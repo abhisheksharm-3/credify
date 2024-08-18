@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from 'next/link'
 
-export function Signup() {
+const Signup = () => {
   const [isLoading, setIsLoading] = useState(false)
   const form = useForm()
 
@@ -83,3 +83,5 @@ export function Signup() {
     </Card>
   )
 }
+
+export default Signup;

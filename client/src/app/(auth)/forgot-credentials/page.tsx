@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from 'next/link'
 
-export function ForgotPassword() {
+const  ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false)
   const form = useForm()
 
@@ -52,3 +52,4 @@ export function ForgotPassword() {
     </Card>
   )
 }
+export default ForgotPassword;
