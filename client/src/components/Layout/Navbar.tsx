@@ -49,8 +49,8 @@ export default function NavbarComponent() {
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Button as={Link} href="/analyze">
-            Analyze Video
+          <Button as={Link} href="/login">
+            Get Started
           </Button>
         </NavbarItem>
         <ModeToggle />
