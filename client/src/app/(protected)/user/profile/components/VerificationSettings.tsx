@@ -51,7 +51,7 @@ function VerificationSettings() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={toggleDropdown}
-              className="w-full border-[1px] text-sm rounded-md p-2 pr-3 outline-none cursor-pointer bg-white flex justify-between items-center"
+              className="w-full border-[1px] text-sm rounded-md p-2 pr-3 outline-none cursor-pointer bg-card flex justify-between items-center"
             >
               {selectedOption}
               <svg
@@ -70,12 +70,12 @@ function VerificationSettings() {
               </svg>
             </button>
             {isOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+              <div className="absolute z-10 mt-1 w-full bg-card border dark:border-gray-700 border-gray-300 rounded-md shadow-lg">
                 {options.map((option) => (
                   <div
                     key={option}
                     onClick={() => selectOption(option)}
-                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                    className="cursor-pointer px-4 py-2 text-sm dark:text-gray-300 text-gray-700  hover:bg-gray-200 dark:hover:bg-gray-700"
                   >
                     {option}
                   </div>
@@ -92,7 +92,7 @@ function VerificationSettings() {
             <div
               onClick={() => setEnabled(!enabled)}
               className={` cursor-pointer ${
-                enabled ? "bg-[#ebebeb]" : ""
+                enabled ? "bg-[#ebebeb] dark:bg-gray-800" : ""
               } p-3 rounded-lg text-sm`}
             >
               Enabled
@@ -100,7 +100,7 @@ function VerificationSettings() {
             <div
               onClick={() => setEnabled(!enabled)}
               className={` cursor-pointer ${
-                !enabled ? "bg-[#ebebeb]" : ""
+                !enabled ? "bg-[#ebebeb] dark:bg-gray-800" : ""
               } p-3 rounded-lg text-sm`}
             >
               Disabled

@@ -38,7 +38,7 @@ function AccountDetails() {
             Username
           </label>
           <input
-            className="border-[1px] text-sm rounded-md p-2 outline-none"
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="username"
             defaultValue="johndoe213"
           />
@@ -48,7 +48,7 @@ function AccountDetails() {
             Phone
           </label>
           <input
-            className="border-[1px] text-sm rounded-md p-2 outline-none"
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="phone"
             defaultValue="+1 (555) 555-5555"
           />
@@ -60,7 +60,7 @@ function AccountDetails() {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={toggleDropdown}
-              className="w-full border-[1px] text-sm rounded-md p-2 pr-3 outline-none cursor-pointer bg-white flex justify-between items-center"
+              className="w-full border-[1px] text-sm rounded-md p-2 pr-3 outline-none cursor-pointer bg-card flex justify-between items-center"
             >
               {selectedOption}
               <svg
@@ -79,12 +79,12 @@ function AccountDetails() {
               </svg>
             </button>
             {isOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+              <div className="absolute z-10 mt-1 w-full bg-card border dark:border-gray-700  border-gray-300 rounded-md shadow-lg">
                 {options.map((option) => (
                   <div
                     key={option}
                     onClick={() => selectOption(option)}
-                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                    className="cursor-pointer px-4 py-2 text-sm dark:text-gray-300 text-gray-700  hover:bg-gray-200 dark:hover:bg-gray-700"
                   >
                     {option}
                   </div>

@@ -15,7 +15,7 @@ function ChangePassword() {
             Current Password
           </label>
           <input
-            className="border-[1px] text-sm rounded-md p-2 outline-none"
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="current-password"
             type="password"
           />
@@ -25,7 +25,7 @@ function ChangePassword() {
             New Password
           </label>
           <input
-            className="border-[1px] text-sm rounded-md p-2 outline-none"
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="new-password"
             type="password"
           />
@@ -35,13 +35,13 @@ function ChangePassword() {
             Confirm Password
           </label>
           <input
-            className="border-[1px] text-sm rounded-md p-2 outline-none"
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="confirm-password"
             type="password"
           />
         </div>
       </div>
-      <button className="mt-6 m-3 p-2 px-3 rounded-lg text-sm text-[#faf6f6] bg-[#ec1e3d]">Update Password</button>
+      <button className="mt-6 m-3 p-2 px-3 rounded-lg text-sm text-[#faf6f6] bg-rose-700">Update Password</button>
     </div>
   );
 }

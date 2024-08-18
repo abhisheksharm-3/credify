@@ -10,11 +10,11 @@ function ProfileInfo() {
       </div>
       <div className="grid gap-6 mt-12">
         <div className="grid gap-2">
-          <label className="font-semibold text-sm" htmlFor="name">
+          <label className="font-semibold  text-sm" htmlFor="name">
             Name
           </label>
           <input
-            className="border-[1px] text-sm rounded-md p-2 outline-none"
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="name"
             defaultValue="John Doe"
           />
@@ -24,7 +24,7 @@ function ProfileInfo() {
             Email
           </label>
           <input
-            className="border-[1px] text-sm rounded-md p-2 outline-none"
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="email"
             type="email"
             defaultValue="john@example.com"
@@ -34,7 +34,7 @@ function ProfileInfo() {
           <label className="font-semibold text-sm mb-3">Profile Picture</label>
           <div className="flex items-center gap-8 ml-3">
             <User size={34} color="#aaaaaa" strokeWidth={1.25} />
-            <button className="border-[1px] text-[#2e2e2e] border-[#b9b9b9]  p-2 rounded-lg text-sm font-semibold  px-3 ">
+            <button className="border-[1px] dark:text-gray-300 text-[#2e2e2e] border-[#b9b9b9]  p-2 rounded-lg text-sm font-semibold   px-3 ">
               Change
             </button>
           </div>
