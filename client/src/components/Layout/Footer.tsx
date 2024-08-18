@@ -38,7 +38,7 @@ const navigation: {
 
 const Footer: React.FC = () => {
   return (
-    <footer className="w-full border-t">
+    <footer className="w-full">
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2 lg:col-span-1">

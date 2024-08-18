@@ -15,7 +15,7 @@ const Layout = ({
   return (
     <div
       className={cn(
-        "w-screen flex flex-col justify-between font-poppins ",
+        "w-screen flex flex-col justify-between font-poppins",
         className
       )}
     >
