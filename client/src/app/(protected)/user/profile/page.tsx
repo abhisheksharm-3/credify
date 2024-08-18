@@ -8,7 +8,7 @@ import SecuritySetting from "./components/SecuritySetting"
 import Layout from "@/components/Layout/Layout"
 export default function Page() {
   return (
-    <Layout><div className="flex flex-col min-h-screen">
+    <Layout><div className="flex flex-col min-h-screen bg-muted dark:bg-inherit">
     <main className="flex-1 grid gap-8 p-4 sm:p-8 md:grid-cols-[1fr_300px]">
       <div className="space-y-8">
         <ProfileInfo/>
