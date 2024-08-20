@@ -6,15 +6,23 @@ import { headers } from "next/headers";
 import { OAuthProvider } from "node-appwrite";
 
 export async function signUpWithGoogle() {
-	const { account } = await createAdminClient();
+  const { account } = await createAdminClient();
 
-  const origin = headers().get("origin");
-  
-	const redirectUrl = await account.createOAuth2Token(
-		OAuthProvider.Google,
-		`${origin}/api/auth/oauth`,
-		`${origin}/user/auth`,
-	);
+  try {
+    const origin = headers().get("origin");
+    if (!origin) {
+      throw new Error("Origin header not found");
+    }
 
-	return redirect(redirectUrl);
-};
+    const redirectUrl = await account.createOAuth2Token(
+      OAuthProvider.Google,
+      `${origin}/api/auth/oauth`,
+      `${origin}/signup`
+    );
+
+    return redirect(redirectUrl);
+  } catch (error) {
+    console.error("Error in signUpWithGoogle:", error);
+    throw error;
+  }
+}

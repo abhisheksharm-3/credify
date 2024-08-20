@@ -7,9 +7,10 @@ import { VerificationTrends } from "@/components/User/VerificationTrendsChart";
 import { AlertsNotifications } from "@/components/User/AlertNotifications";
 import { ActionItems } from "@/components/User/ActionItems";
 import { AccountSettings } from "@/components/User/AccountSettings";
-import { CardData, ChartDataPoint, VideoData } from "@/lib/types";
+import { CardData, ChartDataPoint, User, VideoData } from "@/lib/types";
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
+
 import {
   Card,
   CardContent,
@@ -24,6 +25,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { getLoggedInUser } from "@/lib/server/appwrite";
+import { LoadingSkeleton } from "@/components/Layout/LoadingSkeleton";
 
 const chartData: ChartDataPoint[] = [
   { month: "January", desktop: 186 },
@@ -42,7 +45,6 @@ const chartConfig = {
 };
 
 const summaryCards: CardData[] = [
-  // { title: "Total Videos", description: "The total number of videos that have been verified.", value: 12345 },
   { title: "Successful Verifications", description: "The number of videos that have been successfully verified.", value: 10987 },
   { title: "Detected Tampering", description: "The number of videos where tampering has been detected.", value: 345 },
   { title: "Pending Reviews", description: "The number of videos currently awaiting review.", value: 1013 },
@@ -70,15 +72,49 @@ const pieChartConfig: ChartConfig = Object.fromEntries(
   ])
 );
 
+
+
 export default function Dashboard() {
+  const [user, setUser] = React.useState<User | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await getLoggedInUser();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const totalVideos = React.useMemo(() => {
     return pieChartData.reduce((acc, curr) => acc + curr.value, 0);
   }, []);
+
+  if (loading) {
+    return (
+      <Layout>
+        <LoadingSkeleton />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <main className="flex flex-col gap-8 p-4 sm:px-6 sm:py-8 md:gap-12 lg:px-8 xl:px-12">
+          {user && (
+            <div className="mb-4">
+              <h1 className="text-2xl font-bold">Welcome, {user.name}!</h1>
+              <p>Email: {user.email}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Card className="flex flex-col">
               <CardHeader className="items-center pb-0">
@@ -149,8 +185,10 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <VerificationTrends chartData={chartData} chartConfig={chartConfig} />
             <AlertsNotifications />
-            <div className="flex gap-4 flex-col"><ActionItems />
-            <AccountSettings /></div>
+            <div className="flex gap-4 flex-col">
+              <ActionItems />
+              <AccountSettings />
+            </div>
           </div>
         </main>
       </div>

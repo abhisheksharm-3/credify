@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const session = await account.createSession(userId, secret);
 
   const cookieStore = cookies();
-  cookieStore.set("user-session", session.secret, {
+  cookieStore.set("credify-session", session.secret, {
     path: "/",
     httpOnly: true,
     sameSite: "strict",

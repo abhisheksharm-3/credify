@@ -45,12 +45,12 @@ export async function getLoggedInUser() {
   export async function signUpWithEmail(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const firstName = formData.get("first-name") as string;
-    const lastName = formData.get("last-name") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
     const name = `${firstName} ${lastName}`.trim();
   
     const { account } = await createAdminClient();
-    
+  
     try {
       await account.create(ID.unique(), email, password, name);
       const session = await account.createEmailPasswordSession(email, password);
