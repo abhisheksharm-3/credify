@@ -6,7 +6,13 @@ import VerificationSettings from "./components/VerificationSettings"
 import SupportAndHelp from "./components/SupportAndHelp"
 import SecuritySetting from "./components/SecuritySetting"
 import Layout from "@/components/Layout/Layout"
-export default function Page() {
+import { getLoggedInUser } from "@/lib/server/appwrite";
+import { redirect } from "next/navigation";
+
+export default async function Page() {
+  const user = await getLoggedInUser();
+
+  if (!user) redirect("/signup");
   return (
     <Layout><div className="flex flex-col min-h-screen">
     <main className="flex-1 grid gap-8 p-4 sm:p-8 md:grid-cols-[1fr_300px]">
