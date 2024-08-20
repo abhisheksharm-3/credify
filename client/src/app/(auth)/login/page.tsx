@@ -87,7 +87,7 @@ const Login = () => {
           </Form>
           <form action={signUpWithGoogle} className="mt-4">
             <Button variant="outline" className="w-full" type='submit'>
-              Sign up with Google
+              Sign in with Google
             </Button>
           </form>
         </CardContent>

@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import Footer from "./Footer";
 import NavbarLoggedIn from "./NavbarLoggedIn";
 
-const LoggedInLayout = ({
+const LoggedInayout = ({
   className,
   children,
   active,
@@ -22,9 +22,8 @@ const LoggedInLayout = ({
       {/* TODO: use context to avoid prop drilling */}
       <NavbarLoggedIn />
       {children}
-      <Footer />
     </div>
   );
 };
 
-export default LoggedInLayout;
+export default LoggedInayout;
