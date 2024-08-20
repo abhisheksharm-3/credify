@@ -1,5 +1,9 @@
+import { User as UserType } from "@/lib/types";
 import { User } from "lucide-react";
-function ProfileInfo() {
+interface ProfileInfoProps {
+  user: UserType;
+}
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
   return (
     <div className="border-2 rounded-xl p-6 bg-card">
       <div className="flex flex-col gap-0.5">
@@ -16,7 +20,7 @@ function ProfileInfo() {
           <input
             className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="name"
-            defaultValue="John Doe"
+            defaultValue={user.name}
           />
         </div>
         <div className="grid gap-2">
@@ -27,7 +31,7 @@ function ProfileInfo() {
             className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
             id="email"
             type="email"
-            defaultValue="john@example.com"
+            defaultValue={user.email}
           />
         </div>
         <div className="grid gap-2">

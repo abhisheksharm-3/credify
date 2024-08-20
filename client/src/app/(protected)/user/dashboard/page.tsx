@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react";
-import Layout from "@/components/Layout/Layout";
 import { RecentActivity } from "@/components/User/RecentActivity";
 import { VerificationTrends } from "@/components/User/VerificationTrendsChart";
 import { AlertsNotifications } from "@/components/User/AlertNotifications";
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/chart";
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { LoadingSkeleton } from "@/components/Layout/LoadingSkeleton";
+import LoggedInLayout from "@/components/Layout/LoggedInLayout";
 
 const chartData: ChartDataPoint[] = [
   { month: "January", desktop: 186 },
@@ -99,14 +99,14 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <Layout>
+      <LoggedInLayout>
         <LoadingSkeleton />
-      </Layout>
+      </LoggedInLayout>
     );
   }
 
   return (
-    <Layout>
+    <LoggedInLayout>
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <main className="flex flex-col gap-8 p-4 sm:px-6 sm:py-8 md:gap-12 lg:px-8 xl:px-12">
           {user && (
@@ -192,6 +192,6 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-    </Layout>
+    </LoggedInLayout>
   );
 }
