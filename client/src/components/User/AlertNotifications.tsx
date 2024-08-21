@@ -15,7 +15,7 @@ export function AlertsNotifications() {
             <TriangleAlertIcon className="h-4 w-4" />
             <AlertTitle>Suspicious Activity Detected</AlertTitle>
             <AlertDescription>
-              We've detected unusual activity on your account. Please review your recent activity and contact
+              We&apos;ve detected unusual activity on your account. Please review your recent activity and contact
               support if you have any concerns.
             </AlertDescription>
           </Alert>
