@@ -1,5 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { UploadThingError } from "uploadthing/server";
+import { UTFiles, UploadThingError } from "uploadthing/server";
 import { getLoggedInUser } from "@/lib/server/appwrite";
 
 const f = createUploadthing();
@@ -21,15 +21,17 @@ export const ourFileRouter = {
     video: { maxFileSize: "128MB" },
     image: { maxFileSize: "16MB" },
   })
-    .middleware(async ({ req }) => {
+    .middleware(async ({ req, files }) => {
       // This code runs on your server before upload
       const user = await auth(req);
 
       // If you throw, the user will not be able to upload
       if (!user) throw new UploadThingError("Unauthorized");
-
+      const fileOverrides = files.map((file) => {
+        return { ...file, customId: user.id };
+      })
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId: user.id };
+      return { userId: user.id, [UTFiles]: fileOverrides };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
