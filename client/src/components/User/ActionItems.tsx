@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UploadIcon, SendIcon, MessageCircleIcon } from "lucide-react";
+import { UploadVideoDialog } from "./UploadVideoDialog";
 
 export function ActionItems() {
   return (
@@ -11,10 +12,7 @@ export function ActionItems() {
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
-          <Button>
-            <UploadIcon className="h-4 w-4 mr-2" />
-            Upload New Video
-          </Button>
+          <UploadVideoDialog />
           <Button variant="outline">
             <SendIcon className="h-4 w-4 mr-2" />
             Request Review
