@@ -29,3 +29,10 @@ export interface VideoData {
     accessedAt: string;
     registration: string;
   }
+  export type UploadedFileType = {
+    id: string;
+    customId: string | null;
+    key: string;
+    name: string;
+    status: "Deletion Pending" | "Failed" | "Uploaded" | "Uploading";
+  };
