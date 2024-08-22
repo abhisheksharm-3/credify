@@ -50,11 +50,7 @@ const summaryCards: CardData[] = [
   { title: "Pending Reviews", description: "The number of videos currently awaiting review.", value: 1013 },
 ];
 
-const recentVideos: VideoData[] = [
-  { title: "Acme Product Launch", uploadDate: "Uploaded 2 days ago", status: "Verified" },
-  { title: "Credify Onboarding", uploadDate: "Uploaded 1 week ago", status: "Pending" },
-  { title: "Sustainability Report", uploadDate: "Uploaded 3 weeks ago", status: "Pending" },
-];
+
 
 const pieChartData = summaryCards.map(card => ({
   category: card.title,
@@ -180,7 +176,7 @@ export default function Dashboard() {
                 </div>
               </CardFooter>
             </Card>
-            <RecentActivity videos={recentVideos} />
+            <RecentActivity userId={user?.$id || ""} />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <VerificationTrends chartData={chartData} chartConfig={chartConfig} />
