@@ -1,30 +1,39 @@
-'use client' // Error boundaries must be Client Components
- 
-import { useEffect } from 'react'
- 
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
 export default function Error({
   error,
   reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error(error)
-  }, [error])
- 
+    console.error(error);
+  }, [error]);
+
+  const handleGoBack = () => {
+    router.push("/");
+  };
+
   return (
-    <div>
-      <h2>Something went wrong!</h2>
-      <button
-        onClick={
-          // Attempt to recover by trying to re-render the segment
-          () => reset()
-        }
-      >
-        Try again
-      </button>
+    <div className={cn("flex flex-col items-center justify-center h-screen")}>
+      <img
+        src="/illustrations/Error.svg"
+        alt="Error Illustration"
+        className="mb-8 max-w-[300px]"
+      />
+      <h2 className="text-2xl font-bold mb-4">Something went wrong!</h2>
+      <p className="text-muted-foreground mb-8">
+        We apologize for the inconvenience. Please try again.
+      </p>
+      <Button onClick={handleGoBack}>Click Here to Go Back</Button>
     </div>
-  )
+  );
 }

@@ -25,20 +25,20 @@ export default function NavbarComponent() {
   ];
 
   return (
-    <Navbar onMenuOpenChange={setIsMenuOpen} isBordered>
-      <NavbarContent>
-        <NavbarMenuToggle
-          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-          className="sm:hidden"
-        />
-        <NavbarBrand>
+    <Navbar onMenuOpenChange={setIsMenuOpen} className="" isBordered>
+    <NavbarContent>
+      <NavbarMenuToggle
+        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        className="sm:hidden"
+      />
+      <Link href="/"><NavbarBrand className="text-white">
           <RiShieldCheckLine />
           <p>Credify</p>
-        </NavbarBrand>
+          </NavbarBrand></Link>
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex gap-4" justify="center">
-        {menuItems.map((item) => (
+        {menuItems.map((item, index) => (
           <NavbarItem key={item.name}>
             <Link href="#">
               {item.name}
@@ -49,7 +49,7 @@ export default function NavbarComponent() {
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Button as={Link} href="/login">
+          <Button as={Link} color="primary" href="/signup" variant="shadow">
             Get Started
           </Button>
         </NavbarItem>
