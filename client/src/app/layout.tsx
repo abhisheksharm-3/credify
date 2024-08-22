@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
+
+import { ourFileRouter } from "@/app/api/uploadthing/core";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="overflow-x-hidden scrollbar-hide">
-      <body className={inter.className}><Providers>{children}</Providers></body>
+      <body className={inter.className}> <NextSSRPlugin
+        routerConfig={extractRouterConfig(ourFileRouter)}
+      /><Providers>{children}</Providers></body>
     </html>
   );
 }
