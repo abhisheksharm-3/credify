@@ -1,8 +1,16 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UTFiles, UploadThingError } from "uploadthing/server";
 import { getLoggedInUser } from "@/lib/server/appwrite";
+import * as z from "zod";
 
-const f = createUploadthing();
+const f = createUploadthing({
+  errorFormatter: (err) => {
+    return {
+      message: err.message,
+      zodError: err.cause instanceof z.ZodError ? err.cause.flatten() : null,
+    };
+  },
+});
 
 // Custom auth function using the provided getLoggedInUser function
 const auth = async (req: Request) => {
@@ -17,6 +25,7 @@ const auth = async (req: Request) => {
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
+  
   contentUploader: f({
     video: { maxFileSize: "128MB" },
     image: { maxFileSize: "16MB" },
