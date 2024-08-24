@@ -27,7 +27,7 @@ export default async function Page() {
         <SecuritySetting/>
         <SupportAndHelp/>
       </div>
-    </main>ff
+    </main>
     <footer className="bg-background border-t px-4 sm:px-6 py-4 flex items-center justify-between">
       <button className=" p-2 px-4 rounded-lg text-md text-[#faf6f6] bg-rose-700">Save Changes</button>
     </footer>
