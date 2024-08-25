@@ -19,9 +19,9 @@ export function RecentActivity({ userId }: RecentActivityProps) {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await fetch(`/api/content/get`);
-        const data = await response.json();
-        setFiles(data.files);
+        // const response = await fetch(`/api/content/get`);
+        // const data = await response.json();
+        // setFiles(data.files);
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching files:", error);
