@@ -3,16 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { UploadedFileType } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RiLink } from "@remixicon/react";
+import { RiLink, RiFileTextLine } from "@remixicon/react";
+import { FileType } from "@/lib/types";
+
+
 
 interface RecentActivityProps {
   userId: string;
 }
 
 export function RecentActivity({ userId }: RecentActivityProps) {
-  const [files, setFiles] = useState<UploadedFileType[]>([]);
+  const [files, setFiles] = useState<FileType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -32,11 +34,22 @@ export function RecentActivity({ userId }: RecentActivityProps) {
     fetchFiles();
   }, [userId]);
 
+  const formatFileSize = (bytes: number) => {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes === 0) return '0 Byte';
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)).toString());
+    return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
   return (
     <Card className="col-span-2 lg:col-span-1">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
-        <CardDescription>A list of recently uploaded content and their status.</CardDescription>
+        <CardDescription>A list of recently uploaded content and their details.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading && (
@@ -51,30 +64,33 @@ export function RecentActivity({ userId }: RecentActivityProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>File Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Size</TableHead>
+                <TableHead>Uploaded</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {files.map((file, index) => (
-                <TableRow key={index}>
+              {files.map((file) => (
+                <TableRow key={file.$id}>
                   <TableCell>
-                    <div className="font-medium">{file.name}</div>
+                    <div className="font-medium">{file.fileName}</div>
                     <div className="text-sm text-muted-foreground">
-                    <Link href={`https://utfs.io/f/${file.key}`} className="text-primary hover:underline flex items-center" prefetch={false} target="_blank">
+                      <Link href={file.fileUrl} className="text-primary hover:underline flex items-center" prefetch={false} target="_blank">
                         <RiLink className="pr-1" />
                         View File
                       </Link>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={file.status === "Uploaded" ? "secondary" : "outline"}>{file.status}</Badge>
+                    <Badge variant="secondary">{file.fileType}</Badge>
                   </TableCell>
+                  <TableCell>{formatFileSize(file.fileSize)}</TableCell>
+                  <TableCell>{formatDate(file.$createdAt)}</TableCell>
                   <TableCell>
-                    <Link href="#" className="text-primary" prefetch={false}>
-                      View Report
+                    <Link href="#" className="text-primary flex items-center" prefetch={false}>
+                      <RiFileTextLine className="pr-1" />
+                      View Details
                     </Link>
                   </TableCell>
                 </TableRow>
