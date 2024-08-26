@@ -1,89 +1,61 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { UTFiles, UploadThingError } from "uploadthing/server";
-import { getLoggedInUser } from "@/lib/server/appwrite";
-import * as z from "zod";
+import { UploadThingError } from "uploadthing/server";
+import { getLoggedInUser, createAdminClient } from "@/lib/server/appwrite";
+import { Databases, ID } from "node-appwrite";
 
-// Define constants for file size limits
-const MAX_VIDEO_SIZE = "128MB";
-const MAX_IMAGE_SIZE = "16MB";
+const f = createUploadthing();
 
-// Define a schema for file metadata
-const FileMetadataSchema = z.object({
-  userId: z.string(),
-  fileName: z.string(),
-  fileType: z.string(),
-  fileSize: z.number(),
-});
-
-type FileMetadata = z.infer<typeof FileMetadataSchema>;
-
-const f = createUploadthing({
-  errorFormatter: (err) => ({
-    message: err.message,
-    zodError: err.cause instanceof z.ZodError ? err.cause.flatten() : null,
-  }),
-});
-
-// Improved auth function with better error handling
-const auth = async (req: Request): Promise<{ id: string } | null> => {
+const auth = async (req: Request) => {
   try {
     const user = await getLoggedInUser();
     return user ? { id: user.$id } : null;
   } catch (error) {
     console.error('Error authenticating user:', error);
-    throw new UploadThingError("Authentication failed");
-  }
-};
-
-// Helper function to validate and process file metadata
-const processFileMetadata = (
-  userId: string,
-  file: { name: string; type: string; size: number }
-): FileMetadata => {
-  try {
-    return FileMetadataSchema.parse({
-      userId,
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-    });
-  } catch (error) {
-    console.error('Error processing file metadata:', error);
-    throw new UploadThingError("Invalid file metadata");
+    return null;
   }
 };
 
 export const ourFileRouter = {
   contentUploader: f({
-    video: { maxFileSize: MAX_VIDEO_SIZE },
-    image: { maxFileSize: MAX_IMAGE_SIZE },
+    video: { maxFileSize: "128MB" },
+    image: { maxFileSize: "16MB" },
   })
-    .middleware(async ({ req, files }) => {
+    .middleware(async ({ req }) => {
       const user = await auth(req);
       if (!user) throw new UploadThingError("Unauthorized");
-
-      const fileOverrides = files.map((file) => ({
-        ...file,
-        customId: user.id,
-      }));
-
-      return { userId: user.id, [UTFiles]: fileOverrides };
+      return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Upload complete for userId:", metadata.userId);
+      
+      // Store file information in Appwrite
+      const { account } = await createAdminClient();
+      const databases = new Databases(account.client);
+      
       try {
-        console.log("Upload complete for userId:", metadata.userId);
-        console.log("File details:", {
-          url: file.url,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        });
-
-        return processFileMetadata(metadata.userId, file);
+        await databases.createDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          process.env.APPWRITE_COLLECTION_ID!,
+          ID.unique(),
+          {
+            userId: metadata.userId,
+            fileId: file.key,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            fileUrl: file.url,
+          }
+        );
       } catch (error) {
-        console.error('Error in onUploadComplete:', error);
-        throw new UploadThingError("Failed to process upload");
+        console.error("Error storing file information in Appwrite:", error);
       }
+
+      return { 
+        uploadedBy: metadata.userId,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size
+      };
     }),
 } satisfies FileRouter;
 
