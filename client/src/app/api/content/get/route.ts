@@ -22,7 +22,7 @@ export const GET = async (request: NextRequest) => {
     const files = await databases.listDocuments(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_COLLECTION_ID!,
-      [Query.equal("userId", userId)]
+      [Query.equal("userId", userId), Query.orderAsc('$createdAt')]
     );
 
     return new Response(JSON.stringify({ files: files.documents, hasMore: files.total > files.documents.length }), {
