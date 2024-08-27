@@ -1,37 +1,34 @@
-"use client"
+"use client";
 import React, { useState } from "react";
 import { updatePassword } from "@/lib/server/appwrite";
+import { toast } from "sonner";
 
 const ChangePassword: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
 
   const handlePasswordChange = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      toast.error("New passwords do not match.");
       return;
     }
 
     try {
       const result = await updatePassword(currentPassword, newPassword);
       if (result.success) {
-        setSuccess(true);
-        setError(null);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        toast.success("Password updated successfully!");
       } else {
-        setSuccess(false);
-        setError(result.error || "Password update failed.");
+        toast.error(result.error || "Password update failed.");
       }
     } catch (err) {
       console.error("Password update error:", err);
-      setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -89,10 +86,6 @@ const ChangePassword: React.FC = () => {
         >
           Update Password
         </button>
-        {error && <div className="mt-4 text-red-500 text-sm">{error}</div>}
-        {success && (
-          <div className="mt-4 text-green-500 text-sm">Password updated successfully.</div>
-        )}
       </form>
     </div>
   );

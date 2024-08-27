@@ -1,9 +1,9 @@
 import Link from "next/link"
-import ProfileInfo from "./components/ProfileInfo"
-import ChangePassword from "./components/ChangePassword"
-import VerificationSettings from "./components/VerificationSettings"
-import SupportAndHelp from "./components/SupportAndHelp"
-import SecuritySetting from "./components/SecuritySetting"
+import ProfileInfo from "../../../../components/User/ProfileInfo"
+import ChangePassword from "../../../../components/User/ChangePassword"
+import VerificationSettings from "../../../../components/User/VerificationSettings"
+import SupportAndHelp from "../../../../components/User/SupportAndHelp"
+import SecuritySetting from "../../../../components/User/SecuritySetting"
 import Layout from "@/components/Layout/Layout"
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { redirect } from "next/navigation";
