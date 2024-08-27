@@ -35,55 +35,69 @@ export async function createAdminClient() {
   };
 }
 export async function getLoggedInUser() {
-    try {
-      const { account } = await createSessionClient();
-      return await account.get();
-    } catch (error) {
-      return null;
-    }
+  try {
+    const { account } = await createSessionClient();
+    return await account.get();
+  } catch (error) {
+    return null;
   }
-  export async function signUpWithEmail(formData: FormData) {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
-    const name = `${firstName} ${lastName}`.trim();
-  
-    const { account } = await createAdminClient();
-  
-    try {
-      await account.create(ID.unique(), email, password, name);
-      const session = await account.createEmailPasswordSession(email, password);
-      cookies().set("credify-session", session.secret, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "strict",
-        secure: true,
-      });
-      return { success: true };
-    } catch (error) {
-      console.error("Sign up failed:", error);
-      return { success: false, error: "Sign up failed. Please try again." };
-    }
+}
+export async function signUpWithEmail(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const firstName = formData.get("firstName") as string;
+  const lastName = formData.get("lastName") as string;
+  const name = `${firstName} ${lastName}`.trim();
+
+  const { account } = await createAdminClient();
+
+  try {
+    await account.create(ID.unique(), email, password, name);
+    const session = await account.createEmailPasswordSession(email, password);
+    cookies().set("credify-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: true,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Sign up failed:", error);
+    return { success: false, error: "Sign up failed. Please try again." };
   }
-  
-  export async function loginWithEmail(formData: FormData) {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-  
-    const { account } = await createAdminClient();
-  
-    try {
-      const session = await account.createEmailPasswordSession(email, password);
-      cookies().set("credify-session", session.secret, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "strict",
-        secure: true,
-      });
-      return { success: true };
-    } catch (error) {
-      console.error("Login failed:", error);
-      return { success: false, error: "Invalid email or password" };
-    }
+}
+
+export async function loginWithEmail(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  const { account } = await createAdminClient();
+
+  try {
+    const session = await account.createEmailPasswordSession(email, password);
+    cookies().set("credify-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: true,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Login failed:", error);
+    return { success: false, error: "Invalid email or password" };
   }
+}
+
+export async function updatePassword(oldPassword: string, newPassword: string) {
+  try {
+    const { account } = await createSessionClient();
+    
+    // Attempt to update the password directly
+    await account.updatePassword(newPassword, oldPassword);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Password update failed:", error);
+    return { success: false, error: "Password update failed. Please try again." };
+  }
+}
