@@ -48,7 +48,7 @@ export default function NavbarLoggedIn() {
     { name: "Analytics Dashboard", icon: <RiDashboardLine />, href: "/user/dashboard" },
     { name: "Content Management", icon: <RiEyeLine />, href: "/user/content" },
     { name: "Verification Status", icon: <RiShieldCheckLine />, href: "/user/verification" },
-    { name: "Your Details", icon: <RiUserLine />, href: "/user/details" },
+    { name: "Your Details", icon: <RiUserLine />, href: "/user/profile-details" },
   ];
 
   return (

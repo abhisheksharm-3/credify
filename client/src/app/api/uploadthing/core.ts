@@ -1,10 +1,10 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { UTFiles, UploadThingError } from "uploadthing/server";
-import { getLoggedInUser } from "@/lib/server/appwrite";
+import { UploadThingError } from "uploadthing/server";
+import { getLoggedInUser, createAdminClient } from "@/lib/server/appwrite";
+import { Databases, ID } from "node-appwrite";
 
 const f = createUploadthing();
 
-// Custom auth function using the provided getLoggedInUser function
 const auth = async (req: Request) => {
   try {
     const user = await getLoggedInUser();
@@ -15,33 +15,41 @@ const auth = async (req: Request) => {
   }
 };
 
-// FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
   contentUploader: f({
     video: { maxFileSize: "128MB" },
     image: { maxFileSize: "16MB" },
   })
-    .middleware(async ({ req, files }) => {
-      // This code runs on your server before upload
+    .middleware(async ({ req }) => {
       const user = await auth(req);
-
-      // If you throw, the user will not be able to upload
       if (!user) throw new UploadThingError("Unauthorized");
-      const fileOverrides = files.map((file) => {
-        return { ...file, customId: user.id };
-      })
-      // Whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId: user.id, [UTFiles]: fileOverrides };
+      return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
-      console.log("file url", file.url);
-      console.log("file name", file.name);
-      console.log("file size", file.size);
-      console.log("file type", file.type);
+      
+      // Store file information in Appwrite
+      const { account } = await createAdminClient();
+      const databases = new Databases(account.client);
+      
+      try {
+        await databases.createDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          process.env.APPWRITE_COLLECTION_ID!,
+          ID.unique(),
+          {
+            userId: metadata.userId,
+            fileId: file.key,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            fileUrl: file.url,
+          }
+        );
+      } catch (error) {
+        console.error("Error storing file information in Appwrite:", error);
+      }
 
-      // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { 
         uploadedBy: metadata.userId,
         fileName: file.name,

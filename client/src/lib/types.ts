@@ -36,3 +36,15 @@ export interface VideoData {
     name: string;
     status: "Deletion Pending" | "Failed" | "Uploaded" | "Uploading";
   };
+
+  export interface FileType {
+    userId: string;
+    fileId: string;
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    fileUrl: string;
+    $id: string;
+    $createdAt: string;
+    $updatedAt: string;
+  }
