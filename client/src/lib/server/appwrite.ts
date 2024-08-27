@@ -88,18 +88,6 @@ export async function loginWithEmail(formData: FormData) {
   }
 }
 
-// Function to update a user's password
-/* export async function updatePassword(oldPassword: string, newPassword: string) {
-  try {
-    const { account } = await createSessionClient();
-    await account.updatePassword(newPassword, oldPassword);
-    return { success: true };
-  } catch (error) {
-    console.error("Password update failed:", error);
-    return { success: false, error: "Password update failed. Please try again." };
-  }
-} */
-
 export async function updatePassword(oldPassword: string, newPassword: string) {
   try {
     const { account } = await createSessionClient();
