@@ -101,3 +101,31 @@ export async function updatePassword(oldPassword: string, newPassword: string) {
     return { success: false, error: "Password update failed. Please try again." };
   }
 }
+
+/* export async function getLogDetails() {
+  try {
+    const { account } = await createAdminClient();
+
+    // Fetch the logs
+    const logResponse = await account.listLogs(
+      [] // queries (optional)
+  );
+      console.log(logResponse);
+
+    // Format the logs
+    const formattedLogs = logResponse.logs.map((log) => {
+      return {
+        event: log.event,
+        user: log.userName || log.userEmail,
+        device: log.deviceName || 'Unknown Device',
+        location: log.countryName || 'Unknown Location',
+        timestamp: new Date(log.time).toLocaleString(), // Convert timestamp to readable format
+      };
+    });
+
+    return { success: true, logs: formattedLogs };
+  } catch (error) {
+    console.error("Failed to fetch logs:", error);
+    return { success: false, error: "Failed to fetch logs. Please try again." };
+  }
+} */
