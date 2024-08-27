@@ -38,6 +38,7 @@ const Login = () => {
     const checkUser = async () => {
       const user = await getLoggedInUser();
       if (user) {
+        console.log(user);
         router.push("/user/dashboard");
       }
     };
