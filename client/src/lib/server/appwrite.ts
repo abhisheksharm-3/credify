@@ -91,13 +91,57 @@ export async function loginWithEmail(formData: FormData) {
 export async function updatePassword(oldPassword: string, newPassword: string) {
   try {
     const { account } = await createSessionClient();
-    
+
     // Attempt to update the password directly
     await account.updatePassword(newPassword, oldPassword);
-    
+
     return { success: true };
   } catch (error) {
     console.error("Password update failed:", error);
     return { success: false, error: "Password update failed. Please try again." };
+  }
+}
+
+export async function getLogDetails() {
+  try {
+    const { account } = await createSessionClient();
+    // Fetch the logs
+    const logResponse = await account.listLogs(
+      [] // queries (optional)
+    );
+
+    // Format the logs
+    const formattedLogs = logResponse.logs.map((log) => {
+      return {
+        event: log.event,
+        user: log.userName || log.userEmail,
+        deviceName: log.deviceName || '',
+        deviceBrand: log.deviceBrand || '',
+        deviceModel: log.deviceModel || '',
+        osName: log.osName || '',
+        osVersion: log.osVersion || '',
+        timestamp: new Date(log.time).toLocaleString(), // Convert timestamp to readable format
+      };
+    });
+
+    // Slice to get only the latest 5 results
+    const latestLogs = formattedLogs.slice(-5);
+    return { success: true, logs: latestLogs };
+  } catch (error) {
+    console.error("Failed to fetch logs:", error);
+    return { success: false, error: "Failed to fetch logs. Please try again." };
+  }
+}
+export async function updatePhoneNumber(phone: string, password: string) {
+  try {
+    const { account } = await createSessionClient();
+    const result = await account.updatePhone(
+      phone, // phone
+      password // password
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Phone number update failed:", error);
+    return { success: false, error: "Phone number update failed. Please try again." };
   }
 }
