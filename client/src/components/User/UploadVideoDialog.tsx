@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from 'next/navigation';
 import { CopyIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,8 @@ import { UploadIcon } from "lucide-react";
 import { UploadDropzone } from "@/lib/uploadthing";
 
 export function UploadVideoDialog() {
+  const router = useRouter();
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -33,28 +36,24 @@ export function UploadVideoDialog() {
           </DialogDescription>
         </DialogHeader>
         <UploadDropzone
-        endpoint="contentUploader"
-        onClientUploadComplete={(res) => {
-          // Do something with the response
-          console.log("Files: ", res);
-        }}
-        onUploadError={(error: Error) => {
-          // Do something with the error.
-          alert(`ERROR! ${error.message}`);
-        }}
-        appearance={{
+          endpoint="contentUploader"
+          onClientUploadComplete={(res) => {
+            console.log("Files: ", res);
+            if (res && res.length > 0) {
+              // Assuming the first file's fileId is what we want
+              const fileId = res[0].key;
+              // Redirect to the content page
+              router.push(`/content/${fileId}`);
+            }
+          }}
+          onUploadError={(error: Error) => {
+            alert(`ERROR! ${error.message}`);
+          }}
+          appearance={{
             button: "ut-ready:bg-blue-600 ut-ready:hover:bg-blue-700 ut-ready:focus:ring-2 ut-ready:focus:ring-blue-500 ut-ready:focus:ring-offset-2 ut-ready:text-white ut-ready:font-semibold ut-ready:py-2 ut-ready:px-4 ut-ready:rounded-lg ut-ready:shadow-sm ut-ready:transition-all duration-200 cursor-pointer",
           }}
           className="border-[1px] transition-all border-gray-300 dark:border-gray-600 duration-500 hover:border-blue-500 dark:hover:border-blue-400"
-      />
-        <DialogFooter className="sm:justify-start">
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button type="submit">Upload</Button>
-        </DialogFooter>
+        />
       </DialogContent>
     </Dialog>
   );
