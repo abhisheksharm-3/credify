@@ -11,7 +11,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { CheckCircle, AlertCircle, Clock, PlayCircle, ShieldCheck, ShieldAlert, ChevronRight } from "lucide-react"
-import LoggedInayout from "@/components/Layout/LoggedInLayout"
+import Layout from "@/components/Layout/Layout"
 
 // Mock data for demonstration
 const verificationData = {
@@ -35,7 +35,7 @@ const verificationData = {
   ],
 }
 
-export default function VerificationDetailPage() {
+export default function VerifyContent() {
   const [isVerifying, setIsVerifying] = useState(verificationData.status === "in-progress")
 
   const getStatusIcon = () => {
@@ -65,7 +65,7 @@ export default function VerificationDetailPage() {
   }
 
   return (
-<LoggedInayout className="min-h-screen flex flex-col justify-start">    <div className="container mx-auto p-6">
+<Layout>    <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8">Video Verification Details</h1>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left side - Video preview */}
@@ -169,6 +169,6 @@ export default function VerificationDetailPage() {
           </Card>
         </div>
       </div>
-    </div></LoggedInayout>
+    </div></Layout>
   )
 }

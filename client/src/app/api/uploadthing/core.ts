@@ -52,6 +52,7 @@ export const ourFileRouter = {
 
       return { 
         uploadedBy: metadata.userId,
+        fileId: file.key,
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size
