@@ -91,10 +91,10 @@ export async function loginWithEmail(formData: FormData) {
 export async function updatePassword(oldPassword: string, newPassword: string) {
   try {
     const { account } = await createSessionClient();
-    
+
     // Attempt to update the password directly
     await account.updatePassword(newPassword, oldPassword);
-    
+
     return { success: true };
   } catch (error) {
     console.error("Password update failed:", error);
@@ -102,30 +102,33 @@ export async function updatePassword(oldPassword: string, newPassword: string) {
   }
 }
 
-/* export async function getLogDetails() {
+export async function getLogDetails() {
   try {
-    const { account } = await createAdminClient();
-
+    const { account } = await createSessionClient();
     // Fetch the logs
     const logResponse = await account.listLogs(
       [] // queries (optional)
-  );
-      console.log(logResponse);
+    );
 
     // Format the logs
     const formattedLogs = logResponse.logs.map((log) => {
       return {
         event: log.event,
         user: log.userName || log.userEmail,
-        device: log.deviceName || 'Unknown Device',
-        location: log.countryName || 'Unknown Location',
+        deviceName: log.deviceName || '',
+        deviceBrand: log.deviceBrand || '',
+        deviceModel: log.deviceModel || '',
+        osName: log.osName || '',
+        osVersion: log.osVersion || '',
         timestamp: new Date(log.time).toLocaleString(), // Convert timestamp to readable format
       };
     });
 
-    return { success: true, logs: formattedLogs };
+    // Slice to get only the latest 5 results
+    const latestLogs = formattedLogs.slice(-5);
+    return { success: true, logs: latestLogs };
   } catch (error) {
     console.error("Failed to fetch logs:", error);
     return { success: false, error: "Failed to fetch logs. Please try again." };
   }
-} */
+}
