@@ -46,8 +46,8 @@ export default function NavbarLoggedIn() {
 
   const menuItems = [
     { name: "Analytics Dashboard", icon: <RiDashboardLine />, href: "/user/dashboard" },
-    { name: "Content Management", icon: <RiEyeLine />, href: "/user/content" },
-    { name: "Verification Status", icon: <RiShieldCheckLine />, href: "/user/verification" },
+    { name: "Content Management", icon: <RiEyeLine />, href: "/content/manage" },
+    { name: "Verification Status", icon: <RiShieldCheckLine />, href: "/content/status" },
     { name: "Your Details", icon: <RiUserLine />, href: "/user/profile-details" },
   ];
 
