@@ -132,3 +132,16 @@ export async function getLogDetails() {
     return { success: false, error: "Failed to fetch logs. Please try again." };
   }
 }
+export async function updatePhoneNumber(phone: string, password: string) {
+  try {
+    const { account } = await createSessionClient();
+    const result = await account.updatePhone(
+      phone, // phone
+      password // password
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Phone number update failed:", error);
+    return { success: false, error: "Phone number update failed. Please try again." };
+  }
+}
