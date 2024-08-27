@@ -37,6 +37,16 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
           />
         </div>
         <div className="grid gap-2">
+          <label className="font-semibold text-sm" htmlFor="phone">
+            Phone
+          </label>
+          <input
+            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
+            id="phone"
+            defaultValue="+1 (555) 555-5555"
+          />
+        </div>
+        <div className="grid gap-2">
           <label className="font-semibold text-sm mb-3">Profile Picture</label>
           <div className="flex items-center gap-8 ml-3">
             <User size={34} color="#aaaaaa" strokeWidth={1.25} />

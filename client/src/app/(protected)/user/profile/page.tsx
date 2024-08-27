@@ -1,6 +1,5 @@
 import Link from "next/link"
 import ProfileInfo from "./components/ProfileInfo"
-import AccountDetails from "./components/AccountDetails"
 import ChangePassword from "./components/ChangePassword"
 import VerificationSettings from "./components/VerificationSettings"
 import SupportAndHelp from "./components/SupportAndHelp"
@@ -19,7 +18,6 @@ export default async function Page() {
     <main className="flex-1 grid gap-8 p-4 sm:p-8 md:grid-cols-[1fr_300px]">
       <div className="space-y-8">
         <ProfileInfo user={user}/>
-        <AccountDetails/>
         <ChangePassword/>
       </div>
       <div className="space-y-8">
