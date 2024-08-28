@@ -108,7 +108,7 @@ export default function VerifyContent() {
   const renderUserHierarchy = (user: User) => (
     <div className="ml-4">
       <p>{user.name} ({user.userId})</p>
-      {user.children.length > 0 && user.children.map((child, index) => (
+      {user.children.length > 1 && user.children.map((child, index) => (
         <div key={index} className="ml-4 mt-2">
           <ChevronRight className="inline w-4 h-4 mr-2" />
           {renderUserHierarchy(child)}
