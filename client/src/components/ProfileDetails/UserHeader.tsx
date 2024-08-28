@@ -6,17 +6,17 @@ import { getLoggedInUser } from '@/lib/server/appwrite'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
-interface UserHeaderProps { }
+interface UserHeaderProps {
+  user: User | null
+}
 
-const UserHeader: React.FC<UserHeaderProps> = () => {
-  const [user, setUser] = useState<User | null>(null);
+const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await getLoggedInUser();
-        setUser(userData);
         setIsVerified(userData?.labels.includes('verified') || false);
       } catch (error) {
         console.error('Error fetching user data:', error);
