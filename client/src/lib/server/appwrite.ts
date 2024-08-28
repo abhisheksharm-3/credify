@@ -1,6 +1,6 @@
 // src/lib/server/appwrite.js
 "use server";
-import { Client, Account, ID } from "node-appwrite";
+import { Client, Account, ID, Users } from "node-appwrite";
 import { cookies } from "next/headers";
 
 export async function createSessionClient() {
@@ -31,6 +31,9 @@ export async function createAdminClient() {
   return {
     get account() {
       return new Account(client);
+    },
+    get users() {
+      return new Users(client);
     },
   };
 }
@@ -143,5 +146,15 @@ export async function updatePhoneNumber(phone: string, password: string) {
   } catch (error) {
     console.error("Phone number update failed:", error);
     return { success: false, error: "Phone number update failed. Please try again." };
+  }
+}
+export async function getUserById(userId: string) {
+  try {
+    const { users } = await createAdminClient();
+    const user = await users.get(userId);
+    return { success: true, user };
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+    return { success: false, error: "Failed to fetch user. Please try again." };
   }
 }
