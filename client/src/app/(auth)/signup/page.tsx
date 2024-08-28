@@ -94,7 +94,7 @@ const Signup: React.FC = () => {
           </svg>
         </div>
         <p className="text-sm opacity-75 max-w-md text-center">
-          Sign up now to join our community of content creators and guardians of digital integrity. Together, we're building a more trustworthy online world.
+          Sign up now to join our community of content creators and guardians of digital integrity. Together, we&apos;re building a more trustworthy online world.
         </p>
       </div>
 
