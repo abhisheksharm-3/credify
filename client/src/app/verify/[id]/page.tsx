@@ -71,10 +71,7 @@ export default function VerifyContent() {
 
         // Determine content type
         const contentResponse = await fetch(`https://utfs.io/f/${id}`, { method: 'HEAD' });
-        const contentTypeHeader = contentResponse.headers.get('Content-Type
-          
-        
-        );
+        const contentTypeHeader = contentResponse.headers.get('Content-Type');
         if (contentTypeHeader?.startsWith('image')) {
           setContentType('image');
         } else if (contentTypeHeader?.startsWith('video')) {
