@@ -94,7 +94,7 @@ export function RecentActivity({ userId }: RecentActivityProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {files.map((file) => (
+              {files.splice(0, 3).map((file) => (
                 <TableRow key={file.$id} className="transition-colors duration-150">
                   <TableCell>
                     <div className="font-medium ">{file.fileName}</div>

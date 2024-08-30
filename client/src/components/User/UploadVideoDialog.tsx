@@ -20,7 +20,7 @@ import { UploadDropzone } from "@/lib/uploadthing";
 
 export function UploadVideoDialog() {
   const router = useRouter();
-  const [uploadState, setUploadState] = useState('idle');
+  const [uploadState, setUploadState] = useState('idle'); // 'idle', 'uploading', 'success'
 
   return (
     <Dialog>
