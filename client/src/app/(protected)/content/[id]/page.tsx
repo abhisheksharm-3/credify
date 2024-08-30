@@ -138,7 +138,7 @@ export default function VerificationDetailPage() {
               Error: No verification data available
             </CardTitle>
             <p className="text-muted-foreground">
-              We couldn't retrieve the verification data for this content. Please try again later or contact support if the issue persists.
+              We couldn&apos;t retrieve the verification data for this content. Please try again later or contact support if the issue persists.
             </p>
           </Card>
         </div>
