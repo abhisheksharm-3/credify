@@ -1,6 +1,8 @@
 "use client"
+
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
@@ -8,15 +10,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { CheckCircle, AlertCircle, Clock, PlayCircle, ShieldCheck, ShieldAlert, ChevronRight, FileVideo, FileImage } from "lucide-react";
+import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, ChevronRight, Link as LinkIcon } from "lucide-react";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import CustomPlayer from "@/components/Utils/CustomPlayer";
 import { getUserById } from "@/lib/server/appwrite";
+import { toast } from "sonner";
 
 interface VerificationResult {
   video_hash: string;
@@ -33,19 +34,19 @@ interface User {
   children: User[];
 }
 
-export default function VerifyContent() {
+const VerifyContent: React.FC = () => {
   const params = useParams();
-  const id = params?.id as string;
+  const contentId = params?.id as string;
   const [verificationData, setVerificationData] = useState<VerificationResult | null>(null);
   const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [contentType, setContentType] = useState<"image" | "video" | null>(null);
   const [shareableLink, setShareableLink] = useState<string>("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) {
+      if (!contentId) {
         setError("No content ID provided");
         setIsLoading(false);
         return;
@@ -55,30 +56,17 @@ export default function VerifyContent() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/content/get-lineage/${id}`);
+        const response = await fetch(`/api/content/get-lineage/${contentId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
         const data = await response.json();
         setVerificationData(data.verificationResult);
-        
-        // Fetch usernames for the uploader hierarchy
+
         const updatedHierarchy = await fetchUsernames(data.uploaderHierarchy);
         setUploaderHierarchy(updatedHierarchy);
 
-        // Generate shareable link
-        setShareableLink(`${window.location.origin}/verify/${id}`);
-
-        // Determine content type
-        const contentResponse = await fetch(`https://utfs.io/f/${id}`, { method: 'HEAD' });
-        const contentTypeHeader = contentResponse.headers.get('Content-Type');
-        if (contentTypeHeader?.startsWith('image')) {
-          setContentType('image');
-        } else if (contentTypeHeader?.startsWith('video')) {
-          setContentType('video');
-        } else {
-          setContentType(null);
-        }
+        setShareableLink(`${window.location.origin}/verify/${contentId}`);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to fetch data. Please try again later.");
@@ -88,8 +76,10 @@ export default function VerifyContent() {
     };
 
     fetchData();
-  }, [id]);
-
+  }, [contentId]);
+  const handleCreatorClick = (userId: string) => {
+    router.push(`/verify/creator/${userId}`);
+  };
   const fetchUsernames = async (hierarchy: User): Promise<User> => {
     const result = await getUserById(hierarchy.userId);
     const updatedUser: User = {
@@ -107,8 +97,13 @@ export default function VerifyContent() {
 
   const renderUserHierarchy = (user: User) => (
     <div className="ml-4">
-      <p>{user.name} ({user.userId})</p>
-      {user.children.length > 1 && user.children.map((child, index) => (
+      <p
+        className="cursor-pointer hover:text-primary transition-colors"
+        onClick={() => handleCreatorClick(user.userId)}
+      >
+        {user.name}
+      </p>
+      {user.children.length > 0 && user.children.map((child, index) => (
         <div key={index} className="ml-4 mt-2">
           <ChevronRight className="inline w-4 h-4 mr-2" />
           {renderUserHierarchy(child)}
@@ -119,22 +114,16 @@ export default function VerifyContent() {
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareableLink)
-      .then(() => alert("Link copied to clipboard!"))
+      .then(() => toast.success("Verification link copied to clipboard"))
       .catch((err) => console.error('Failed to copy: ', err));
   };
 
   if (isLoading) {
     return (
-      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start">
-        <div className="container mx-auto p-6">
+      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-background to-secondary/20">
+        <div className="container max-w-2xl mx-auto p-6">
           <Skeleton className="w-[250px] h-[40px] mb-8" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Skeleton className="h-[400px] w-full" />
-            <div className="space-y-6">
-              <Skeleton className="h-[200px] w-full" />
-              <Skeleton className="h-[200px] w-full" />
-            </div>
-          </div>
+          <Skeleton className="h-[400px] w-full" />
         </div>
       </LoggedInLayout>
     );
@@ -142,13 +131,14 @@ export default function VerifyContent() {
 
   if (error) {
     return (
-      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start">
-        <div className="container mx-auto p-6">
-          <Card className="p-6">
-            <CardTitle className="flex items-center gap-2 mb-4">
-              <AlertCircle className="w-6 h-6 text-red-500" />
-              Error: {error}
-            </CardTitle>
+      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-background to-secondary/20">
+        <div className="container max-w-2xl mx-auto p-6">
+          <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
+            <CardContent className="p-6">
+              <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-center mb-2">Error</h2>
+              <p className="text-center text-muted-foreground">{error}</p>
+            </CardContent>
           </Card>
         </div>
       </LoggedInLayout>
@@ -157,13 +147,14 @@ export default function VerifyContent() {
 
   if (!verificationData) {
     return (
-      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start">
-        <div className="container mx-auto p-6">
-          <Card className="p-6">
-            <CardTitle className="flex items-center gap-2 mb-4">
-              <AlertCircle className="w-6 h-6 text-yellow-500" />
-              No verification data found for this content.
-            </CardTitle>
+      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-background to-secondary/20">
+        <div className="container max-w-2xl mx-auto p-6">
+          <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
+            <CardContent className="p-6">
+              <AlertCircle className="w-12 h-12 text-warning mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-center mb-2">No Data Found</h2>
+              <p className="text-center text-muted-foreground">No verification data found for this content.</p>
+            </CardContent>
           </Card>
         </div>
       </LoggedInLayout>
@@ -171,109 +162,91 @@ export default function VerifyContent() {
   }
 
   return (
-    <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start">
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-8 text-center">Content Verification Details</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left side - Content preview */}
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {contentType === 'video' ? <FileVideo className="w-6 h-6" /> : <FileImage className="w-6 h-6" />}
-                Content ID: {id}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="aspect-video bg-muted flex items-center justify-center">
-                {contentType === 'image' && (
-                  <img src={`https://utfs.io/f/${id}`} alt="Content" className="max-w-full max-h-full object-contain" />
-                )}
-                {contentType === 'video' && (
-                  <CustomPlayer url={`https://utfs.io/f/${id}`} />
-                )}
-                {!contentType && (
-                  <div className="text-muted-foreground">
-                    <PlayCircle className="w-16 h-16" />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Right side - Verification details */}
-          <div className="space-y-6">
-            <Card>
+    <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-background to-secondary/20">
+      <div className="container max-w-2xl mx-auto p-6">
+        <motion.h1
+          className="text-4xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Content Verification
+        </motion.h1>
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-6 h-6 text-green-500" />
-                  Verification Status: Complete
+                <CardTitle className="flex items-center justify-between">
+                  <span>Verification Details</span>
+                  <Badge variant={verificationData.is_tampered ? "destructive" : "default"} className="animate-pulse">
+                    {verificationData.is_tampered ? "TAMPERED" : "VERIFIED"}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="summary">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="summary">Summary</TabsTrigger>
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="summary">
-                    <div className="flex items-center gap-2 p-3 mt-4 rounded-md bg-muted">
-                      {verificationData.is_tampered ? (
-                        <>
-                          <ShieldAlert className="w-6 h-6 text-red-500" />
-                          <span className="font-semibold">Video Authenticity Compromised</span>
-                          <Badge variant="destructive">TAMPERED</Badge>
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck className="w-6 h-6 text-green-500" />
-                          <span className="font-semibold">Certified Original Video</span>
-                          <Badge variant="default">VERIFIED</Badge>
-                        </>
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <h3 className="font-semibold mb-2">Share Verification</h3>
-                      <div className="flex gap-2">
-                        <Input value={shareableLink} readOnly />
-                        <Button onClick={handleCopyLink}>Copy Link</Button>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="details">
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value="verification-results">
-                        <AccordionTrigger>Verification Results</AccordionTrigger>
-                        <AccordionContent>
-                          <ul className="space-y-2">
-                            <li>Video Hash: {verificationData.video_hash}</li>
-                            <li>Collective Audio Hash: {verificationData.collective_audio_hash}</li>
-                            <li>Image Hash: {verificationData.image_hash}</li>
-                            <li>Audio Hash: {verificationData.audio_hash}</li>
-                            <li>Frame Hash: {verificationData.frame_hash}</li>
-                          </ul>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
+                    {verificationData.is_tampered ? (
+                      <>
+                        <ShieldAlert className="w-6 h-6 text-destructive" />
+                        <span className="font-semibold">Content Authenticity Compromised</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-6 h-6 text-green-500" />
+                        <span className="font-semibold">Certified Original Content</span>
+                      </>
+                    )}
+                  </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Uploader Hierarchy</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {uploaderHierarchy ? (
-                  renderUserHierarchy(uploaderHierarchy)
-                ) : (
-                  <p>No one else has uploaded this content.</p>
-                )}
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="verification-results">
+                      <AccordionTrigger>Verification Results</AccordionTrigger>
+                      <AccordionContent>
+                        <ul className="space-y-2">
+                          <li>Video Hash: {verificationData.video_hash}</li>
+                          <li>Collective Audio Hash: {verificationData.collective_audio_hash}</li>
+                          <li>Image Hash: {verificationData.image_hash}</li>
+                          <li>Audio Hash: {verificationData.audio_hash}</li>
+                          <li>Frame Hash: {verificationData.frame_hash}</li>
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="uploader-hierarchy">
+                      <AccordionTrigger>Uploader Hierarchy</AccordionTrigger>
+                      <AccordionContent>
+                        {uploaderHierarchy ? (
+                          renderUserHierarchy(uploaderHierarchy)
+                        ) : (
+                          <p>No uploader hierarchy available.</p>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Share Verification</h3>
+                    <div className="flex gap-2">
+                      <Input value={shareableLink} readOnly className="bg-muted" />
+                      <Button onClick={handleCopyLink} variant="secondary">
+                        <LinkIcon className="w-4 h-4 mr-2" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </LoggedInLayout>
   );
-}
+};
+
+export default VerifyContent;
