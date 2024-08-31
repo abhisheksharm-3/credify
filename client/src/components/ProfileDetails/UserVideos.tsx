@@ -1,28 +1,53 @@
-import React from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Card, CardContent } from "@/components/ui/card"
-import { Shield, Eye } from "lucide-react"
+import { CircleCheck, XCircle, ClipboardCheck, Clipboard } from 'lucide-react'
+import { FC } from 'react'
 
-const mockVideos = [
-  { title: "Trusted Content 1", trustScore: 98, views: "10.5K" },
-  { title: "Verified Video 2", trustScore: 97, views: "8.2K" },
-  { title: "Authentic Clip 3", trustScore: 99, views: "15.3K" },
-  { title: "Reliable Content 4", trustScore: 96, views: "7.8K" },
-  { title: "Credible Video 5", trustScore: 98, views: "12.1K" },
-  { title: "Trustworthy Footage 6", trustScore: 97, views: "9.6K" },
+interface IconProps {
+  className?: string
+  width?: number
+  height?: number
+}
+
+interface VideoMetadata {
+  title: string
+  trustScore: number
+  verified: boolean
+  tampered: boolean
+  copied: boolean  // Add this field to manage the copied state
+}
+
+const mockVideos: VideoMetadata[] = [
+  { title: "Trusted Content 1", trustScore: 98, verified: true, tampered: false, copied: false },
+  { title: "Verified Video 2", trustScore: 97, verified: false, tampered: true, copied: false },
+  { title: "Authentic Clip 3", trustScore: 99, verified: true, tampered: false, copied: false },
+  { title: "Reliable Content 4", trustScore: 96, verified: false, tampered: true, copied: false },
+  { title: "Credible Video 5", trustScore: 98, verified: true, tampered: false, copied: false },
+  { title: "Trustworthy Footage 6", trustScore: 97, verified: false, tampered: true, copied: false },
 ]
 
 const VerifiedVideos = () => {
+  const [videoStates, setVideoStates] = useState(mockVideos)
+
+  // Handle the copy action for a specific video
+  const handleCopy = (index: number) => {
+    setVideoStates(prevStates =>
+      prevStates.map((video, i) =>
+        i === index ? { ...video, copied: !video.copied } : video
+      )
+    )
+  }
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6, duration: 0.6 }}
-      className="mb-16"
+      className=" mt-24"
     >
-      <h2 className="text-4xl font-bold mb-10 text-center">Verified Videos</h2>
+      <h2 className="text-4xl font-bold mb-10 text-center">All Videos</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-        {mockVideos.map((video, index) => (
+        {videoStates.map((video, index) => (
           <motion.div
             key={index}
             initial={{ scale: 0.9, opacity: 0 }}
@@ -31,27 +56,53 @@ const VerifiedVideos = () => {
             whileHover={{ scale: 1.05 }}
             className="group"
           >
-            <Card className="overflow-hidden border hover:shadow-2xl transition-all duration-300 bg-card/70 backdrop-blur-lg">
-              <CardContent className="p-6">
-                <div className="relative">
-                  <img
-                    src={`/api/placeholder/350/200?text=Video+${index + 1}`}
-                    alt={`Video ${index + 1}`}
-                    className="w-full h-56 object-cover rounded-lg shadow-md"
-                  />
-                  <div className="absolute top-3 right-3 bg-green-500/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                    Verified
+            <div className="bg-card text-card-foreground border-2  rounded-xl p-3 pl-5">
+              <div>
+                <div className="flex flex-col items-start gap-4">
+                  <div className="flex flex-row items-center gap-4 justify-start">
+                    <div className="bg-card-foreground/20 rounded-full p-2 shadow-lg">
+                      <VideoIcon className="w-12 h-12 text-card-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{video.title}</h3>
+                      <div className="flex flex-col gap-2 text-sm text-muted-foreground mt-2">
+                        {/* Verified Status */}
+                        <div className="flex items-center gap-2">
+                          {video.verified ? (
+                            <CircleCheck className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500" />
+                          )}
+                          <span>{video.verified ? "Verified" : "Not Verified"}</span>
+                        </div>
+                        {/* Tampered Status */}
+                        <div className="flex items-center gap-2">
+                          {video.tampered ? (
+                            <XCircle className="w-4 h-4 text-red-500" />
+                          ) : (
+                            <CircleCheck className="w-4 h-4 text-green-500" />
+                          )}
+                          <span>{video.tampered ? "Tampered" : "Not Tampered"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex w-full items-end justify-end">
+                    <button
+                      className='bg-primary hover:bg-purple-900 text-white py-2 text-center px-3 rounded text-sm flex flex-row items-center gap-2 justify-center'
+                      onClick={() => handleCopy(index)} // Update state on click
+                    >
+                      Verification Link
+                      {video.copied ? (
+                        <ClipboardCheck className="w-4 h-4" />
+                      ) : (
+                        <Clipboard className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
-                <h3 className="text-2xl font-semibold mt-6 mb-3 group-hover:text-primary transition-colors duration-300">{video.title}</h3>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Shield className="w-5 h-5 mr-2 text-green-500" />
-                  <span className="mr-4 font-medium">Trust Score: {video.trustScore}</span>
-                  <Eye className="w-5 h-5 mr-2 text-blue-500" />
-                  <span className="font-medium">{video.views} views</span>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>
@@ -60,3 +111,21 @@ const VerifiedVideos = () => {
 }
 
 export default VerifiedVideos
+
+const VideoIcon: FC<IconProps> = ({ className, width = 24, height = 24 }) => (
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    width={width}
+    height={height}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" />
+    <rect x="2" y="6" width="14" height="12" rx="2" />
+  </svg>
+)
