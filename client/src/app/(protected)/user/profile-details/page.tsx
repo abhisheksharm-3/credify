@@ -12,7 +12,9 @@ const TrustDashboard = () => {
   const { user, loading } = useUser()
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div className="h-screen flex items-center justify-center">
+      <div className="loader "></div>
+    </div>
   }
 
   return (
