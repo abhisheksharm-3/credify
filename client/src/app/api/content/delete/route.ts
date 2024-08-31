@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/server/appwrite';
-import { Databases, ID } from 'node-appwrite';
+import { Databases, ID, Query } from 'node-appwrite';
 import { UTApi } from 'uploadthing/server';
 
 export async function DELETE(req: Request) {
   const utapi = new UTApi()
   try {
     const { id } = await req.json();
-    console.log('Deleting document with ID:', id);
+    console.log('Deleting content with ID:', id);
 
     if (!id) {
-      return NextResponse.json({ error: 'File ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Create an admin client
@@ -21,18 +21,31 @@ export async function DELETE(req: Request) {
     const databases = new Databases(client);
 
     console.log('Fetching document...');
-    // 1. Get the file information from Appwrite
-    const file = await databases.getDocument(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_COLLECTION_ID!,
-      id
-    );
+    // 1. Try to get the file information from Appwrite
+    let file;
+    try {
+      // First, try to fetch the document assuming 'id' is the document ID
+      file = await databases.getDocument(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_COLLECTION_ID!,
+        id
+      );
+    } catch (error) {
+      // If that fails, assume 'id' is the fileId and query for it
+      const documents = await databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_COLLECTION_ID!,
+        [Query.equal('fileId', id)]
+      );
+
+      if (documents.documents.length > 0) {
+        file = documents.documents[0];
+      } else {
+        return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      }
+    }
 
     console.log('File retrieved:', file);
-
-    if (!file) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
-    }
 
     // 2. Delete the file from UploadThing
     const uploadThingFileKey = file.fileId;
@@ -46,7 +59,7 @@ export async function DELETE(req: Request) {
     await databases.deleteDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_COLLECTION_ID!,
-      id
+      file.$id
     );
 
     return NextResponse.json({ message: 'File deleted successfully' }, { status: 200 });
