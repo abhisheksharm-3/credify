@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { User as UserIcon } from 'lucide-react';
 import { BadgeCheck } from 'lucide-react';
 import { FC } from "react"
+import { RiVerifiedBadgeFill,RiStarFill } from '@remixicon/react'
 
 interface IconProps {
   className?: string;
@@ -76,11 +77,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                 className="flex items-start flex-col "
               >
                 <div className="flex  flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
-                  <Star size={20} />
+                  <RiStarFill className='text-yellow-500' size={20} />
                   <span>Trust Score: 4.8</span>
                 </div>
                 <div className="flex  flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
-                  <BadgeCheck size={20} />
+                  <RiVerifiedBadgeFill className='text-blue-600 ' size={20} />
                   <span>
                     Verified Videos: 124</span>
                 </div>
