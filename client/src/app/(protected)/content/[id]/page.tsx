@@ -20,9 +20,12 @@ enum VerificationStatus {
 }
 
 interface VerificationResult {
-  video_hash: string;
-  collective_audio_hash: string;
-  is_tampered: boolean;
+  video_hash?: string;
+  collective_audio_hash?: string;
+  image_hash?: string;
+  audio_hash?: string;
+  frame_hash?: string;
+  is_tampered?: boolean;
 }
 
 const VerificationDetailPage: React.FC = () => {
@@ -48,7 +51,8 @@ const VerificationDetailPage: React.FC = () => {
         const data: VerificationResult = await response.json();
         setStatus(VerificationStatus.COMPLETE);
         setResult(data);
-        setShareableLink(`${window.location.origin}/verify/${contentId}`);
+        const contentHash = data.image_hash || data.video_hash;
+        setShareableLink(`${window.location.origin}/verify/${contentHash}`);
 
         if (data && !data.is_tampered) {
           await deleteVerifiedContent(contentId);

@@ -44,7 +44,7 @@ async function verifyContent(contentBuffer: Buffer, contentType: string, filenam
 let isNeo4jInitialized = false;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  console.log('Received request to /api/content/get-phash');
+  console.log('Received request to /api/content/getTag');
   try {
     if (!isNeo4jInitialized) {
       await initializeNeo4j();
@@ -63,18 +63,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const user = await getLoggedInUser();
     const userId = user?.$id || "";
 
-    const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentId, userId);
-    
-    if (existingResult) {
-      console.log('Verification result found in database:', existingResult);
-      if (userExists) {
-        return NextResponse.json(existingResult);
-      } else {
-        await addUserToContent(contentId, userId);
-        return NextResponse.json({ ...existingResult, message: 'User associated with existing content' });
-      }
-    }
-
     const contentUrl = `https://utfs.io/f/${contentId}`;
     console.log('Content URL:', contentUrl);
 
@@ -92,7 +80,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const verificationResult: VerificationResult = await verifyContent(contentBuffer, contentType, filename);
     console.log('Verification result:', verificationResult);
 
-    await storeContentVerificationAndUser(contentId, verificationResult, userId);
+    const contentHash = verificationResult.image_hash || verificationResult.video_hash;
+    if (!contentHash) {
+      throw new Error('No content hash found in verification result');
+    }
+
+    const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentHash, userId);
+    
+    if (existingResult) {
+      console.log('Verification result found in database:', existingResult);
+      if (userExists) {
+        return NextResponse.json(existingResult);
+      } else {
+        await addUserToContent(contentHash, userId);
+        return NextResponse.json({ ...existingResult, message: 'User associated with existing content' });
+      }
+    }
+
+    await storeContentVerificationAndUser(verificationResult, userId);
     console.log('Verification result and user stored in database');
 
     return NextResponse.json(verificationResult);

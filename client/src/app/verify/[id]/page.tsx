@@ -36,7 +36,7 @@ interface User {
 
 const VerifyContent: React.FC = () => {
   const params = useParams();
-  const contentId = params?.id as string;
+  const contentHash = params?.id as string;
   const [verificationData, setVerificationData] = useState<VerificationResult | null>(null);
   const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,8 +46,8 @@ const VerifyContent: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!contentId) {
-        setError("No content ID provided");
+      if (!contentHash) {
+        setError("No content hash provided");
         setIsLoading(false);
         return;
       }
@@ -56,17 +56,18 @@ const VerifyContent: React.FC = () => {
       setError(null);
 
       try {
-        const response = await fetch(`/api/content/get-lineage/${contentId}`);
+        const response = await fetch(`/api/content/get-lineage/${contentHash}`);
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
         const data = await response.json();
         setVerificationData(data.verificationResult);
+        console.log(data)
 
         const updatedHierarchy = await fetchUsernames(data.uploaderHierarchy);
         setUploaderHierarchy(updatedHierarchy);
 
-        setShareableLink(`${window.location.origin}/verify/${contentId}`);
+        setShareableLink(`${window.location.origin}/verify/${contentHash}`);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to fetch data. Please try again later.");
@@ -76,7 +77,7 @@ const VerifyContent: React.FC = () => {
     };
 
     fetchData();
-  }, [contentId]);
+  }, [contentHash]);
   const handleCreatorClick = (userId: string) => {
     router.push(`/verify/creator/${userId}`);
   };
