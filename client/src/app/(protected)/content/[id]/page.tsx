@@ -109,7 +109,7 @@ const VerificationDetailPage: React.FC = () => {
             <RefreshCw className="w-16 h-16 text-primary animate-spin" />
             <h3 className="text-2xl font-semibold">Verification in Progress</h3>
             <p className="text-center text-muted-foreground">
-              We're analyzing your content to ensure its authenticity. This process guarantees the highest level of accuracy.
+              We&apos;re analyzing your content to ensure its authenticity. This process guarantees the highest level of accuracy.
             </p>
             <Progress value={progress} className="w-full mt-4" />
             <p className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</p>
@@ -162,7 +162,7 @@ const VerificationDetailPage: React.FC = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>
-              We couldn't retrieve the verification data. Please try again later or contact support if the issue persists.
+              We couldn&apos;t retrieve the verification data. Please try again later or contact support if the issue persists.
             </AlertDescription>
           </Alert>
         );
