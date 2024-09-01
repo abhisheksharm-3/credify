@@ -1,261 +1,219 @@
 "use client"
-import React, { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, FileVideo, FileImage, Link as LinkIcon } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import LoggedInLayout from "@/components/Layout/LoggedInLayout"
-import CustomPlayer from "@/components/Utils/CustomPlayer"
+
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, Link as LinkIcon, RefreshCw, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import LoggedInLayout from "@/components/Layout/LoggedInLayout";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
+
+enum VerificationStatus {
+  PENDING = "pending",
+  COMPLETE = "complete",
+  ERROR = "error"
+}
 
 interface VerificationResult {
-  video_hash: string;
-  collective_audio_hash: string;
-  is_tampered: boolean;
+  video_hash?: string;
+  collective_audio_hash?: string;
+  image_hash?: string;
+  audio_hash?: string;
+  frame_hash?: string;
+  is_tampered?: boolean;
 }
 
-interface VerificationData {
-  status: "pending" | "complete";
-  title: string;
-  duration: string;
-  submissionDate: string;
-  verificationResult: VerificationResult | null;
-}
+const VerificationDetailPage: React.FC = () => {
+  const params = useParams();
+  const contentId = params.id as string;
 
-export default function VerificationDetailPage() {
-  const params = useParams()
-  const contentId = params.id as string
-
-  const [verificationData, setVerificationData] = useState<VerificationData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [contentType, setContentType] = useState<"image" | "video" | null>(null)
-  const [shareableLink, setShareableLink] = useState<string>("")
+  const [status, setStatus] = useState<VerificationStatus>(VerificationStatus.PENDING);
+  const [result, setResult] = useState<VerificationResult | null>(null);
+  const [progress, setProgress] = useState<number>(0);
+  const [shareableLink, setShareableLink] = useState<string>("");
 
   useEffect(() => {
     const fetchVerificationData = async () => {
-      setIsLoading(true)
       try {
-        const response = await fetch('/api/content/get-phash', {
+        const response = await fetch('/api/content/getTag', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentId }),
-        })
+        });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch verification data')
-        }
+        if (!response.ok) throw new Error('Failed to fetch verification data');
 
-        const result: VerificationResult = await response.json()
+        const data: VerificationResult = await response.json();
+        setStatus(VerificationStatus.COMPLETE);
+        setResult(data);
+        const contentHash = data.image_hash || data.video_hash;
+        setShareableLink(`${window.location.origin}/verify/${contentHash}`);
 
-        setVerificationData({
-          status: "complete",
-          title: `Content ${contentId}`,
-          duration: "2:30", // Example duration
-          submissionDate: new Date().toISOString(),
-          verificationResult: result,
-        })
-
-        // Generate shareable link
-        setShareableLink(`${window.location.origin}/verify/${contentId}`)
-
-        // Determine content type
-        const contentResponse = await fetch(`https://utfs.io/f/${contentId}`, { method: 'HEAD' })
-        const contentTypeHeader = contentResponse.headers.get('Content-Type')
-        if (contentTypeHeader?.startsWith('image')) {
-          setContentType('image')
-        } else if (contentTypeHeader?.startsWith('video')) {
-          setContentType('video')
-        } else {
-          setContentType(null) // Handle other content types
+        if (data && !data.is_tampered) {
+          await deleteVerifiedContent(contentId);
         }
       } catch (error) {
-        console.error('Error fetching verification data:', error)
-        setVerificationData({
-          status: "pending",
-          title: `Content ${contentId}`,
-          duration: "Unknown",
-          submissionDate: new Date().toISOString(),
-          verificationResult: null,
-        })
-      } finally {
-        setIsLoading(false)
+        console.error('Error fetching verification data:', error);
+        setStatus(VerificationStatus.ERROR);
       }
+    };
+
+    const simulateProgress = () => {
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          const next = prev + Math.random() * 10;
+          return next > 100 ? 100 : next;
+        });
+      }, 5000);
+      return () => clearInterval(interval);
+    };
+
+    fetchVerificationData();
+    const cleanup = simulateProgress();
+    return cleanup;
+  }, [contentId]);
+
+  const deleteVerifiedContent = async (id: string): Promise<void> => {
+    try {
+      const response = await fetch(`/api/content/delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) throw new Error('Failed to delete verified content');
+
+      console.log('Content deleted successfully');
+    } catch (error) {
+      console.error('Error deleting verified content:', error);
     }
+  };
 
-    fetchVerificationData()
-  }, [contentId])
-
-  const getStatusIcon = (status: VerificationData['status']) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="w-6 h-6 text-yellow-500" />
-      case "complete":
-        return <CheckCircle className="w-6 h-6 text-green-500" />
-    }
-  }
-
-  const handleCopyLink = () => {
+  const handleCopyLink = (): void => {
     navigator.clipboard.writeText(shareableLink)
-      .then(() => alert("Link copied to clipboard!"))
-      .catch((err) => console.error('Failed to copy: ', err))
-  }
+      .then(() => toast.success("Verification link copied to clipboard"))
+      .catch((err) => console.error('Failed to copy: ', err));
+  };
 
-  if (isLoading) {
-    return (
-      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start">
-        <div className="container mx-auto p-6">
-          <Skeleton className="w-[250px] h-[40px] mb-8" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Skeleton className="h-[400px] w-full" />
-            <div className="space-y-6">
-              <Skeleton className="h-[200px] w-full" />
-              <Skeleton className="h-[200px] w-full" />
-            </div>
-          </div>
-        </div>
-      </LoggedInLayout>
-    )
-  }
-
-  if (!verificationData) {
-    return (
-      <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start">
-        <div className="container mx-auto p-6">
-          <Card className="p-6">
-            <CardTitle className="flex items-center gap-2 mb-4">
-              <AlertCircle className="w-6 h-6 text-red-500" />
-              Error: No verification data available
-            </CardTitle>
-            <p className="text-muted-foreground">
-              We couldn&apos;t retrieve the verification data for this content. Please try again later or contact support if the issue persists.
+  const renderContent = (): JSX.Element => {
+    switch (status) {
+      case VerificationStatus.PENDING:
+        return (
+          <motion.div 
+            className="flex flex-col items-center gap-4 p-6 mt-4 rounded-lg bg-secondary/20"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <RefreshCw className="w-16 h-16 text-primary animate-spin" />
+            <h3 className="text-2xl font-semibold">Verification in Progress</h3>
+            <p className="text-center text-muted-foreground">
+              We&apos;re analyzing your content to ensure its authenticity. This process guarantees the highest level of accuracy.
             </p>
-          </Card>
-        </div>
-      </LoggedInLayout>
-    )
-  }
+            <Progress value={progress} className="w-full mt-4" />
+            <p className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</p>
+          </motion.div>
+        );
+      case VerificationStatus.COMPLETE:
+        return result ? (
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Alert variant={result.is_tampered ? "destructive" : "default"} className="border-2">
+              {result.is_tampered ? (
+                <>
+                  <ShieldAlert className="h-6 w-6" />
+                  <AlertTitle className="text-xl font-semibold">Content Compromised</AlertTitle>
+                  <AlertDescription className="mt-2 text-lg">
+                    Our system has detected potential tampering with this content.
+                  </AlertDescription>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="h-6 w-6" />
+                  <AlertTitle className="text-xl font-semibold">Content Authentic</AlertTitle>
+                  <AlertDescription className="mt-2 text-lg">
+                    This content has been verified by our system and is deemed authentic.
+                  </AlertDescription>
+                </>
+              )}
+            </Alert>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Share this link to verify the authenticity of your content:
+              </p>
+              <div className="flex gap-2">
+                <Input value={shareableLink} readOnly className="bg-secondary/20" />
+                <Button onClick={handleCopyLink} variant="secondary">
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Copy
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        ) : <></>;
+      case VerificationStatus.ERROR:
+        return (
+          <Alert variant="destructive" className="animate-pulse">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              We couldn&apos;t retrieve the verification data. Please try again later or contact support if the issue persists.
+            </AlertDescription>
+          </Alert>
+        );
+    }
+  };
 
   return (
-    <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start">
-      <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-center">Content Verification Details</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left side - Content preview */}
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {contentType === 'video' ? <FileVideo className="w-6 h-6" /> : <FileImage className="w-6 h-6" />}
-                {verificationData.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="aspect-video bg-muted flex items-center justify-center">
-                {contentType === 'image' && (
-                  <img src={`https://utfs.io/f/${contentId}`} alt="Content" className="max-w-full max-h-full object-contain" />
-                )}
-                {contentType === 'video' && (
-                  <CustomPlayer url={`https://utfs.io/f/${contentId}`} />
-                )}
-                {!contentType && (
-                  <div className="text-muted-foreground">Content preview not available</div>
-                )}
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-muted-foreground">Duration: {verificationData.duration}</p>
-                <p className="text-sm text-muted-foreground">Submitted: {new Date(verificationData.submissionDate).toLocaleString()}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Right side - Verification details */}
-          <div className="space-y-6">
-            <Card>
+    <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-background to-secondary/20">
+      <div className="container max-w-2xl mx-auto p-6">
+        <motion.h1 
+          className="text-4xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Content Verification
+        </motion.h1>
+        <AnimatePresence>
+          <motion.div
+            key={status}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    {getStatusIcon(verificationData.status)}
-                    Verification Status
-                  </span>
-                  <Badge variant={verificationData.status === "complete" ? "default" : "destructive"}>
-                    {verificationData.status.toUpperCase()}
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl">Verification Details</CardTitle>
+                  <Badge variant={status === VerificationStatus.COMPLETE ? "default" : "secondary"} className="animate-pulse">
+                    {status.toUpperCase()}
                   </Badge>
-                </CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
-                {verificationData.status === "complete" && verificationData.verificationResult && (
-                  <Tabs defaultValue="summary">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="summary">Summary</TabsTrigger>
-                      <TabsTrigger value="share">Share</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="summary">
-                      <div className="mt-4 p-4 rounded-lg bg-muted">
-                        <div className="flex items-center justify-between mb-4">
-                          {verificationData.verificationResult.is_tampered ? (
-                            <>
-                              <span className="flex items-center gap-2 text-red-500 font-semibold">
-                                <ShieldAlert className="w-6 h-6" />
-                                Content Compromised
-                              </span>
-                              <Badge variant="destructive">TAMPERED</Badge>
-                            </>
-                          ) : (
-                            <>
-                              <span className="flex items-center gap-2 text-green-500 font-semibold">
-                                <ShieldCheck className="w-6 h-6" />
-                                Content Authentic
-                              </span>
-                              <Badge variant="default">VERIFIED</Badge>
-                            </>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          This content has been verified by our system. You can share the verification link to allow others to confirm its authenticity.
-                        </p>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="share">
-                      <div className="mt-4 space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                          Share this link with anyone to verify the authenticity of your content:
-                        </p>
-                        <div className="flex gap-2">
-                          <Input value={shareableLink} readOnly />
-                          <Button onClick={handleCopyLink}>
-                            <LinkIcon className="w-4 h-4 mr-2" />
-                            Copy
-                          </Button>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                )}
-
-                {verificationData.status === "pending" && (
-                  <div className="flex flex-col items-center gap-4 p-6 mt-4 rounded-lg bg-muted">
-                    <Clock className="w-12 h-12 text-yellow-500 animate-pulse" />
-                    <h3 className="text-xl font-semibold">Verification in Progress</h3>
-                    <p className="text-center text-muted-foreground">
-                      Our system is currently analyzing the content. This process ensures the highest level of accuracy in detecting any potential alterations or manipulations.
-                    </p>
-                  </div>
-                )}
+                {renderContent()}
+                <div className="mt-6 flex items-center justify-center text-sm text-muted-foreground">
+                  <Lock className="w-4 h-4 mr-2" />
+                  Your privacy is our priority. We do not store or retain your content after verification.
+                </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </LoggedInLayout>
-  )
-}
+  );
+};
+
+export default VerificationDetailPage;
