@@ -70,8 +70,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
           'state_changed',
           (snapshot) => {
             const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-/*             console.log(`Upload is ${fileProgress}% done`);
- */          },
+         },
           (error) => {
             console.error('Upload failed:', error);
             reject(error);
@@ -107,7 +106,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const handleAction = async (stepIndex: number) => {
     switch (stepIndex) {
       case 0:
-        console.log('Sending verification email');
         setEmailVerified(true);
         break;
       case 1:
@@ -121,7 +119,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       try {
         const downloadURL = await uploadPhoto(imageUrl, "profile");
         setProfileUrl(downloadURL);
-        console.log(downloadURL);
         verifyProfileUpload();
       } catch (error) {
         console.error("Error uploading profile photo:", error);
@@ -134,7 +131,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       try {
         const downloadURL = await uploadPhoto(imageUrl, "id");
         setIdUrl(downloadURL);
-        console.log(downloadURL);
         verifyIdUpload();
       } catch (error) {
         console.error("Error uploading gov id photo:", error);
@@ -143,11 +139,9 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   };
 
   const verifyIdUpload = async () => {
-    console.log("sending id photo with link", idUrl);
     setidVerified(true);
   };
   const verifyProfileUpload = async () => {
-    console.log("sending profile photo with link", profileUrl);
     setprofileverified(true);
   };
 
