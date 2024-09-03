@@ -6,7 +6,7 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { Toaster } from "@/components/ui/sonner"
 import { ourFileRouter } from "@/app/api/uploadthing/core";
-
+import { CameraProvider } from "@/components/ui/camera/camera-provider";
 
 export const metadata: Metadata = {
   title: "Credify | Video Authenticity & Attribution Service",
@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="en" className="overflow-x-hidden scrollbar-hide">
       <body className={GeistSans.className}> <NextSSRPlugin
         routerConfig={extractRouterConfig(ourFileRouter)}
-      /><Providers>{children}</Providers>
+      /><Providers>  <CameraProvider>{children}</CameraProvider></Providers>
         <Toaster /></body>
     </html>
   );
