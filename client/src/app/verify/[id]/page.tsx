@@ -31,6 +31,7 @@ interface VerificationResult {
 interface User {
   userId: string;
   name: string;
+  uploadTimestamp: number;
   children: User[];
 }
 
@@ -57,12 +58,13 @@ const VerifyContent: React.FC = () => {
 
       try {
         const response = await fetch(`/api/content/get-lineage/${contentHash}`);
+        console.log(response)
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
         const data = await response.json();
         setVerificationData(data.verificationResult);
-        console.log(data)
+        console.log(data);
 
         const updatedHierarchy = await fetchUsernames(data.uploaderHierarchy);
         setUploaderHierarchy(updatedHierarchy);
@@ -78,14 +80,17 @@ const VerifyContent: React.FC = () => {
 
     fetchData();
   }, [contentHash]);
+
   const handleCreatorClick = (userId: string) => {
     router.push(`/verify/creator/${userId}`);
   };
+
   const fetchUsernames = async (hierarchy: User): Promise<User> => {
     const result = await getUserById(hierarchy.userId);
     const updatedUser: User = {
       userId: hierarchy.userId,
       name: result.success ? result.user?.name ?? 'Unknown User' : 'Unknown User',
+      uploadTimestamp: hierarchy.uploadTimestamp,
       children: [],
     };
 

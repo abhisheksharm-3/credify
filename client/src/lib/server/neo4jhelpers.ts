@@ -14,7 +14,6 @@ export interface VerificationResult {
 
 export interface User {
   userId: string;
-  uploadTimestamp: number;
   children: User[];
 }
 
@@ -103,7 +102,7 @@ export async function storeContentVerificationAndUser(verificationResult: Verifi
       SET c.verificationResult = $verificationResult
       MERGE (u:User {userId: $userId})
       MERGE (u)-[r:UPLOADED]->(c)
-      ON CREATE SET r.timestamp = timestamp()
+      SET u.lastUploadContentHash = $contentHash
       `,
       { 
         userId, 
@@ -116,7 +115,7 @@ export async function storeContentVerificationAndUser(verificationResult: Verifi
   }
 }
 
-export async function getContentVerificationAndUser(contentHash: string, userId: string): Promise<{ verificationResult: VerificationResult | null, userExists: boolean }> {
+export async function getContentVerificationAndUser(contentHash: string, userId: string): Promise<{ verificationResult: VerificationResult | null, userExists: boolean, uploadInfo: { userId: string } | null }> {
   if (!contentHash || !userId) {
     throw new ContentVerificationError('Invalid contentHash or userId provided');
   }
@@ -125,7 +124,7 @@ export async function getContentVerificationAndUser(contentHash: string, userId:
     const result = await runQuery(
       `
       MATCH (c:Content {contentHash: $contentHash})
-      OPTIONAL MATCH (u:User {userId: $userId})-[:UPLOADED]->(c)
+      OPTIONAL MATCH (u:User {userId: $userId})-[r:UPLOADED]->(c)
       RETURN c.verificationResult AS verificationResult, u.userId AS userId
       `,
       { contentHash, userId }
@@ -133,14 +132,15 @@ export async function getContentVerificationAndUser(contentHash: string, userId:
     const record = result.records[0];
     return {
       verificationResult: record?.get('verificationResult') ? JSON.parse(record.get('verificationResult')) : null,
-      userExists: record?.get('userId') !== null
+      userExists: record?.get('userId') !== null,
+      uploadInfo: record?.get('userId') ? { userId: record.get('userId') } : null
     };
   } catch (error) {
     throw new ContentVerificationError(`Failed to get content verification: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
-export async function getContentUploaders(contentHash: string): Promise<string[]> {
+export async function getContentUploaders(contentHash: string): Promise<Array<{ userId: string }>> {
   if (!contentHash) {
     throw new ContentVerificationError('Invalid contentHash provided');
   }
@@ -148,26 +148,30 @@ export async function getContentUploaders(contentHash: string): Promise<string[]
   try {
     const result = await runQuery(
       `
-      MATCH (u:User)-[:UPLOADED]->(c:Content {contentHash: $contentHash})
-      RETURN COLLECT(u.userId) AS uploaders
+      MATCH (u:User)-[r:UPLOADED]->(c:Content {contentHash: $contentHash})
+      RETURN u.userId AS userId
+      ORDER BY r.createdAt ASC
       `,
       { contentHash }
     );
 
-    return result.records[0]?.get('uploaders') || [];
+    return result.records.map(record => ({
+      userId: record.get('userId')
+    }));
   } catch (error) {
     throw new ContentVerificationError(`Failed to get content uploaders: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+
 function convertToUserHierarchy(node: any): User {
   return {
     userId: node.userId,
-    uploadTimestamp: node.uploaded?.[0]?.timestamp?.toNumber() || 0,
     children: (node.uploaded || [])
       .map((child: any) => convertToUserHierarchy(child))
-      .sort((a: User, b: User) => a.uploadTimestamp - b.uploadTimestamp)
+      .sort((a: User, b: User) => a.userId.localeCompare(b.userId))
   };
 }
+
 export async function getUploaderHierarchy(contentHash: string): Promise<User | null> {
   if (!contentHash) {
     throw new ContentVerificationError('Invalid contentHash provided');
@@ -190,8 +194,7 @@ export async function getUploaderHierarchy(contentHash: string): Promise<User | 
     }
 
     const treeResult = result.records[0].get('value');
-
-    
+    console.log(treeResult)
 
     return convertToUserHierarchy(treeResult);
   } catch (error) {
@@ -210,7 +213,7 @@ export async function addUserToContent(contentHash: string, userId: string): Pro
       MATCH (c:Content {contentHash: $contentHash})
       MERGE (u:User {userId: $userId})
       MERGE (u)-[r:UPLOADED]->(c)
-      ON CREATE SET r.timestamp = timestamp()
+      SET u.lastUploadContentHash = $contentHash
       `,
       { userId, contentHash }
     );
@@ -218,7 +221,38 @@ export async function addUserToContent(contentHash: string, userId: string): Pro
     throw new ContentVerificationError(`Failed to add user to content: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+export async function getConnectedUsers(contentHash: string): Promise<{ content: any, users: User[] }> {
+  if (!contentHash) {
+    throw new ContentVerificationError('Invalid contentHash provided');
+  }
 
+  try {
+    const result = await runQuery(
+      `
+      MATCH (c:Content)
+      WHERE c.contentHash = $contentHash OR c.image_hash = $contentHash
+      MATCH (u:User)-[:UPLOADED]->(c)
+      RETURN c, COLLECT(u) as connectedUsers
+      `,
+      { contentHash }
+    );
+
+    if (result.records.length === 0) {
+      return { content: null, users: [] };
+    }
+
+    const record = result.records[0];
+    const content = record.get('c').properties;
+    const users = record.get('connectedUsers').map((user: any) => ({
+      userId: user.properties.userId,
+      children: []
+    }));
+
+    return { content, users };
+  } catch (error) {
+    throw new ContentVerificationError(`Failed to get connected users: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 export async function closeNeo4jConnection(): Promise<void> {
   if (driver) {
     try {
