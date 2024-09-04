@@ -39,12 +39,12 @@ const TrustScoreTrend = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, duration: 0.6 }}
-      className="mb-16"
+      className="mb-16 shadow-custom rounded-xl pt-4"
     >
-      <h2 className="text-4xl font-bold mb-10 text-center">Trust Score Trend</h2>
-      <Card className="bg-card/70 backdrop-blur-lg border-none shadow-xl hover:shadow-2xl transition-all duration-300">
+      <h2 className="text-3xl font-bold mb-6 text-center">Trust Score Trend</h2>
+      <Card className="bg-card backdrop-blur-lg border-none    transition-all duration-300 ">
         <CardContent className="p-8">
-          <div className="h-96">
+          <div className="h-[300px] ">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={mockTrustData}
                 onMouseMove={(e: any) => {

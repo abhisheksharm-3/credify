@@ -1,6 +1,6 @@
 // src/lib/server/appwrite.js
 "use server";
-import { Client, Account, ID, Users } from "node-appwrite";
+import { Client, Account, ID, Users, Databases } from "node-appwrite";
 import { cookies } from "next/headers";
 
 export async function createSessionClient() {
@@ -156,5 +156,29 @@ export async function getUserById(userId: string) {
   } catch (error) {
     console.error("Failed to fetch user:", error);
     return { success: false, error: "Failed to fetch user. Please try again." };
+  }
+}
+
+
+export async function createProfileDocument(userId:any, profileId:string, imageUrl:string) {
+  try {
+    const client = new Client()
+      .setEndpoint(process.env.APPWRITE_ENDPOINT!)
+      .setProject(process.env.PROFILE_COLLECTION!)
+      .setKey(process.env.APPWRITE_KEY!);
+
+    const databases = new Databases(client);
+
+    const result = await databases.createDocument(
+      process.env.APPWRITE_DATABASE_ID!, // Database ID
+      process.env.APPWRITE_COLLECTION_ID!, // Collection ID
+      ID.unique(), // Generate a unique Document ID
+      { userId, profileId, imageUrl } // Document data
+    );
+
+    return { success: true, result };
+  } catch (error) {
+    console.error("Failed to create profile document:", error);
+    return { success: false, error: "Failed to create profile document. Please try again." };
   }
 }

@@ -31,7 +31,7 @@ export default function NavbarComponent() {
         aria-label={isMenuOpen ? "Close menu" : "Open menu"}
         className="sm:hidden"
       />
-      <Link href="/"><NavbarBrand className="text-white">
+      <Link href="/"><NavbarBrand className="">
           <RiShieldCheckLine />
           <p>Credify</p>
           </NavbarBrand></Link>
