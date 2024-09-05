@@ -1,6 +1,6 @@
 // TrustDashboard.tsx
 "use client"
-import React from 'react'
+import {FC} from 'react'
 import LoggedInLayout from '@/components/Layout/LoggedInLayout'
 import UserHeader from '@/components/ProfileDetails/UserHeader'
 import TrustStatistics from '@/components/ProfileDetails/TrustStatistics'
@@ -12,14 +12,16 @@ const TrustDashboard = () => {
   const { user, loading } = useUser()
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div className="h-screen flex items-center justify-center">
+      <div className="loader "></div>
+    </div>
   }
 
   return (
     <LoggedInLayout>
       <div className="min-h-screen bg-background relative overflow-hidden">
         <UserHeader user={user} />
-        <main className="container mx-auto px-4 py-16 relative z-10">
+        <main className="container mx-auto px-4 py-16  relative z-10">
           <TrustStatistics />
           <TrustScoreTrend />
           <VerifiedVideos />

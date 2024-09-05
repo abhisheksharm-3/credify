@@ -59,7 +59,7 @@ export default function NavbarLoggedIn() {
           className="sm:hidden"
         />
         <Link href="/">
-          <NavbarBrand className="text-white">
+          <NavbarBrand className="">
             <RiShieldCheckLine />
             <p>Credify</p>
           </NavbarBrand>
