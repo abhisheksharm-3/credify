@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { getLoggedInUser } from '@/lib/server/appwrite';
 
-export function GET() {
+export async function GET() {
   try {
-    const session = cookies().get("credify-session");
-    if (session) {
+    const user = await getLoggedInUser();
+    if (user) {
       return NextResponse.json({ isLoggedIn: true });
     } else {
       return NextResponse.json({ isLoggedIn: false });
     }
   } catch (error) {
-    console.error('Error checking session:', error);
+    console.error('Error checking authentication:', error);
     return NextResponse.json({ isLoggedIn: false });
   }
 }
