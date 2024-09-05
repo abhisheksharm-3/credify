@@ -130,6 +130,7 @@ export async function getContentVerificationAndUser(contentHash: string, userId:
       { contentHash, userId }
     );
     const record = result.records[0];
+    console.log("Neo", record)
     return {
       verificationResult: record?.get('verificationResult') ? JSON.parse(record.get('verificationResult')) : null,
       userExists: record?.get('userId') !== null,
@@ -140,25 +141,59 @@ export async function getContentVerificationAndUser(contentHash: string, userId:
   }
 }
 
-export async function getContentUploaders(contentHash: string): Promise<Array<{ userId: string }>> {
+export async function getContentVerificationOnly(contentHash: string): Promise<{ 
+  verificationResult: VerificationResult | null, 
+  userExists: boolean, 
+  uploadInfo: { userId: string } | null 
+}> {
+  console.log(`[getContentVerificationOnly] Starting with contentHash: ${contentHash}`);
+  
   if (!contentHash) {
+    console.error('[getContentVerificationOnly] Invalid contentHash provided');
     throw new ContentVerificationError('Invalid contentHash provided');
   }
 
   try {
+    console.log('[getContentVerificationOnly] Executing Neo4j query');
     const result = await runQuery(
       `
-      MATCH (u:User)-[r:UPLOADED]->(c:Content {contentHash: $contentHash})
-      RETURN u.userId AS userId
-      ORDER BY r.createdAt ASC
+      MATCH (c:Content {contentHash: $contentHash})
+      OPTIONAL MATCH (u:User)-[:UPLOADED]->(c)
+      RETURN c.verificationResult AS verificationResult, u.userId AS userId
       `,
       { contentHash }
     );
+    console.log('[getContentVerificationOnly] Query executed successfully');
+    
+    const record = result.records[0];
+    console.log('[getContentVerificationOnly] Query result:', record ? record.toObject() : 'No record found');
 
-    return result.records.map(record => ({
-      userId: record.get('userId')
-    }));
+    if (!record) {
+      console.log('[getContentVerificationOnly] No content found with the given hash');
+      return {
+        verificationResult: null,
+        userExists: false,
+        uploadInfo: null
+      };
+    }
+
+    const verificationResult = record.get('verificationResult') ? JSON.parse(record.get('verificationResult')) : null;
+    const userId = record.get('userId');
+    const userExists = userId !== null;
+
+    console.log('[getContentVerificationOnly] Processed result:', {
+      verificationResult: verificationResult ? 'Present' : 'Null',
+      userExists,
+      uploadInfo: userExists ? { userId } : 'Null'
+    });
+
+    return { 
+      verificationResult, 
+      userExists, 
+      uploadInfo: userExists ? { userId } : null 
+    };
   } catch (error) {
+    console.error('[getContentVerificationOnly] Error during database query:', error);
     throw new ContentVerificationError(`Failed to get content uploaders: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
