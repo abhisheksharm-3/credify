@@ -64,7 +64,7 @@ const EmailVerificationPage = () => {
                     <div className="text-center">
                         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Email Verified!</h2>
-                        <p className="text-gray-600">Your email has been successfully verified. You'll be redirected shortly.</p>
+                        <p className="text-gray-600">Your email has been successfully verified. You&apos;ll be redirected shortly.</p>
                     </div>
                 )}
 
@@ -72,7 +72,7 @@ const EmailVerificationPage = () => {
                     <div className="text-center">
                         <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Verification Failed</h2>
-                        <p className="text-gray-600 mb-4">We couldn't verify your email. The link may be invalid or expired.</p>
+                        <p className="text-gray-600 mb-4">We couldn&apos;t verify your email. The link may be invalid or expired.</p>
                     </div>
                 )}
             </motion.div>
