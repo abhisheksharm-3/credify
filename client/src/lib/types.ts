@@ -48,3 +48,19 @@ export interface VideoData {
     $createdAt: string;
     $updatedAt: string;
   }
+
+  export interface VerificationResult {
+    verified: boolean;
+    status: string;
+    message: string;
+    uploader?: string;
+    timestamp?: string;
+    isTampered: boolean;
+  }
+  
+  export interface User {
+    userId: string;
+    name: string;
+    uploadTimestamp: number;
+    children: User[];
+  }
