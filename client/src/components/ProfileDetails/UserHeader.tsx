@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon } from "lucide-react"
 import { User } from '@/lib/types'
-import { getLoggedInUser } from '@/lib/server/appwrite'
+import { getLoggedInUser, sendVerificationEmail } from '@/lib/server/appwrite'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { User as UserIcon } from 'lucide-react';
@@ -16,6 +16,8 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { app } from "../../../src/lib/FirebaseConfig";
+import { Client, Account } from 'node-appwrite'
+import { useRouter } from 'next/router'
 
 interface UserHeaderProps {
   user: User | null
@@ -38,6 +40,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
   const storage = getStorage(app);
 
+  const client = new Client()
+  .setEndpoint(process.env.APPWRITE_ENDPOINT!)
+  .setProject(process.env.APPWRITE_PROJECT_ID!);
+
+  const account = new Account(client);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -50,6 +57,21 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
     fetchUser();
   }, []);
+  
+  const sendverify = async () => {
+    try {
+      const result = await sendVerificationEmail();
+      console.log(result);
+      if(result.success){
+        console.log("Verification email sent! Check your inbox.");
+      }else{
+        console.log("lund nahi chal raha");
+      }
+    } catch (error) {
+        console.error(error);
+        console.log("Failed to send verification email.");
+    }
+};
 
   const toggleStep = (index: number) => {
     setOpenStep(openStep === index ? null : index);
@@ -70,7 +92,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
           'state_changed',
           (snapshot) => {
             const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-         },
+          },
           (error) => {
             console.error('Upload failed:', error);
             reject(error);
@@ -102,11 +124,14 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     }
     setShowDialog(false);
   };
-
+  const handleEmailVerification = () => {
+    console.log("clickedverify");
+    sendverify();
+  }
   const handleAction = async (stepIndex: number) => {
     switch (stepIndex) {
       case 0:
-        setEmailVerified(true);
+        sendverify();
         break;
       case 1:
       case 2:
