@@ -182,3 +182,36 @@ export async function createProfileDocument(userId:any, profileId:string, imageU
     return { success: false, error: "Failed to create profile document. Please try again." };
   }
 }
+
+
+
+export async function sendVerificationEmail() {
+  try {
+    const { account } = await createSessionClient();  
+    await account.createVerification(`https://3000-idx-credify-1724438772473.cluster-qpa6grkipzc64wfjrbr3hsdma2.cloudworkstations.dev/verifyEmail`);
+    return { success: true, message: "Verification email sent." };
+  } catch (error) {
+    console.error("Failed to send verification email:", error);
+    return { success: false, error: "Failed to send verification email." };
+  }
+}
+
+export async function verifyEmail(userId: string, secret: string) {
+  try {
+    console.log(userId,secret);
+    const { account } = await createSessionClient();  
+    
+    await account.updateVerification(userId, secret);  // Verifies email using userId and secret
+    
+    return { success: true, message: "Email successfully verified." };
+  } catch (error) {
+    console.error("Email verification failed:", error);
+    return { success: false, error: "Email verification failed." };
+  }
+}
+
+
+export async function setprofilephoto(userId:string,profileURL:string) {
+ 
+
+}
