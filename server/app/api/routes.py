@@ -18,57 +18,7 @@ class CompareRequest(BaseModel):
     url1: str
     url2: str
 
-@router.get("/health", response_class=HTMLResponse)
-async def health():
-    html_content = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Service Health Status</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                margin: 0;
-                background: linear-gradient(45deg, #6ab7f5, #f086d3);
-            }
-            .container {
-                background-color: white;
-                padding: 2rem;
-                border-radius: 10px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                text-align: center;
-            }
-            h1 {
-                color: #333;
-            }
-            .status {
-                font-size: 1.2rem;
-                margin-top: 1rem;
-                padding: 0.5rem 1rem;
-                border-radius: 20px;
-                display: inline-block;
-            }
-            .ok {
-                background-color: #4CAF50;
-                color: white;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Service Health Status</h1>
-            <div class="status ok">OK</div>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
+
 @router.post("/fingerprint")
 async def create_fingerprint(request: ContentRequest):
     logging.info("Received request to create fingerprint.")
