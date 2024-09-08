@@ -76,3 +76,4 @@ wrapt==1.16.0
 yarl==1.9.7
 uvicorn==0.27.1
 firebase-admin==6.5.0
+python-dotenv==1.0.1
