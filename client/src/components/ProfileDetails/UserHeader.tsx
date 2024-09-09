@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon, Loader } from "lucide-react"
+import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon, Loader, Mail } from "lucide-react"
 import { User } from '@/lib/types'
 import { checkVerify, getLoggedInUser, sendVerificationEmail, setIdPhoto, setProfilePhoto } from '@/lib/server/appwrite'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -23,7 +23,7 @@ interface UserHeaderProps {
 const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [openStep, setOpenStep] = useState<number | null>(null);
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState("no");
   const [profilePhotoUploaded, setProfilePhotoUploaded] = useState(false);
   const [govIdUploaded, setGovIdUploaded] = useState(false);
   const [profileImages, setProfileImages] = useState<string[]>([]);
@@ -62,7 +62,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     fetchUser();
   }, []);
   useEffect(() => {
-    if (profileverified === "yes" && emailVerified && idVerified === "yes") {
+    if (profileverified === "yes" && emailVerified === "yes" && idVerified === "yes") {
       setIsVerified(true);
     }
   }, [isVerified, profileverified, emailVerified, idVerified])
@@ -71,7 +71,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     const checkVerification = async () => {
       const response = await checkVerify();
       if (response.success && response.verified) {
-        setEmailVerified(true);
+        setEmailVerified("yes");
       } else if (response.success && !response.verified) {
       } else {
         console.error(response.error);
@@ -86,12 +86,15 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       const result = await sendVerificationEmail();
       if (result.success) {
         console.log("Verification email sent! Check your inbox.");
+        setEmailVerified("send");
       } else {
         console.log("Failed to send verification email.");
+        setEmailVerified("no");
       }
     } catch (error) {
       console.error(error);
       console.log("Failed to send verification email.");
+      setEmailVerified("no");
     }
   };
 
@@ -331,12 +334,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                       onClick={() => toggleStep(0)}
                     >
                       <div className="flex items-center space-x-2">
-                        {emailVerified ? (
+                        {emailVerified === "yes" ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
                           <X className="w-5 h-5 text-red-500" />
                         )}
-                        <span className={`text-sm ${emailVerified ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className={`text-sm ${emailVerified === "yes" ? 'text-green-500' : 'text-red-500'}`}>
                           Email Verification
                         </span>
                       </div>
@@ -351,19 +354,29 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden mt-2"
                         >
-                          {emailVerified ? (
+                          {emailVerified === "yes" && (
                             <div className="flex flex-col w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white  w-full text-center">Email Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white ">Congratulations! Your email has been successfully verified.</p>
                             </div>
-                          ) : (
+                          )}
+                          {emailVerified === "no" && (
                             <>
                               <p className="text-sm mb-2 text-gray-400">Verify your email address</p>
                               <Button onClick={() => handleAction(0)} className="w-full bg-blue-500 text-white">
                                 Send Verification Email
                               </Button>
                             </>
+                          )}
+                          {emailVerified === "send" && (
+                            <div className='flex flex-col items-center justify-center w-full'>
+                              <Mail className="h-10 w-auto" />
+                              <p className="text-black dark:text-white font-bold">Verify your email address</p>
+                              <div className="text-sm text-black dark:text-white">
+                                We&apos;ve sent a verification link to your email. Please check your email and click the link to verify your account.
+                              </div>
+                            </div>
                           )}
                         </motion.div>
                       )}
