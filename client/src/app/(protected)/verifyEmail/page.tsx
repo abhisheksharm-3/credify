@@ -9,10 +9,10 @@ const EmailVerificationPage = () => {
     const router = useRouter();
     const [verificationState, setVerificationState] = useState('verifying');
 
+
     useEffect(() => {
         const secret = searchParams.get('secret');
         const userId = searchParams.get('userId');
-
         const verifyEmail = async () => {
             if (secret && userId) {
                 try {
@@ -23,9 +23,13 @@ const EmailVerificationPage = () => {
 
                     if (data.success) {
                         setVerificationState('verified');
-                        setTimeout(() => router.push('/user/profile-details'), 1000); 
+                        router.push('/user/profile-details')
                     } else {
-                        setVerificationState('error');
+                        setTimeout(() => {
+                            setVerificationState('error');
+                        }, 2000);
+                        router.push('/user/profile-details')
+
                     }
                 } catch (error) {
                     console.error('Email verification failed:', error);
@@ -37,7 +41,7 @@ const EmailVerificationPage = () => {
         };
 
         verifyEmail();
-    }, [searchParams, router]);
+    }, []);
 
     const contentVariants = {
         hidden: { opacity: 0, y: 20 },
