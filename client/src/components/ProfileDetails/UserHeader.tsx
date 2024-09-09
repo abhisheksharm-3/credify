@@ -372,8 +372,8 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           {emailVerified === "send" && (
                             <div className='flex flex-col items-center justify-center w-full'>
                               <Mail className="h-10 w-auto" />
-                              <p className="text-black dark:text-white font-bold">Verify your email address</p>
-                              <div className="text-sm text-black dark:text-white">
+                              <p className="text-black dark:text-white font-bold text-sm">Verify your email address</p>
+                              <div className="text-xs text-black dark:text-white">
                                 We&apos;ve sent a verification link to your email. Please check your email and click the link to verify your account.
                               </div>
                             </div>

@@ -23,8 +23,13 @@ const EmailVerificationPage = () => {
 
                     if (data.success) {
                         setVerificationState('verified');
+                        router.push('/user/profile-details')
                     } else {
-                        setVerificationState('error');
+                        setTimeout(() => {
+                            setVerificationState('error');
+                        }, 2000);
+                        router.push('/user/profile-details')
+
                     }
                 } catch (error) {
                     console.error('Email verification failed:', error);
