@@ -67,7 +67,7 @@ const ForgotPassword: React.FC = () => {
             </svg>
           </div>
           <p className="text-sm opacity-75 max-w-md text-center">
-            Don't worry, it happens to the best of us. Enter your email address and we'll send you instructions to reset your password.
+            Don&apos;t worry, it happens to the best of us. Enter your email address and we&apos;ll send you instructions to reset your password.
           </p>
         </div>
 

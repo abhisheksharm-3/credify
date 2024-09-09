@@ -211,7 +211,30 @@ export async function verifyEmail(userId: string, secret: string) {
 }
 
 
-export async function setprofilephoto(userId:string,profileURL:string) {
- 
+export async function setprofilephoto(userId: string, profileURL: string) {
+  try {
+    const { users } = await createAdminClient();
+    await users.updatePrefs(userId, { profilePhoto: profileURL });
+    return { success: true, message: "Profile photo updated." };
+  } catch (error) {
+    console.error("Failed to update profile photo:", error);
+    return { success: false, error: "Failed to update profile photo." };
+  }
+}
 
+export async function setUserAsVerified() {
+  try {
+    const { users } = await createAdminClient();
+    const { account } = await createSessionClient();
+    
+    const user = await account.get();
+    
+    // Add 'verified' label to user
+    await users.updateLabels(user.$id, [...(user.labels || []), 'verified']);
+    
+    return { success: true, message: "User set as verified." };
+  } catch (error) {
+    console.error("Failed to set user as verified:", error);
+    return { success: false, error: "Failed to set user as verified." };
+  }
 }

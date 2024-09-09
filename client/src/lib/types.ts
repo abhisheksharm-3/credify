@@ -64,3 +64,15 @@ export interface VideoData {
     uploadTimestamp: number;
     children: User[];
   }
+
+  export interface Content {
+    id: number
+    title: string
+    type: 'video' | 'image'
+    uploadDate: string
+    status: 'Published' | 'Draft' | 'Under Review'
+    creator: string
+    duration?: string
+    dimensions?: string
+    description: string
+  }
