@@ -159,36 +159,10 @@ export async function getUserById(userId: string) {
   }
 }
 
-
-export async function createProfileDocument(userId:any, profileId:string, imageUrl:string) {
-  try {
-    const client = new Client()
-      .setEndpoint(process.env.APPWRITE_ENDPOINT!)
-      .setProject(process.env.PROFILE_COLLECTION!)
-      .setKey(process.env.APPWRITE_KEY!);
-
-    const databases = new Databases(client);
-
-    const result = await databases.createDocument(
-      process.env.APPWRITE_DATABASE_ID!, // Database ID
-      process.env.APPWRITE_COLLECTION_ID!, // Collection ID
-      ID.unique(), // Generate a unique Document ID
-      { userId, profileId, imageUrl } // Document data
-    );
-
-    return { success: true, result };
-  } catch (error) {
-    console.error("Failed to create profile document:", error);
-    return { success: false, error: "Failed to create profile document. Please try again." };
-  }
-}
-
-
-
 export async function sendVerificationEmail() {
   try {
-    const { account } = await createSessionClient();  
-    await account.createVerification(`https://3000-idx-credify-1724438772473.cluster-qpa6grkipzc64wfjrbr3hsdma2.cloudworkstations.dev/verifyEmail`);
+    const { account } = await createSessionClient();
+    await account.createVerification(process.env.VERIFICATION_URL!);
     return { success: true, message: "Verification email sent." };
   } catch (error) {
     console.error("Failed to send verification email:", error);
@@ -198,11 +172,11 @@ export async function sendVerificationEmail() {
 
 export async function verifyEmail(userId: string, secret: string) {
   try {
-    console.log(userId,secret);
-    const { account } = await createSessionClient();  
-    
+    console.log(userId, secret);
+    const { account } = await createSessionClient();
+
     await account.updateVerification(userId, secret);  // Verifies email using userId and secret
-    
+
     return { success: true, message: "Email successfully verified." };
   } catch (error) {
     console.error("Email verification failed:", error);
@@ -210,21 +184,10 @@ export async function verifyEmail(userId: string, secret: string) {
   }
 }
 
-
-export async function setprofilephoto(userId:string,profileURL:string) {
- 
-
-}
-
 export async function checkVerify() {
   try {
-    // Create a session client to fetch the logged-in user's account
     const { account } = await createSessionClient();
-    
-    // Fetch the currently logged-in user's details
     const user = await account.get();
-    console.log(user);
-    // Check if the email is verified
     if (user.emailVerification) {
       return { success: true, verified: true, message: "Email is already verified." };
     } else {
@@ -236,3 +199,28 @@ export async function checkVerify() {
   }
 }
 
+export async function setProfilePhoto(userId: string, profileURL: string) {
+  try {
+    const { users } = await createAdminClient();
+    const user = await users.get(userId);  // Fetch current user preferences
+    const currentPrefs = user.prefs || {};  // Get existing preferences or empty object
+    await users.updatePrefs(userId, { ...currentPrefs, profilePhoto: profileURL });  // Merge new data with existing prefs
+    return { success: true, message: "Profile photo updated." };
+  } catch (error) {
+    console.error("Failed to update profile photo:", error);
+    return { success: false, error: "Failed to update profile photo." };
+  }
+}
+
+export async function setIdPhoto(userId: string, IdUrl: string) {
+  try {
+    const { users } = await createAdminClient();
+    const user = await users.get(userId);  // Fetch current user preferences
+    const currentPrefs = user.prefs || {};  // Get existing preferences or empty object
+    await users.updatePrefs(userId, { ...currentPrefs, IdPhoto: IdUrl });  // Merge new data with existing prefs
+    return { success: true, message: "ID photo updated." };
+  } catch (error) {
+    console.error("Failed to update ID photo:", error);
+    return { success: false, error: "Failed to update ID photo." };
+  }
+}

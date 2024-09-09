@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon } from "lucide-react"
+import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon, Loader } from "lucide-react"
 import { User } from '@/lib/types'
-import { checkVerify, getLoggedInUser, sendVerificationEmail } from '@/lib/server/appwrite'
+import { checkVerify, getLoggedInUser, sendVerificationEmail, setIdPhoto, setProfilePhoto } from '@/lib/server/appwrite'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { User as UserIcon } from 'lucide-react';
@@ -32,15 +32,27 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const [idUrl, setIdUrl] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState<number | null>(null);
-  const [profileverified, setprofileverified] = useState(false);
-  const [idVerified, setidVerified] = useState(false);
-
+  const [profileverified, setprofileverified] = useState("no");
+  const [idVerified, setidVerified] = useState("no");
+  const [userid, setuserid] = useState("");
+  const [userProfileImage, setuserProfileImage] = useState("");
   const storage = getStorage(app);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await getLoggedInUser();
+        if (userData) {
+          setuserid(userData?.$id);
+          if (userData.prefs.profilePhoto.length > 0) {
+            setuserProfileImage(userData.prefs.profilePhoto);
+            setprofileverified("yes");
+          }
+          if (userData.prefs.IdPhoto.length > 0) {
+            setidVerified("yes");
+          }
+
+        }
         setIsVerified(userData?.labels.includes('verified') || false);
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -49,6 +61,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
     fetchUser();
   }, []);
+  useEffect(() => {
+    if (profileverified === "yes" && emailVerified && idVerified === "yes") {
+      setIsVerified(true);
+    }
+  }, [isVerified, profileverified, emailVerified, idVerified])
 
   useEffect(() => {
     const checkVerification = async () => {
@@ -67,7 +84,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const sendverify = async () => {
     try {
       const result = await sendVerificationEmail();
-      console.log(result);
       if (result.success) {
         console.log("Verification email sent! Check your inbox.");
       } else {
@@ -132,15 +148,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     setShowDialog(false);
   };
 
-  const handleAction = async (stepIndex: number) => {
-    switch (stepIndex) {
-      case 0:
-        sendverify();
-        break;
-      case 1:
-      case 2:
-        await handleCapturePhoto(stepIndex);
-        break;
+  const handleAction = (stepIndex: number) => {
+    if (stepIndex === 0) {
+      sendverify();
+    } else {
+      handleCapturePhoto(stepIndex);
     }
   };
   const handleProfileUpload = async () => {
@@ -148,30 +160,78 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       try {
         const downloadURL = await uploadPhoto(imageUrl, "profile");
         setProfileUrl(downloadURL);
-        verifyProfileUpload();
+        verifyProfileImage(downloadURL);
       } catch (error) {
         console.error("Error uploading profile photo:", error);
       }
     }
   };
 
+
+  const verifyProfileImage = async (url: string) => {
+
+    try {
+      setprofileverified("verifying");
+      const response = await fetch(`/api/auth/verifyLiveliness?url=${encodeURIComponent(url)}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const isReal = data.result?.is_real;
+
+      if (isReal) {
+        setprofileverified("yes");
+        sendProfileUrl(url);
+
+      } else {
+        setprofileverified("no");
+        setProfileImages([]);
+        console.log("nhk verify")
+      }
+    } catch (error) {
+      console.error('Error during fetch:', error);
+    }
+  };
+
+  const sendProfileUrl = async (url: string) => {
+    const profileURL = url;
+    const userID = userid;
+    const response = await setProfilePhoto(userID, profileURL);
+    if (response.success) {
+      console.log(response.message);
+      return response;
+    } else {
+      console.error(response.error);
+      return response;
+    }
+  }
+  const sendIdUrl = async (url: string) => {
+    const IdUrl = url;
+    const userID = userid;
+    const response = await setIdPhoto(userID, IdUrl);
+    if (response.success) {
+      console.log(response.message);
+      setidVerified("yes");
+      return response;
+    } else {
+      console.error(response.error);
+      return response;
+    }
+  }
   const handleIdUpload = async () => {
+    setidVerified("uploading");
     for (const imageUrl of idImages) {
       try {
         const downloadURL = await uploadPhoto(imageUrl, "id");
-        setIdUrl(downloadURL);
-        verifyIdUpload();
+        sendIdUrl(downloadURL);
       } catch (error) {
         console.error("Error uploading gov id photo:", error);
       }
     }
-  };
-
-  const verifyIdUpload = async () => {
-    setidVerified(true);
-  };
-  const verifyProfileUpload = async () => {
-    setprofileverified(true);
   };
 
   return (
@@ -189,9 +249,21 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-                className="w-25 h-25 rounded-full overflow-hidden shadow-lg bg-white/5 border-3 border-black dark:border-white backdrop-blur-lg flex items-center justify-center p-1"
+                className={` w-25 h-25 rounded-full overflow-hidden shadow-lg bg-white/5 border-3 border-black dark:border-white backdrop-blur-lg flex items-center justify-center 
+                ${userProfileImage.length > 0 ? '' : 'p-1'}`}
               >
-                <UserIcon size={100} strokeWidth={1} />
+                {userProfileImage.length > 0 ? (
+                  <div className="h-[150px] p-0 w-[150px] overflow-hidden flex items-center justify-center">
+                    <img
+                      src={userProfileImage}
+                      alt="Profile"
+                      className="rounded-full h-[150px] w-[150px] object-cover"
+                    />
+                  </div>
+
+                ) : (
+                  <UserIcon size={135} strokeWidth={1} />
+                )}
               </motion.div>
             </div>
             <div className="text-start md:text-left  ml-4 ">
@@ -237,7 +309,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                   className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 py-2 lg:px-4 py-3 shadow-lg cursor-pointer"
                 >
                   {isVerified ? (
-                    <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                   ) : (
                     <X className="w-4 h-4 text-red-500  mr-2" />
                   )}
@@ -306,12 +378,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                       onClick={() => toggleStep(1)}
                     >
                       <div className="flex items-center space-x-2">
-                        {profileverified ? (
+                        {profileverified === "yes" ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
                           <X className="w-5 h-5 text-red-500" />
                         )}
-                        <span className={`text-sm ${profileverified ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className={`text-sm ${profileverified === "yes" ? 'text-green-500' : 'text-red-500'}`}>
                           Profile Photo Upload
                         </span>
                       </div>
@@ -326,21 +398,22 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden mt-2"
                         >
-                          {profileverified ? (
+                          {profileverified === "yes" && (
                             <div className="flex flex-col w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white w-full text-center">Profile Photo Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white">Congratulations! Your email has been successfully verified.</p>
                               <Button onClick={() => {
                                 handleAction(1);
-                                setprofileverified(false);
+                                setprofileverified("no");
                               }} className="bg-purple-700 text-white">
                                 <CameraIcon className="mr-2 h-5 w-5" />
                                 Recapture Photo
                               </Button>
                             </div>
 
-                          ) : (
+                          )}
+                          {profileverified === "no" && (
                             <>
                               <p className="text-sm mb-2 text-gray-400">Upload a clear photo of yourself</p>
                               <div className="w-full flex flex-col items-center justify-center">
@@ -370,6 +443,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                               </div>
                             </>
                           )}
+                          {profileverified === "verifying" && (
+                            <div className="w-full flex flex-col items-center justify-center">
+                              <Loader className="w-12 h-12 text-purple-600 mx-auto mb-4 animate-spin" />
+                              <p className="text-black dark:text-white">Verifying...</p>
+                            </div>
+                          )}
                         </motion.div>
                       )}
 
@@ -383,12 +462,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                       onClick={() => toggleStep(2)}
                     >
                       <div className="flex items-center space-x-2">
-                        {idVerified ? (
+                        {idVerified === "yes" ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
                           <X className="w-5 h-5 text-red-500" />
                         )}
-                        <span className={`text-sm ${idVerified ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className={`text-sm ${idVerified === "yes" ? 'text-green-500' : 'text-red-500'}`}>
                           Government ID Upload
                         </span>
                       </div>
@@ -403,21 +482,22 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden mt-2"
                         >
-                          {idVerified ? (
+                          {idVerified === "yes" && (
                             <div className="flex flex-col w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white w-full text-center">Government ID Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white">Your government ID has been successfully verified.</p>
                               <Button onClick={() => {
                                 handleAction(1);
-                                setidVerified(false);
+                                setidVerified("no");
                               }
                               } className="bg-purple-700 text-white">
                                 <CameraIcon className="mr-2 h-5 w-5" />
                                 Recapture Photo
                               </Button>
                             </div>
-                          ) : (
+                          )}
+                          {idVerified === "no" && (
                             <>
                               <p className="text-sm mb-2 text-gray-400">Upload a photo of your government-issued ID</p>
                               <div className="w-full flex flex-col items-center justify-center">
@@ -446,6 +526,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                                 </div>
                               </div>
                             </>
+                          )}
+                          {idVerified === "uploading" && (
+                            <div className="w-full flex flex-col items-center justify-center">
+                              <Loader className="w-12 h-12 text-purple-600 mx-auto mb-4 animate-spin" />
+                              <p className="text-black dark:text-white">Uploading...</p>
+                            </div>
                           )}
                         </motion.div>
                       )}
