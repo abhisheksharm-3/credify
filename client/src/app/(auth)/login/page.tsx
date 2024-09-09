@@ -96,7 +96,7 @@ const Login: React.FC = () => {
             </svg>
           </div>
           <p className="text-sm opacity-75 max-w-md text-center">
-            Leverage cutting-edge video verification technology to protect your content and maintain authenticity in today's digital landscape.
+            Leverage cutting-edge video verification technology to protect your content and maintain authenticity in today&apos;s digital landscape.
           </p>
         </div>
 
