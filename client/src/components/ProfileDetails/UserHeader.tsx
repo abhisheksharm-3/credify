@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon, Loader, Mail } from "lucide-react"
-import { User } from '@/lib/types'
+import { AppwriteUser } from '@/lib/types'
 import { checkVerify, getLoggedInUser, sendVerificationEmail, setIdPhoto, setProfilePhoto } from '@/lib/server/appwrite'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ import {
 import { app } from "../../../src/lib/FirebaseConfig";
 
 interface UserHeaderProps {
-  user: AppwriteUser | null;
+  user: AppwriteUser | null
 }
 
 const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
@@ -56,7 +56,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         setIsVerified(userData?.labels.includes('verified') || false);
       } catch (error) {
         console.error('Error fetching user data:', error);
-        toast.error('Failed to fetch user data. Please try again.');
       }
     };
 
@@ -118,11 +117,9 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
           'state_changed',
           (snapshot) => {
             const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            toast.info(`Upload progress: ${fileProgress.toFixed(2)}%`);
           },
           (error) => {
             console.error('Upload failed:', error);
-            toast.error('Upload failed. Please try again.');
             reject(error);
           },
           async () => {
@@ -133,7 +130,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       });
     } catch (error) {
       console.error('Error converting image URL to blob:', error);
-      toast.error('Error processing image. Please try again.');
       throw error;
     }
   };
@@ -155,19 +151,13 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     setShowDialog(false);
   };
 
-
-  const handleAction = async (stepIndex: number) => {
-    switch (stepIndex) {
-      case 0:
-        sendVerify();
-        break;
-      case 1:
-      case 2:
-        await handleCapturePhoto(stepIndex);
-        break;
+  const handleAction = (stepIndex: number) => {
+    if (stepIndex === 0) {
+      sendverify();
+    } else {
+      handleCapturePhoto(stepIndex);
     }
   };
-
   const handleProfileUpload = async () => {
     for (const imageUrl of profileImages) {
       try {
@@ -176,7 +166,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         verifyProfileImage(downloadURL);
       } catch (error) {
         console.error("Error uploading profile photo:", error);
-        toast.error("Error uploading profile photo. Please try again.");
       }
     }
   };
@@ -244,47 +233,10 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         sendIdUrl(downloadURL);
       } catch (error) {
         console.error("Error uploading gov id photo:", error);
-        toast.error("Error uploading government ID photo. Please try again.");
       }
     }
   };
 
-  const verifyIdUpload = async () => {
-    setIdVerified(true);
-    checkAllVerificationsComplete();
-  };
-
-  const verifyProfileUpload = async () => {
-    setProfileVerified(true);
-    checkAllVerificationsComplete();
-  };
-
-  const checkAllVerificationsComplete = async () => {
-    if (emailVerified && profileVerified && idVerified) {
-      try {
-        await setUserAsVerified();
-        setIsVerified(true);
-        toast.success("Congratulations! Your account is now fully verified.");
-      } catch (error) {
-        console.error("Error setting user as verified:", error);
-        toast.error("Error completing verification process. Please contact support.");
-      }
-    }
-  };
-  const handleCompleteVerification = async () => {
-    try {
-      await setUserAsVerified();
-      setIsVerified(true);
-      toast.success("Congratulations! Your account is now fully verified.");
-    } catch (error) {
-      console.error("Error setting user as verified:", error);
-      toast.error("Error completing verification process. Please contact support.");
-    }
-  }; useEffect(() => {
-    // Check if all verification steps are complete
-    const areAllVerificationsComplete = emailVerified && profileVerified && idVerified;
-    setIsVerificationButtonDisabled(!areAllVerificationsComplete);
-  }, [emailVerified, profileVerified, idVerified]);
   return (
     <header className="relative bg-gradient-to-b from-purple-600 to-white dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg">
       <div className="container mx-auto px-4 ml-4 md:ml-6 lg:ml-8 pt-12 lg:py-12 pb-4">
@@ -403,7 +355,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           className="overflow-hidden mt-2"
                         >
                           {emailVerified === "yes" && (
-                            <div className="flex flex-col w-full flex-col items-center justify-center">
+                            <div className="flex w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white  w-full text-center">Email Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white ">Congratulations! Your email has been successfully verified.</p>
@@ -460,7 +412,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           className="overflow-hidden mt-2"
                         >
                           {profileverified === "yes" && (
-                            <div className="flex flex-col w-full flex-col items-center justify-center">
+                            <div className="flex w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white w-full text-center">Profile Photo Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white">Congratulations! Your email has been successfully verified.</p>
@@ -544,7 +496,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           className="overflow-hidden mt-2"
                         >
                           {idVerified === "yes" && (
-                            <div className="flex flex-col w-full flex-col items-center justify-center">
+                            <div className="flex w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white w-full text-center">Government ID Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white">Your government ID has been successfully verified.</p>
@@ -599,13 +551,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
                     </AnimatePresence>
                   </div>
-                  <Button
-                    disabled={isVerificationButtonDisabled}
-                    onClick={handleCompleteVerification}
-                    className="bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    Complete Verification
-                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
