@@ -14,7 +14,7 @@ export interface VideoData {
     description: string;
     value: number;
   }
-  export interface User {
+  export interface AppwriteUser {
     $id: string;
     $createdAt: string;
     $updatedAt: string;
