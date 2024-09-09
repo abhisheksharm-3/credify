@@ -1,32 +1,26 @@
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon } from "lucide-react"
-import { User } from '@/lib/types'
-import { getLoggedInUser, sendVerificationEmail } from '@/lib/server/appwrite'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+"use client"
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon } from "lucide-react";
+import { AppwriteUser } from '@/lib/types';
+import { getLoggedInUser, sendVerificationEmail, verifyEmail, setUserAsVerified } from '@/lib/server/appwrite';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { User as UserIcon } from 'lucide-react';
-import { FC } from "react"
-import { RiVerifiedBadgeFill, RiStarFill } from '@remixicon/react'
+import { RiVerifiedBadgeFill, RiStarFill } from '@remixicon/react';
 import Camera from "@/components/ui/camera/camera";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import { app } from "../../../src/lib/FirebaseConfig";
-import { Client, Account } from 'node-appwrite'
-import { useRouter } from 'next/router'
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { app } from "@/lib/FirebaseConfig";
+import { toast } from 'sonner';
 
 interface UserHeaderProps {
-  user: User | null
+  user: AppwriteUser | null;
 }
 
 const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [openStep, setOpenStep] = useState<number | null>(null);
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(user?.emailVerification || false);
   const [profilePhotoUploaded, setProfilePhotoUploaded] = useState(false);
   const [govIdUploaded, setGovIdUploaded] = useState(false);
   const [profileImages, setProfileImages] = useState<string[]>([]);
@@ -35,43 +29,39 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const [idUrl, setIdUrl] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState<number | null>(null);
-  const [profileverified, setprofileverified] = useState(false);
-  const [idVerified, setidVerified] = useState(false);
+  const [profileVerified, setProfileVerified] = useState(false);
+  const [idVerified, setIdVerified] = useState(false);
+  const [isVerificationButtonDisabled, setIsVerificationButtonDisabled] = useState(true);
 
   const storage = getStorage(app);
 
-  const client = new Client()
-  .setEndpoint(process.env.APPWRITE_ENDPOINT!)
-  .setProject(process.env.APPWRITE_PROJECT_ID!);
-
-  const account = new Account(client);
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await getLoggedInUser();
-        setIsVerified(userData?.labels.includes('verified') || false);
+        setIsVerified(userData?.labels?.includes('verified') || false);
       } catch (error) {
         console.error('Error fetching user data:', error);
+        toast.error('Failed to fetch user data. Please try again.');
       }
     };
 
     fetchUser();
   }, []);
-  
-  const sendverify = async () => {
+
+  const sendVerify = async () => {
     try {
       const result = await sendVerificationEmail();
-      console.log(result);
-      if(result.success){
-        console.log("Verification email sent! Check your inbox.");
-      }else{
-        console.log("lund nahi chal raha");
+      if (result.success) {
+        toast.success("Verification email sent! Please check your inbox.");
+      } else {
+        toast.error("Failed to send verification email. Please try again.");
       }
     } catch (error) {
-        console.error(error);
-        console.log("Failed to send verification email.");
+      console.error(error);
+      toast.error("Failed to send verification email. Please try again.");
     }
-};
+  };
 
   const toggleStep = (index: number) => {
     setOpenStep(openStep === index ? null : index);
@@ -92,9 +82,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
           'state_changed',
           (snapshot) => {
             const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            toast.info(`Upload progress: ${fileProgress.toFixed(2)}%`);
           },
           (error) => {
             console.error('Upload failed:', error);
+            toast.error('Upload failed. Please try again.');
             reject(error);
           },
           async () => {
@@ -105,6 +97,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       });
     } catch (error) {
       console.error('Error converting image URL to blob:', error);
+      toast.error('Error processing image. Please try again.');
       throw error;
     }
   };
@@ -124,14 +117,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     }
     setShowDialog(false);
   };
-  const handleEmailVerification = () => {
-    console.log("clickedverify");
-    sendverify();
-  }
+
   const handleAction = async (stepIndex: number) => {
     switch (stepIndex) {
       case 0:
-        sendverify();
+        sendVerify();
         break;
       case 1:
       case 2:
@@ -139,6 +129,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         break;
     }
   };
+
   const handleProfileUpload = async () => {
     for (const imageUrl of profileImages) {
       try {
@@ -147,6 +138,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         verifyProfileUpload();
       } catch (error) {
         console.error("Error uploading profile photo:", error);
+        toast.error("Error uploading profile photo. Please try again.");
       }
     }
   };
@@ -159,17 +151,47 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         verifyIdUpload();
       } catch (error) {
         console.error("Error uploading gov id photo:", error);
+        toast.error("Error uploading government ID photo. Please try again.");
       }
     }
   };
 
   const verifyIdUpload = async () => {
-    setidVerified(true);
-  };
-  const verifyProfileUpload = async () => {
-    setprofileverified(true);
+    setIdVerified(true);
+    checkAllVerificationsComplete();
   };
 
+  const verifyProfileUpload = async () => {
+    setProfileVerified(true);
+    checkAllVerificationsComplete();
+  };
+
+  const checkAllVerificationsComplete = async () => {
+    if (emailVerified && profileVerified && idVerified) {
+      try {
+        await setUserAsVerified();
+        setIsVerified(true);
+        toast.success("Congratulations! Your account is now fully verified.");
+      } catch (error) {
+        console.error("Error setting user as verified:", error);
+        toast.error("Error completing verification process. Please contact support.");
+      }
+    }
+  };
+  const handleCompleteVerification = async () => {
+    try {
+      await setUserAsVerified();
+      setIsVerified(true);
+      toast.success("Congratulations! Your account is now fully verified.");
+    } catch (error) {
+      console.error("Error setting user as verified:", error);
+      toast.error("Error completing verification process. Please contact support.");
+    }
+  }; useEffect(() => {
+    // Check if all verification steps are complete
+    const areAllVerificationsComplete = emailVerified && profileVerified && idVerified;
+    setIsVerificationButtonDisabled(!areAllVerificationsComplete);
+  }, [emailVerified, profileVerified, idVerified]);
   return (
     <header className="relative bg-gradient-to-b from-purple-600 to-white dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg">
       <div className="container mx-auto px-4 ml-4 md:ml-6 lg:ml-8 pt-12 lg:py-12 pb-4">
@@ -230,7 +252,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
               <DialogTrigger asChild>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 py-2 lg:px-4 py-3 shadow-lg cursor-pointer"
+                  className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 lg:px-4 py-3 shadow-lg cursor-pointer"
                 >
                   {isVerified ? (
                     <CheckCircle className="w-6 h-6 text-green-500 mr-2" />
@@ -276,7 +298,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           className="overflow-hidden mt-2"
                         >
                           {emailVerified ? (
-                            <div className="flex flex-col w-full flex-col items-center justify-center">
+                            <div className="flex w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white  w-full text-center">Email Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white ">Congratulations! Your email has been successfully verified.</p>
@@ -302,12 +324,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                       onClick={() => toggleStep(1)}
                     >
                       <div className="flex items-center space-x-2">
-                        {profileverified ? (
+                        {profileVerified ? (
                           <CheckCircle className="w-5 h-5 text-green-500" />
                         ) : (
                           <X className="w-5 h-5 text-red-500" />
                         )}
-                        <span className={`text-sm ${profileverified ? 'text-green-500' : 'text-red-500'}`}>
+                        <span className={`text-sm ${profileVerified ? 'text-green-500' : 'text-red-500'}`}>
                           Profile Photo Upload
                         </span>
                       </div>
@@ -322,14 +344,14 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           transition={{ duration: 0.3 }}
                           className="overflow-hidden mt-2"
                         >
-                          {profileverified ? (
-                            <div className="flex flex-col w-full flex-col items-center justify-center">
+                          {profileVerified ? (
+                            <div className="flex w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white w-full text-center">Profile Photo Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white">Congratulations! Your email has been successfully verified.</p>
                               <Button onClick={() => {
                                 handleAction(1);
-                                setprofileverified(false);
+                                setProfileVerified(false);
                               }} className="bg-purple-700 text-white">
                                 <CameraIcon className="mr-2 h-5 w-5" />
                                 Recapture Photo
@@ -400,13 +422,13 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                           className="overflow-hidden mt-2"
                         >
                           {idVerified ? (
-                            <div className="flex flex-col w-full flex-col items-center justify-center">
+                            <div className="flex w-full flex-col items-center justify-center">
                               <CircleCheckIcon className="size-10 text-green-500" />
                               <p className="text-sm mb-2 font-bold text-black dark:text-white w-full text-center">Government ID Verified</p>
                               <p className="flex text-center w-full text-sm mb-2 text-black dark:text-white">Your government ID has been successfully verified.</p>
                               <Button onClick={() => {
                                 handleAction(1);
-                                setidVerified(false);
+                                setIdVerified(false);
                               }
                               } className="bg-purple-700 text-white">
                                 <CameraIcon className="mr-2 h-5 w-5" />
@@ -448,6 +470,13 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
                     </AnimatePresence>
                   </div>
+                  <Button
+                    disabled={isVerificationButtonDisabled}
+                    onClick={handleCompleteVerification}
+                    className="bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Complete Verification
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -464,7 +493,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
               <motion.div
                 key={index}
                 whileHover={{ scale: 1.05 }}
-                className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 py-2 lg:px-4 py-3 shadow-lg"
+                className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 lg:px-4 py-3 shadow-lg"
               >
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                 <span className="text-xs lg:text-s font-medium dark:text-white">{credential}</span>
