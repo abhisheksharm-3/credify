@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { getUserById, setprofilephoto } from '@/lib/server/appwrite'; // Adjust the import path as needed
+import { getUserById, setProfilePhoto } from '@/lib/server/appwrite'; // Adjust the import path as needed
 import {
   StarIcon,
   FlagIcon,
@@ -102,7 +102,7 @@ export default function CredibilityOverviewPage() {
     setUpdatingProfilePicture(true);
     try {
       const creatorId = Array.isArray(params.creatorId) ? params.creatorId[0] : params.creatorId;
-      await setprofilephoto(creatorId, imageUrl);
+      await setProfilePhoto(creatorId, imageUrl);
       setUserData((prevData) => ({
         ...prevData!,
         profilePicture: imageUrl,
