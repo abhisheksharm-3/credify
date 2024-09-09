@@ -215,3 +215,24 @@ export async function setprofilephoto(userId:string,profileURL:string) {
  
 
 }
+
+export async function checkVerify() {
+  try {
+    // Create a session client to fetch the logged-in user's account
+    const { account } = await createSessionClient();
+    
+    // Fetch the currently logged-in user's details
+    const user = await account.get();
+    console.log(user);
+    // Check if the email is verified
+    if (user.emailVerification) {
+      return { success: true, verified: true, message: "Email is already verified." };
+    } else {
+      return { success: true, verified: false, message: "Email is not verified." };
+    }
+  } catch (error) {
+    console.error("Failed to check email verification status:", error);
+    return { success: false, error: "Failed to check email verification status." };
+  }
+}
+

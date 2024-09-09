@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, X, ChevronDown, ChevronUp, Camera as CameraIcon, Upload, CircleCheckIcon } from "lucide-react"
 import { User } from '@/lib/types'
-import { getLoggedInUser, sendVerificationEmail } from '@/lib/server/appwrite'
+import { checkVerify, getLoggedInUser, sendVerificationEmail } from '@/lib/server/appwrite'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { User as UserIcon } from 'lucide-react';
-import { FC } from "react"
 import { RiVerifiedBadgeFill, RiStarFill } from '@remixicon/react'
 import Camera from "@/components/ui/camera/camera";
 import {
@@ -16,8 +15,6 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { app } from "../../../src/lib/FirebaseConfig";
-import { Client, Account } from 'node-appwrite'
-import { useRouter } from 'next/router'
 
 interface UserHeaderProps {
   user: User | null
@@ -40,11 +37,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
   const storage = getStorage(app);
 
-  const client = new Client()
-  .setEndpoint(process.env.APPWRITE_ENDPOINT!)
-  .setProject(process.env.APPWRITE_PROJECT_ID!);
-
-  const account = new Account(client);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -57,21 +49,35 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
     fetchUser();
   }, []);
-  
+
+  useEffect(() => {
+    const checkVerification = async () => {
+      const response = await checkVerify();
+      if (response.success && response.verified) {
+        setEmailVerified(true);
+      } else if (response.success && !response.verified) {
+      } else {
+        console.error(response.error);
+      }
+    };
+    checkVerification();
+  }, []);
+
+
   const sendverify = async () => {
     try {
       const result = await sendVerificationEmail();
       console.log(result);
-      if(result.success){
+      if (result.success) {
         console.log("Verification email sent! Check your inbox.");
-      }else{
-        console.log("lund nahi chal raha");
+      } else {
+        console.log("Failed to send verification email.");
       }
     } catch (error) {
-        console.error(error);
-        console.log("Failed to send verification email.");
+      console.error(error);
+      console.log("Failed to send verification email.");
     }
-};
+  };
 
   const toggleStep = (index: number) => {
     setOpenStep(openStep === index ? null : index);
@@ -109,6 +115,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     }
   };
 
+
   const handleCapturePhoto = async (stepIndex: number) => {
     setCurrentStepIndex(stepIndex);
     setShowDialog(true);
@@ -124,10 +131,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     }
     setShowDialog(false);
   };
-  const handleEmailVerification = () => {
-    console.log("clickedverify");
-    sendverify();
-  }
+
   const handleAction = async (stepIndex: number) => {
     switch (stepIndex) {
       case 0:

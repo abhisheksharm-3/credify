@@ -1,43 +1,43 @@
-"use client"
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { CheckCircle, Loader, XCircle } from 'lucide-react';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { CheckCircle, Loader, XCircle } from "lucide-react";
 
 const EmailVerificationPage = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [verificationState, setVerificationState] = useState('verifying');
+    const [verificationState, setVerificationState] = useState("verifying");
+    const [hasVerified, setHasVerified] = useState(false); // Track if verification has succeeded
 
     useEffect(() => {
-        const secret = searchParams.get('secret');
-        const userId = searchParams.get('userId');
+        const secret = searchParams.get("secret");
+        const userId = searchParams.get("userId");
 
         const verifyEmail = async () => {
-            if (secret && userId) {
+            if (!hasVerified && secret && userId) { // Ensure the verification only runs once
                 try {
                     const response = await fetch(`/api/auth/verifyEmail?userId=${userId}&secret=${secret}`, {
-                        method: 'GET',
+                        method: "GET",
                     });
                     const data = await response.json();
 
                     if (data.success) {
-                        setVerificationState('verified');
-                        setTimeout(() => router.push('/user/profile-details'), 1000); 
+                        setVerificationState("verified");
+                        setHasVerified(true); // Mark as verified so we don't re-trigger verification
+                        router.push("/user/profile-details");
                     } else {
-                        setVerificationState('error');
+                        setVerificationState("error");
                     }
                 } catch (error) {
-                    console.error('Email verification failed:', error);
-                    setVerificationState('error');
+                    console.error("Email verification failed:", error);
+                    setVerificationState("error");
                 }
-            } else {
-                setVerificationState('error');
             }
         };
 
         verifyEmail();
-    }, [searchParams, router]);
+    }, [hasVerified, searchParams, router]); // Depend on hasVerified to control execution
 
     const contentVariants = {
         hidden: { opacity: 0, y: 20 },
@@ -45,14 +45,14 @@ const EmailVerificationPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-card   flex items-center justify-center px-4">
+        <div className="min-h-screen bg-card flex items-center justify-center px-4">
             <motion.div
-                className="bg-white/80 rounded-lg  shadow-custom p-8 max-w-md w-full"
+                className="bg-white/80 rounded-lg shadow-custom p-8 max-w-md w-full"
                 initial="hidden"
                 animate="visible"
                 variants={contentVariants}
             >
-                {verificationState === 'verifying' && (
+                {verificationState === "verifying" && (
                     <div className="text-center">
                         <Loader className="w-16 h-16 text-purple-600 mx-auto mb-4 animate-spin" />
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Verifying Your Email</h2>
@@ -60,7 +60,7 @@ const EmailVerificationPage = () => {
                     </div>
                 )}
 
-                {verificationState === 'verified' && (
+                {verificationState === "verified" && (
                     <div className="text-center">
                         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Email Verified!</h2>
@@ -68,7 +68,7 @@ const EmailVerificationPage = () => {
                     </div>
                 )}
 
-                {verificationState === 'error' && (
+                {verificationState === "error" && (
                     <div className="text-center">
                         <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Verification Failed</h2>
