@@ -6,7 +6,7 @@ import { VerificationTrends } from "@/components/User/VerificationTrendsChart";
 import { AlertsNotifications } from "@/components/User/AlertNotifications";
 import { ActionItems } from "@/components/User/ActionItems";
 import { AccountSettings } from "@/components/User/AccountSettings";
-import { CardData, ChartDataPoint, User, VideoData } from "@/lib/types";
+import { AppwriteUser, CardData, ChartDataPoint, User, VideoData } from "@/lib/types";
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 
@@ -71,7 +71,7 @@ const pieChartConfig: ChartConfig = Object.fromEntries(
 
 
 export default function Dashboard() {
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<AppwriteUser | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {

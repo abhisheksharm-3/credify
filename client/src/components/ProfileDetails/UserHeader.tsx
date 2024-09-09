@@ -17,7 +17,7 @@ import {
 import { app } from "../../../src/lib/FirebaseConfig";
 
 interface UserHeaderProps {
-  user: User | null
+  user: AppwriteUser | null;
 }
 
 const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
@@ -56,6 +56,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         setIsVerified(userData?.labels.includes('verified') || false);
       } catch (error) {
         console.error('Error fetching user data:', error);
+        toast.error('Failed to fetch user data. Please try again.');
       }
     };
 
@@ -117,9 +118,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
           'state_changed',
           (snapshot) => {
             const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            toast.info(`Upload progress: ${fileProgress.toFixed(2)}%`);
           },
           (error) => {
             console.error('Upload failed:', error);
+            toast.error('Upload failed. Please try again.');
             reject(error);
           },
           async () => {
@@ -130,6 +133,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       });
     } catch (error) {
       console.error('Error converting image URL to blob:', error);
+      toast.error('Error processing image. Please try again.');
       throw error;
     }
   };
@@ -151,13 +155,19 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
     setShowDialog(false);
   };
 
-  const handleAction = (stepIndex: number) => {
-    if (stepIndex === 0) {
-      sendverify();
-    } else {
-      handleCapturePhoto(stepIndex);
+
+  const handleAction = async (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0:
+        sendVerify();
+        break;
+      case 1:
+      case 2:
+        await handleCapturePhoto(stepIndex);
+        break;
     }
   };
+
   const handleProfileUpload = async () => {
     for (const imageUrl of profileImages) {
       try {
@@ -166,6 +176,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         verifyProfileImage(downloadURL);
       } catch (error) {
         console.error("Error uploading profile photo:", error);
+        toast.error("Error uploading profile photo. Please try again.");
       }
     }
   };
@@ -233,10 +244,47 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
         sendIdUrl(downloadURL);
       } catch (error) {
         console.error("Error uploading gov id photo:", error);
+        toast.error("Error uploading government ID photo. Please try again.");
       }
     }
   };
 
+  const verifyIdUpload = async () => {
+    setIdVerified(true);
+    checkAllVerificationsComplete();
+  };
+
+  const verifyProfileUpload = async () => {
+    setProfileVerified(true);
+    checkAllVerificationsComplete();
+  };
+
+  const checkAllVerificationsComplete = async () => {
+    if (emailVerified && profileVerified && idVerified) {
+      try {
+        await setUserAsVerified();
+        setIsVerified(true);
+        toast.success("Congratulations! Your account is now fully verified.");
+      } catch (error) {
+        console.error("Error setting user as verified:", error);
+        toast.error("Error completing verification process. Please contact support.");
+      }
+    }
+  };
+  const handleCompleteVerification = async () => {
+    try {
+      await setUserAsVerified();
+      setIsVerified(true);
+      toast.success("Congratulations! Your account is now fully verified.");
+    } catch (error) {
+      console.error("Error setting user as verified:", error);
+      toast.error("Error completing verification process. Please contact support.");
+    }
+  }; useEffect(() => {
+    // Check if all verification steps are complete
+    const areAllVerificationsComplete = emailVerified && profileVerified && idVerified;
+    setIsVerificationButtonDisabled(!areAllVerificationsComplete);
+  }, [emailVerified, profileVerified, idVerified]);
   return (
     <header className="relative bg-gradient-to-b from-purple-600 to-white dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg">
       <div className="container mx-auto px-4 ml-4 md:ml-6 lg:ml-8 pt-12 lg:py-12 pb-4">
@@ -309,7 +357,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
               <DialogTrigger asChild>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 py-2 lg:px-4 py-3 shadow-lg cursor-pointer"
+                  className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 lg:px-4 py-3 shadow-lg cursor-pointer"
                 >
                   {isVerified ? (
                     <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
@@ -551,6 +599,13 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
                     </AnimatePresence>
                   </div>
+                  <Button
+                    disabled={isVerificationButtonDisabled}
+                    onClick={handleCompleteVerification}
+                    className="bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Complete Verification
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -567,7 +622,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
               <motion.div
                 key={index}
                 whileHover={{ scale: 1.05 }}
-                className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 py-2 lg:px-4 py-3 shadow-lg"
+                className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 lg:px-4 py-3 shadow-lg"
               >
                 <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                 <span className="text-xs lg:text-s font-medium dark:text-white">{credential}</span>

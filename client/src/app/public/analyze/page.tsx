@@ -8,6 +8,7 @@ import AnalyzingSection from '@/components/PublicComponents/AnalyzingLoader';
 import ErrorSection from '@/components/PublicComponents/Error';
 import VerificationResultSection from '@/components/PublicComponents/VerificationResultSection';
 import { VerificationResult, User } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function ContentVerificationPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -19,7 +20,7 @@ export default function ContentVerificationPage() {
   const handleUploadComplete = async (res: { key: string; url: string; name: string }[]) => {
     if (res && res.length > 0) {
       setIsAnalyzing(true);
-      setError(null); 
+      setError(null);
       const contentId = res[0].key;
       try {
         const response = await fetch(`/api/content/analyze/${contentId}`);
@@ -49,8 +50,8 @@ export default function ContentVerificationPage() {
           }
         }
       } catch (error) {
-        console.error('Error during verification:', error);
-        setError("Failed to verify content. Please try again later.");
+        toast.error('Error during verification');
+        setError("Oops, it looks like there was an issue verifying your content. Please try again later.");
       } finally {
         setIsAnalyzing(false);
         await deleteVerifiedContent(contentId);
@@ -68,9 +69,9 @@ export default function ContentVerificationPage() {
 
       if (!response.ok) throw new Error('Failed to delete verified content');
 
-      console.log('Content deleted successfully');
+      toast.info('Content deleted successfully');
     } catch (error) {
-      console.error('Error deleting verified content:', error);
+      toast.error('Error deleting verified content');
     }
   };
 
@@ -88,11 +89,14 @@ export default function ContentVerificationPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          Content Verification
+          Verify Your Content
         </motion.h1>
 
         {!verificationComplete && (
-          <UploadSection onUploadComplete={handleUploadComplete} onUploadError={setError} />
+          <UploadSection
+            onUploadComplete={handleUploadComplete}
+            onUploadError={(error) => setError("Oops, it looks like there was an issue uploading your file. Please try again.")}
+          />
         )}
 
         {isAnalyzing && <AnalyzingSection />}

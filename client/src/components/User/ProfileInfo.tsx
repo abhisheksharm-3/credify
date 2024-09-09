@@ -1,5 +1,5 @@
 "use client";
-import { User as UserType } from "@/lib/types";
+import { AppwriteUser as UserType } from "@/lib/types";
 import { User } from "lucide-react";
 import { useState, useRef } from "react";
 import { updatePhoneNumber } from "@/lib/server/appwrite";
