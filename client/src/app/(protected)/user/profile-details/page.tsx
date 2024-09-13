@@ -1,12 +1,10 @@
-// TrustDashboard.tsx
 "use client"
-import {FC} from 'react'
 import LoggedInLayout from '@/components/Layout/LoggedInLayout'
-import UserHeader from '@/components/ProfileDetails/UserHeader'
 import TrustStatistics from '@/components/ProfileDetails/TrustStatistics'
 import TrustScoreTrend from '@/components/ProfileDetails/TrustScoreTrends'
 import VerifiedVideos from '@/components/ProfileDetails/UserVideos'
 import { useUser } from '@/hooks/useUser'
+import UserHeader from '@/components/ProfileDetails/UserHeader'
 
 const TrustDashboard = () => {
   const { user, loading } = useUser()
