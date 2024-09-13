@@ -181,7 +181,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
       } else {
         setProfileVerified("no");
         setProfileImages([]);
-        toast.error("nahi hua tu verify chal firse photo daal")
+        toast.error("Profile Photo not Verified. Try again.")
       }
     } catch (error) {
       toast.error('Error during fetch');
