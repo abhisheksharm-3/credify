@@ -48,7 +48,9 @@ const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) 
             transition={{ delay: 0.4, duration: 0.6 }}
             className="text-2xl md:text-2xl lg:text-3xl font-bold dark:text-white flex gap-2 items-center"
           >
-            {user?.name || ""} <RiVerifiedBadgeFill className="text-blue-600" size={25} />
+            {user?.name || ""}
+            {isVerified && <RiVerifiedBadgeFill className="text-blue-600" size={25} />
+            }
 
           </motion.h1>
           <motion.div
