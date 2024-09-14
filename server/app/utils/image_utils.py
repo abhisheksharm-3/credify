@@ -1,46 +1,27 @@
-import os
 import cv2
 import numpy as np
 from typing import Union
 from PIL import Image
 from io import BytesIO
-
-# Creating a BytesIO object
-buffer = BytesIO()
-
-# Writing binary data to the buffer
-buffer.write(b"Hello, this is some binary data!")
-
-# Moving the cursor to the beginning of the buffer
-buffer.seek(0)
-
-# Reading data from the buffer
-data = buffer.read()
-
-print(data)  # Output: b'Hello,
-
 import imghdr
 from fastapi import HTTPException
+from app.utils.file_utils import get_file_content
 
 SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp']
 
 def verify_image_format(filename: str):
-    file_ext = os.path.splitext(filename)[1].lower()
-    
-    if not file_ext:
-        # If there's no extension, try to determine the image type
-        with open(filename, 'rb') as f:
-            file_ext = '.' + (imghdr.what(f) or '')
+    content = get_file_content(filename)
+    file_ext = '.' + (imghdr.what(BytesIO(content)) or '')
     
     if file_ext not in SUPPORTED_IMAGE_FORMATS:
         raise HTTPException(status_code=400, detail=f"Unsupported image format. Supported formats are: {', '.join(SUPPORTED_IMAGE_FORMATS)}")
 
 def preprocess_image(image: Union[str, np.ndarray, Image.Image], hash_size: int = 32) -> np.ndarray:
     if isinstance(image, str):
-        with open(image, 'rb') as f:
-            img = Image.open(f)
-            img = strip_metadata(img)
-            image = np.array(img)
+        content = get_file_content(image)
+        img = Image.open(BytesIO(content))
+        img = strip_metadata(img)
+        image = np.array(img)
     elif isinstance(image, Image.Image):
         image = strip_metadata(image)
         image = np.array(image)
@@ -79,23 +60,22 @@ def are_images_similar(hash1: str, hash2: str, threshold: int = 5) -> bool:
     distance = hamming_distance(hash1, hash2)
     return distance <= threshold
 
-def process_image(temp_file_path: str):
+def process_image(filename: str):
     try:
-        if not os.path.exists(temp_file_path):
-            raise FileNotFoundError(f"Saved image not found: {temp_file_path}")
-        
-        img = Image.open(BytesIO(temp_file_path))
-        img.verify()
+        content = get_file_content(filename)
+        img = Image.open(BytesIO(content))
         image_hash = perceptual_image_hash(img)
         
         return image_hash
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
-def compare_images(temp_file_path1: str, temp_file_path2: str):
+def compare_images(filename1: str, filename2: str):
     try:
-        img1 = Image.open(BytesIO(temp_file_path1))
-        img2 = Image.open(BytesIO(temp_file_path2))
+        content1 = get_file_content(filename1)
+        content2 = get_file_content(filename2)
+        img1 = Image.open(BytesIO(content1))
+        img2 = Image.open(BytesIO(content2))
         hash1 = perceptual_image_hash(img1)
         hash2 = perceptual_image_hash(img2)
         

@@ -4,35 +4,38 @@ import json
 from firebase_admin import credentials, initialize_app, storage
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from the .env file
+load_dotenv()
+
+_firebase_app = None
+_firebase_bucket = None
 
 def initialize_firebase():
-    # Decode the base64 encoded Firebase key from the environment variable
+    global _firebase_app, _firebase_bucket
+    
+    if _firebase_app is not None:
+        return _firebase_bucket
+    
     firebase_key_base64 = os.getenv('FIREBASE_KEY_BASE64')
     if not firebase_key_base64:
-        print("Environment variable FIREBASE_KEY_BASE64 is not set or is empty")
-        return None
+        raise ValueError("Environment variable FIREBASE_KEY_BASE64 is not set or is empty")
 
     try:
-        # Decode the base64 string to get the JSON string
+        print("Decoding Firebase key...")
         firebase_key_json = base64.b64decode(firebase_key_base64).decode('utf-8')
-
-        # Convert the JSON string into a Python dictionary
         firebase_key_dict = json.loads(firebase_key_json)
-
-        # Create credentials from the dictionary instead of a file
+        
+        print("Initializing Firebase...")
         cred = credentials.Certificate(firebase_key_dict)
-
-        # Initialize the Firebase app with the credentials and storage bucket
-        initialize_app(cred, {
-            'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET')  # Ensure this environment variable is set
+        
+        # Initialize Firebase with a unique name if needed
+        _firebase_app = initialize_app(cred, {
+            'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET')
         })
-
-        # Get a reference to the storage bucket
-        return storage.bucket()
-
+        
+        _firebase_bucket = storage.bucket(app=_firebase_app)
+        print("Firebase initialized successfully.")
+        return _firebase_bucket
     except Exception as e:
-        print(f"Error initializing Firebase: {e}")
-        return None
+        raise RuntimeError(f"Error initializing Firebase: {e}")
 
 firebase_bucket = initialize_firebase()

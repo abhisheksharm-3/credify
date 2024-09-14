@@ -1,118 +1,70 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.services.video_service import fingerprint_video, compare_videos
-from app.services.image_service import verify_image, compare_images
-from app.utils.file_utils import download_file, remove_temp_file
-
+from app.services import video_service, image_service, antispoof_service
 from app.services.antispoof_service import antispoof_service
-from fastapi.responses import JSONResponse
-
+from app.services.image_service import compare_images
 import logging
 
 router = APIRouter()
 
 class ContentRequest(BaseModel):
     url: str
-    
+
 class CompareRequest(BaseModel):
     url1: str
     url2: str
 
-
 @router.post("/fingerprint")
 async def create_fingerprint(request: ContentRequest):
-    logging.info("Received request to create fingerprint.")
-    temp_path = None
     try:
-        temp_path = await download_file(request.url)
-        fingerprint = await fingerprint_video(temp_path)
-        return fingerprint
+        result = await video_service.fingerprint_video(request.url)
+        return {"message": "Fingerprint processing completed", "result": result}
     except Exception as e:
-        logging.error(f"Error creating fingerprint: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing video: {str(e)}")
-    finally:
-        if temp_path:
-            await remove_temp_file(temp_path)
-            
+        logging.error(f"Error in fingerprint processing: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in fingerprint processing: {str(e)}")
+
 @router.post("/verify_video_only")
 async def verify_video_only(request: ContentRequest):
-    temp_path = None
     try:
-        logging.info("Received request to verify video.")
-        temp_path = await download_file(request.url)
-        fingerprint = await fingerprint_video(temp_path)
-        # Extract robust_video_hash from the fingerprint result
-        robust_video_hash = fingerprint.get('robust_video_hash')
-        if not robust_video_hash:
-            raise HTTPException(status_code=404, detail="Robust video hash not found.")
-        return {"robust_video_hash": robust_video_hash}
+        result = await video_service.fingerprint_video(request.url)
+        return {"message": "Video verification completed", "result": result}
     except Exception as e:
-        logging.error(f"Error verifying video: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing video: {str(e)}")
-    finally:
-        if temp_path:
-            await remove_temp_file(temp_path)
-            
+        logging.error(f"Error in video verification: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in video verification: {str(e)}")
+
 @router.post("/verify_liveness")
 async def verify_liveness(request: ContentRequest):
-    logging.info("Received request to verify image liveness.")
     try:
-        result = await antispoof_service.verify_image(request.url)
-        if "error" in result:
-            return JSONResponse(content=result, status_code=400)
-        return result
-    except HTTPException as e:
-        raise e
+        result = await antispoof_service.verify_liveness(request.url)
+        return {"message": "Liveness verification completed", "result": result}
     except Exception as e:
-        logging.error(f"Error verifying image liveness: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
+        logging.error(f"Error in liveness verification: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in liveness verification: {str(e)}")
 
 @router.post("/compare_videos")
 async def compare_videos_route(request: CompareRequest):
-    logging.info("Received request to compare videos.")
-    temp_paths = []
     try:
-        temp_path1 = await download_file(request.url1)
-        temp_path2 = await download_file(request.url2)
-        temp_paths = [temp_path1, temp_path2]
-        
-        result = await compare_videos(temp_path1, temp_path2)
-        return result
+        result = await video_service.compare_videos(request.url1, request.url2)
+        return {"message": "Video comparison completed", "result": result}
     except Exception as e:
-        logging.error(f"Error comparing videos: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
-    finally:
-        for path in temp_paths:
-            await remove_temp_file(path)
+        logging.error(f"Error in video comparison: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in video comparison: {str(e)}")
 
 @router.post("/verify_image")
 async def verify_image_route(request: ContentRequest):
-    temp_path = None
     try:
-        temp_path = await download_file(request.url)
-        image_hash = await verify_image(temp_path)
-        return {"image_hash": image_hash}
+        result = await image_service.verify_image(request.url)
+        return {"message": "Image verification completed", "result": result}
     except Exception as e:
-        logging.error(f"Error verifying image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
-    finally:
-        if temp_path:
-            await remove_temp_file(temp_path)
+        logging.error(f"Error in image verification: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in image verification: {str(e)}")
 
 @router.post("/compare_images")
 async def compare_images_route(request: CompareRequest):
-    logging.info("Received request to compare images.")
-    temp_paths = []
     try:
-        temp_path1 = await download_file(request.url1)
-        temp_path2 = await download_file(request.url2)
-        temp_paths = [temp_path1, temp_path2]
-
-        result = await compare_images(temp_path1, temp_path2)
-        return result
+        # Call the image comparison service with the URLs from the request body
+        result = await compare_images(request.url1, request.url2)
+        return {"message": "Image comparison completed", "result": result}
     except Exception as e:
-        logging.error(f"Error comparing images: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error comparing images: {str(e)}")
-    finally:
-        for path in temp_paths:
-            await remove_temp_file(path)
+        logging.error(f"Error in image comparison: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in image comparison: {str(e)}")

@@ -4,15 +4,26 @@ from scipy.fftpack import dct
 import imagehash
 from PIL import Image
 import logging
+import logging
 from app.utils.hash_utils import compute_video_hash, compute_frame_hashes
 from app.services.audio_service import extract_audio_features, compute_audio_hash, compute_audio_hashes
-from app.utils.file_utils import download_file, remove_temp_file
-from app.core.firebase_config import firebase_bucket
+from app.utils.file_utils import download_file, remove_temp_file, get_file_stream
+import io
+
+import tempfile
 import os
 
-def extract_video_features(video_path):
-    logging.info("Extracting video features from: %s", video_path)
-    cap = cv2.VideoCapture(video_path)
+async def extract_video_features(firebase_filename):
+    logging.info("Extracting video features")
+    video_stream = get_file_stream(firebase_filename)
+    video_bytes = video_stream.getvalue()
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_file:
+        temp_file.write(video_bytes)
+        temp_file_path = temp_file.name
+
+    cap = cv2.VideoCapture(temp_file_path)
+    
     features = []
     while True:
         ret, frame = cap.read()
@@ -22,31 +33,27 @@ def extract_video_features(video_path):
         resized = cv2.resize(gray, (32, 32))
         dct_frame = dct(dct(resized.T, norm='ortho').T, norm='ortho')
         features.append(dct_frame[:8, :8].flatten())
+    
     cap.release()
+    os.unlink(temp_file_path)
+    
     logging.info("Finished extracting video features.")
-    return np.array(features)
+    return np.array(features), video_bytes
 
 async def fingerprint_video(video_url):
-    logging.info("Fingerprinting video: %s", video_url)
+    logging.info(f"Fingerprinting video: {video_url}")
     firebase_filename = None
     try:
         firebase_filename = await download_file(video_url)
+        video_stream = get_file_stream(firebase_filename)
+        video_bytes = video_stream.getvalue()
         
-        # Download the file from Firebase
-        blob = firebase_bucket.blob(firebase_filename)
-        video_bytes = blob.download_as_bytes()
+        video_features, _ = await extract_video_features(firebase_filename)
         
-        # Use cv2.VideoCapture with a memory buffer
-        video_array = np.asarray(bytearray(video_bytes), dtype=np.uint8)
-        cap = cv2.VideoCapture()
-        cap.open(cv2.CAP_OPENCV_MJPEG, memoryBuf=video_array.tobytes())
-        
-        video_features = extract_video_features(cap)
         audio_features = extract_audio_features(video_bytes)
         
         video_hash = compute_video_hash(video_features)
-        audio_hashes = compute_audio_hash(audio_features)
-        frame_hashes = compute_frame_hashes(cap)
+        frame_hashes = compute_frame_hashes(firebase_filename)
         audio_hashes = compute_audio_hashes(video_bytes)
         
         collective_audio_hash = compute_audio_hash(audio_features)
@@ -62,8 +69,6 @@ async def fingerprint_video(video_url):
     finally:
         if firebase_filename:
             await remove_temp_file(firebase_filename)
-        if 'cap' in locals():
-            cap.release()
 
 async def compare_videos(video_url1, video_url2):
     fp1 = await fingerprint_video(video_url1)
@@ -75,8 +80,7 @@ async def compare_videos(video_url1, video_url2):
     overall_similarity = (video_similarity + audio_similarity) / 2
     is_same_content = overall_similarity > 0.9  # You can adjust this threshold
 
-    logging.info("Comparison result - Video Similarity: %f, Audio Similarity: %f, Overall Similarity: %f, Is Same Content: %s",
-                 video_similarity, audio_similarity, overall_similarity, is_same_content)
+    logging.info(f"Comparison result - Video Similarity: {video_similarity}, Audio Similarity: {audio_similarity}, Overall Similarity: {overall_similarity}, Is Same Content: {is_same_content}")
 
     return {
         "video_similarity": video_similarity,

@@ -1,21 +1,18 @@
-import os
 import aiohttp
 import uuid 
 import logging
 from urllib.parse import urlparse
 from app.core.firebase_config import firebase_bucket
+import io
 
 async def download_file(url: str) -> str:
-    # Extract the file extension from the URL
     parsed_url = urlparse(url)
-    file_extension = os.path.splitext(parsed_url.path)[1]
-
-    # If no extension is found, default to .tmp
+    file_extension = parsed_url.path.split('.')[-1]
+    
     if not file_extension:
-        file_extension = '.tmp'
+        file_extension = 'tmp'
 
-    # Generate a unique filename
-    filename = f"{uuid.uuid4()}{file_extension}"
+    filename = f"{uuid.uuid4()}.{file_extension}"
 
     try:
         async with aiohttp.ClientSession() as session:
@@ -23,9 +20,9 @@ async def download_file(url: str) -> str:
                 if response.status != 200:
                     raise Exception(f"Failed to download file: HTTP {response.status}")
                 
-                # Upload the file content to Firebase
+                content = await response.read()
                 blob = firebase_bucket.blob(filename)
-                blob.upload_from_string(await response.read(), content_type=response.headers.get('content-type'))
+                blob.upload_from_string(content, content_type=response.headers.get('content-type'))
 
         logging.info(f"File downloaded and saved to Firebase: {filename}")
         return filename
@@ -40,3 +37,19 @@ async def remove_temp_file(filename: str):
         logging.info(f"Temporary file deleted from Firebase: {filename}")
     except Exception as e:
         logging.error(f"Error deleting temporary file from Firebase: {str(e)}")
+
+def get_file_content(filename: str) -> bytes:
+    try:
+        blob = firebase_bucket.blob(filename)
+        return blob.download_as_bytes()
+    except Exception as e:
+        logging.error(f"Error getting file content from Firebase: {str(e)}")
+        raise
+
+def get_file_stream(filename: str) -> io.BytesIO:
+    try:
+        content = get_file_content(filename)
+        return io.BytesIO(content)
+    except Exception as e:
+        logging.error(f"Error getting file stream from Firebase: {str(e)}")
+        raise
