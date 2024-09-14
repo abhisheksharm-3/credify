@@ -47,6 +47,8 @@ export interface VideoData {
     $id: string;
     $createdAt: string;
     $updatedAt: string;
+    verified?: boolean;
+    geminiAnalysis?: string;
   }
 
   export interface VerificationResult {

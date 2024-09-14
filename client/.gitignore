@@ -15,7 +15,8 @@
 
 # production
 /build
-
+error.log
+combined.log
 # misc
 .DS_Store
 *.pem
