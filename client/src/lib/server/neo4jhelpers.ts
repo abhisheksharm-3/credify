@@ -10,6 +10,7 @@ export interface VerificationResult {
   audio_hash?: string;
   frame_hash?: string;
   is_tampered?: boolean;
+  is_deepfake?: boolean;
 }
 
 export interface User {
