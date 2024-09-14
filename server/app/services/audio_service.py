@@ -4,24 +4,33 @@ import imagehash
 from PIL import Image
 import logging
 import io
-import subprocess
-import os
 from pydub import AudioSegment
+
+import ffmpeg
+import numpy as np
 
 def extract_audio_features(video_bytes):
     logging.info("Extracting audio features")
     try:
-        # Use librosa to load audio from bytes
-        y, sr = librosa.load(io.BytesIO(video_bytes), sr=None)
+        # Use ffmpeg to extract audio from video bytes
+        out, _ = (
+            ffmpeg
+            .input('pipe:0')
+            .output('pipe:1', format='f32le', acodec='pcm_f32le', ac=1, ar='44100')
+            .run(input=video_bytes, capture_stdout=True, capture_stderr=True)
+        )
+        
+        # Convert to numpy array
+        audio_array = np.frombuffer(out, np.float32)
         
         # Extract MFCC features
-        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        mfcc = librosa.feature.mfcc(y=audio_array, sr=44100, n_mfcc=13)
         
         return mfcc
     except Exception as e:
         logging.error(f"Error extracting audio features: {str(e)}")
         raise
-
+    
 def compute_audio_hash(features):
     logging.info("Computing audio hash.")
     if features is None:
