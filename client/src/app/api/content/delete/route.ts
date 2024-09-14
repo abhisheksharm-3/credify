@@ -2,72 +2,95 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/server/appwrite';
 import { Databases, ID, Query } from 'node-appwrite';
 import { UTApi } from 'uploadthing/server';
+import { z } from 'zod';
+import logger from '@/lib/logger';
 
-export async function DELETE(req: Request) {
-  const utapi = new UTApi()
+const deleteRequestSchema = z.object({
+  id: z.string().nonempty('ID is required'),
+});
+
+async function getFileDocument(databases: Databases, id: string) {
   try {
-    const { id } = await req.json();
-    console.log('Deleting content with ID:', id);
+    return await databases.getDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_COLLECTION_ID!,
+      id
+    );
+  } catch (error) {
+    const documents = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_COLLECTION_ID!,
+      [Query.equal('fileId', id)]
+    );
 
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    if (documents.documents.length > 0) {
+      return documents.documents[0];
     }
+    throw new Error('File not found');
+  }
+}
 
-    // Create an admin client
-    const { account } = await createAdminClient();
-    const client = account.client;
+async function deleteUploadThingFile(utapi: UTApi, fileId: string) {
+  try {
+    await utapi.deleteFiles(fileId);
+    logger.info(`File deleted from UploadThing: ${fileId}`);
+  } catch (error) {
+    logger.error(`Error deleting file from UploadThing: ${fileId}`, error);
+    throw new Error('Failed to delete file from UploadThing');
+  }
+}
 
-    // Create a Databases instance
-    const databases = new Databases(client);
-
-    console.log('Fetching document...');
-    // 1. Try to get the file information from Appwrite
-    let file;
-    try {
-      // First, try to fetch the document assuming 'id' is the document ID
-      file = await databases.getDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_COLLECTION_ID!,
-        id
-      );
-    } catch (error) {
-      // If that fails, assume 'id' is the fileId and query for it
-      const documents = await databases.listDocuments(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_COLLECTION_ID!,
-        [Query.equal('fileId', id)]
-      );
-
-      if (documents.documents.length > 0) {
-        file = documents.documents[0];
-      } else {
-        return NextResponse.json({ error: 'File not found' }, { status: 404 });
-      }
-    }
-
-    console.log('File retrieved:', file);
-
-    // 2. Delete the file from UploadThing
-    const uploadThingFileKey = file.fileId;
-    if (uploadThingFileKey) {
-      console.log('Deleting file from UploadThing:', uploadThingFileKey);
-      await utapi.deleteFiles(uploadThingFileKey);
-    }
-
-    // 3. Delete the file record from Appwrite
-    console.log('Deleting document from Appwrite');
+async function deleteAppwriteDocument(databases: Databases, documentId: string) {
+  try {
     await databases.deleteDocument(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_COLLECTION_ID!,
-      file.$id
+      documentId
     );
+    logger.info(`Document deleted from Appwrite: ${documentId}`);
+  } catch (error) {
+    logger.error(`Error deleting document from Appwrite: ${documentId}`, error);
+    throw new Error('Failed to delete document from Appwrite');
+  }
+}
+
+export async function DELETE(req: Request) {
+  const utapi = new UTApi();
+  
+  try {
+    const body = await req.json();
+    const { id } = deleteRequestSchema.parse(body);
+
+    logger.info(`Deleting content with ID: ${id}`);
+
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    const file = await getFileDocument(databases, id);
+    logger.info(`File retrieved: ${JSON.stringify(file)}`);
+
+    if (file.fileId) {
+      await deleteUploadThingFile(utapi, file.fileId);
+    }
+
+    await deleteAppwriteDocument(databases, file.$id);
 
     return NextResponse.json({ message: 'File deleted successfully' }, { status: 200 });
   } catch (error) {
-    console.error('Error deleting file:', error);
+    if (error instanceof z.ZodError) {
+      logger.warn('Validation error', error.errors);
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+
     if (error instanceof Error) {
+      if (error.message === 'File not found') {
+        return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      }
+      logger.error('Error deleting file', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    logger.error('Unexpected error', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

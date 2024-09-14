@@ -1,65 +1,61 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getLoggedInUser, createAdminClient } from "@/lib/server/appwrite";
-import { Databases, Query } from "node-appwrite";
+import { Databases, Query, Models } from "node-appwrite";
+import logger from "@/lib/logger";
+
+interface FileDocument extends Models.Document {
+  userId: string;
+  verified: boolean;
+}
+
+async function fetchFiles(databases: Databases, userId: string, collectionId: string, verified: boolean): Promise<FileDocument[]> {
+  try {
+    const response = await databases.listDocuments<FileDocument>(
+      process.env.APPWRITE_DATABASE_ID!,
+      collectionId,
+      [
+        Query.equal("userId", userId),
+        Query.orderDesc('$createdAt'),
+      ]
+    );
+    return response.documents.map(doc => ({ ...doc, verified }));
+  } catch (error) {
+    logger.error(`Error fetching ${verified ? 'verified' : 'unverified'} files:`, error);
+    throw new Error(`Failed to fetch ${verified ? 'verified' : 'unverified'} files`);
+  }
+}
 
 export const GET = async (request: NextRequest) => {
   try {
     const user = await getLoggedInUser();
 
     if (!user) {
-      return new Response(JSON.stringify({ message: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      logger.warn("Unauthorized access attempt");
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const userId = user.$id;
+    logger.info(`Fetching files for user: ${userId}`);
     
-    // Fetch files from Appwrite
     const { account } = await createAdminClient();
     const databases = new Databases(account.client);
 
-    // Fetch unverified files
-    const unverifiedFiles = await databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_COLLECTION_ID!,
-      [
-        Query.equal("userId", userId),
-        Query.orderDesc('$createdAt') 
-      ]
-    );
+    const [unverifiedFiles, verifiedFiles] = await Promise.all([
+      fetchFiles(databases, userId, process.env.APPWRITE_COLLECTION_ID!, false),
+      fetchFiles(databases, userId, process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!, true)
+    ]);
 
-    // Fetch verified files
-    const verifiedFiles = await databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
-      [
-        Query.equal("userId", userId),
-        Query.orderDesc('$createdAt') 
-      ]
-    );
+    const combinedFiles = [...unverifiedFiles, ...verifiedFiles]
+      .sort((a, b) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime());
 
-    // Combine and tag the files
-    const combinedFiles = [
-      ...unverifiedFiles.documents.map(file => ({ ...file, verified: false })),
-      ...verifiedFiles.documents.map(file => ({ ...file, verified: true }))
-    ];
-
-    // Sort combined files by creation date
-    combinedFiles.sort((a, b) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime());
-
-    const totalFiles = unverifiedFiles.total + verifiedFiles.total;
+    const totalFiles = unverifiedFiles.length + verifiedFiles.length;
     const hasMore = totalFiles > combinedFiles.length;
 
-    return new Response(JSON.stringify({ files: combinedFiles, hasMore }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    logger.info(`Successfully fetched ${totalFiles} files for user: ${userId}`);
+
+    return NextResponse.json({ files: combinedFiles, hasMore }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching files:", error);
-    return new Response(JSON.stringify({ message: "Error processing request" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    logger.error("Error processing request:", error);
+    return NextResponse.json({ message: "Error processing request" }, { status: 500 });
   }
 };
