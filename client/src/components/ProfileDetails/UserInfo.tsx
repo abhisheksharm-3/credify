@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { RiStarFill, RiVerifiedBadgeFill} from '@remixicon/react';
+import { RiStarFill, RiVerifiedBadgeFill } from '@remixicon/react';
 import { UserIcon } from 'lucide-react';
 
 interface UserProfileProps {
@@ -8,9 +8,10 @@ interface UserProfileProps {
     name: string;
   } | null;
   userProfileImage: string;
+  isVerified: boolean;
 }
 
-const UserInfo: FC<UserProfileProps> = ({ user, userProfileImage }) => {
+const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) => {
   return (
     <div className="flex flex-row items-center justify-between">
       <motion.div
@@ -24,9 +25,8 @@ const UserInfo: FC<UserProfileProps> = ({ user, userProfileImage }) => {
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-            className={`w-25 h-25 rounded-full overflow-hidden shadow-lg bg-white/5 border-3 border-black dark:border-white backdrop-blur-lg flex items-center justify-center ${
-              userProfileImage.length > 0 ? '' : 'p-1'
-            }`}
+            className={`w-25 h-25 rounded-full overflow-hidden shadow-lg bg-white/5 border-3 border-black dark:border-white backdrop-blur-lg flex items-center justify-center ${userProfileImage.length > 0 ? '' : 'p-1'
+              }`}
           >
             {userProfileImage.length > 0 ? (
               <div className="h-[150px] p-0 w-[150px] overflow-hidden flex items-center justify-center">
@@ -46,9 +46,12 @@ const UserInfo: FC<UserProfileProps> = ({ user, userProfileImage }) => {
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-2xl md:text-2xl lg:text-3xl font-bold dark:text-white"
+            className="text-2xl md:text-2xl lg:text-3xl font-bold dark:text-white flex gap-2 items-center"
           >
             {user?.name || ""}
+            {isVerified && <RiVerifiedBadgeFill className="text-blue-600" size={25} />
+            }
+
           </motion.h1>
           <motion.div
             initial={{ y: -20, opacity: 0 }}
