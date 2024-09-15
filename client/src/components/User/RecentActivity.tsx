@@ -108,7 +108,6 @@ export function RecentActivity({ userId }: RecentActivityProps) {
     }
     window.location.href = redirectUrl;
   };
-
   return (
     <Card className="col-span-2 lg:col-span-1 shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="border-b pb-4">
