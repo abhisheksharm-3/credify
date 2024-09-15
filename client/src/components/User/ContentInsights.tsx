@@ -1,36 +1,36 @@
 import React from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { AlertCircle, CheckCircle2, Clock } from 'lucide-react'
-import { Content } from '@/lib/types'
+import { AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react'
+import { FileInfo } from '@/lib/types'
 
 interface ContentInsightsProps {
-  content: Content[]
+  content: FileInfo[]
 }
 
 export default function ContentInsights({ content }: ContentInsightsProps) {
-  const draftCount = content.filter(item => item.status === 'Draft').length
-  const reviewCount = content.filter(item => item.status === 'Under Review').length
-  const publishedCount = content.filter(item => item.status === 'Published').length
+  const tamperedCount = content.filter(item => item.tampered).length
+  const verifiedCount = content.filter(item => item.verified).length
+  const notVerifiedCount = content.filter(item => !item.verified && !item.tampered).length
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Content Insights</CardTitle>
-        <CardDescription>Overview of your content performance</CardDescription>
+        <CardDescription>Overview of your content status</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center space-x-2 text-yellow-600">
-            <Clock className="w-5 h-5" />
-            <span>{draftCount} draft item{draftCount !== 1 ? 's' : ''} waiting to be reviewed.</span>
-          </div>
-          <div className="flex items-center space-x-2 text-blue-600">
-            <AlertCircle className="w-5 h-5" />
-            <span>{reviewCount} item{reviewCount !== 1 ? 's' : ''} under review.</span>
+        <div className="flex flex-col md:flex-row justify-between w-full   gap-4">
+          <div className="flex items-center space-x-2 text-red-600">
+            <AlertTriangle className="w-5 h-5" />
+            <span>{tamperedCount} tampered item{tamperedCount !== 1 ? 's' : ''}.</span>
           </div>
           <div className="flex items-center space-x-2 text-green-600">
             <CheckCircle2 className="w-5 h-5" />
-            <span>{publishedCount} published item{publishedCount !== 1 ? 's' : ''}.</span>
+            <span>{verifiedCount} verified item{verifiedCount !== 1 ? 's' : ''}.</span>
+          </div>
+          <div className="flex items-center space-x-2 text-gray-500">
+            <AlertCircle className="w-5 h-5" />
+            <span>{notVerifiedCount} not verified item{notVerifiedCount !== 1 ? 's' : ''}.</span>
           </div>
         </div>
       </CardContent>
