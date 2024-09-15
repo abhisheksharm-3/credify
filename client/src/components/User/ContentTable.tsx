@@ -24,14 +24,14 @@ export default function ContentTable({ files }: ContentTableProps) {
 
   const handleVerificationRedirect = (file: FileInfo) => {
     let redirectUrl;
-    if(!file.verified){
-      redirectUrl=`/content/${file.fileId}`
-    }else if (file.video_hash) {
+    if (!file.verified) {
+      redirectUrl = `/content/${file.fileId}`;
+    } else if (file.video_hash) {
       redirectUrl = `/verify/${file.video_hash}`;
     } else {
       redirectUrl = `/verify/${file.image_hash}`;
     }
-    window.location.href = redirectUrl;
+    window.open(redirectUrl, '_blank'); // Open in a new tab
   };
 
   const getStatusColor = (file: FileInfo) => {
@@ -110,22 +110,28 @@ export default function ContentTable({ files }: ContentTableProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  {/* On clicking "View", call the handleVerificationRedirect */}
-                  <DropdownMenuItem onClick={() => handleVerificationRedirect(item)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    <span>View</span>
-                  </DropdownMenuItem>
-                  {
-                    !item.verified ? null :
-                    <DropdownMenuSeparator />
-                  }
-                  {
-                    item.verified ? null :
-                    <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete</span>
+                  {/* Show "View" if verified, otherwise show "Verify" */}
+                  {item.verified ? (
+                    <DropdownMenuItem onClick={() => handleVerificationRedirect(item)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      <span>View</span>
                     </DropdownMenuItem>
-                  }
+                  ) : (
+                    <DropdownMenuItem onClick={() => handleVerificationRedirect(item)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      <span>Verify</span>
+                    </DropdownMenuItem>
+                  )}
+                  {/* Only show "Delete" if not verified */}
+                  {!item.verified && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>

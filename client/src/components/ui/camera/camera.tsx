@@ -93,6 +93,7 @@ const Camera: FC<CameraProps> = ({ onClosed, onCapturedImages }) => {
                   className="inline-flex h-10 w-10 lg:h-14 lg:w-14 items-center justify-center rounded-full bg-gray-500 text-gray-50 transition-colors hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
                   <XIcon className="h-6 w-6" />
                 </button>
+
               </div>
             </div>
           </div>
@@ -110,7 +111,11 @@ const Camera: FC<CameraProps> = ({ onClosed, onCapturedImages }) => {
             >
               <div className="fixed h-11 w-11 rounded-full bg-primary-foreground group-hover:bg-primary-foreground/60"></div>
             </Button>
+            <div className="absolute bottom-20 right-4">
+              <SwitchCamera />
+            </div>
           </div>
+
         )}
       </div>
     </div>

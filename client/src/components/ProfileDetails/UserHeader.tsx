@@ -20,8 +20,10 @@ import { toast } from 'sonner'
 
 interface UserHeaderProps {
   user: AppwriteUser | null
+  trustScore:number
+  verifiedCount: number
 }
-const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
+const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user,trustScore }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [emailVerified, setEmailVerified] = useState("no");
@@ -225,7 +227,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   return (
     <header className="relative bg-gradient-to-b from-purple-600 to-white dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg">
       <div className="container pt-12 lg:py-12 pb-4">
-        <UserInfo isVerified={isVerified} user={user} userProfileImage={userProfileImage} />
+        <UserInfo verifiedCount={verifiedCount} trustScore={trustScore} isVerified={isVerified} user={user} userProfileImage={userProfileImage} />
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

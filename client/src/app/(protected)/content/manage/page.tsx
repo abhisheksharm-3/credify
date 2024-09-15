@@ -14,6 +14,7 @@ import ContentDetailsSheet from '@/components/User/ContentDetailsSheet'
 import { toast } from 'sonner'
 import { FileInfo } from '@/lib/types'
 import { useRouter } from 'next/navigation'
+import { UploadVideoDialog } from '@/components/User/UploadVideoDialog'
 export default function ContentManagement() {
   const router=useRouter();
   const [searchTerm, setSearchTerm] = useState('')
@@ -151,10 +152,7 @@ const sortedFiles = useMemo(() => {
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleAddNewContent}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Content
-          </Button>
+          <UploadVideoDialog/>
         </div>
 
         <Card className="overflow-hidden">
