@@ -14,3 +14,4 @@ scipy==1.14.1
 tensorflow==2.15.0
 uvicorn==0.30.6
 opencv-python==4.8.0.74
+python-magic==0.4.27

@@ -1,3 +1,4 @@
+from fastapi import logger
 import numpy as np
 import librosa
 import imagehash
@@ -10,25 +11,23 @@ import ffmpeg
 import numpy as np
 
 def extract_audio_features(video_bytes):
-    logging.info("Extracting audio features")
+    logger.info("Extracting audio features")
     try:
-        # Use ffmpeg to extract audio from video bytes
-        out, _ = (
+        out, err = (
             ffmpeg
             .input('pipe:0')
             .output('pipe:1', format='f32le', acodec='pcm_f32le', ac=1, ar='44100')
             .run(input=video_bytes, capture_stdout=True, capture_stderr=True)
         )
         
-        # Convert to numpy array
         audio_array = np.frombuffer(out, np.float32)
-        
-        # Extract MFCC features
         mfcc = librosa.feature.mfcc(y=audio_array, sr=44100, n_mfcc=13)
-        
         return mfcc
+    except ffmpeg.Error as e:
+        logger.error(f"FFmpeg error: {e.stderr.decode()}")
+        raise
     except Exception as e:
-        logging.error(f"Error extracting audio features: {str(e)}")
+        logger.error(f"Error extracting audio features: {str(e)}", exc_info=True)
         raise
     
 def compute_audio_hash(features):
@@ -42,13 +41,28 @@ def compute_audio_hash(features):
     return imagehash.phash(Image.fromarray(features_2d))
 
 def compute_audio_hashes(video_bytes):
-    logging.info("Computing audio hashes")
-    audio = AudioSegment.from_file(io.BytesIO(video_bytes))
-    samples = np.array(audio.get_array_of_samples())
-    mfccs = librosa.feature.mfcc(y=samples.astype(float), sr=audio.frame_rate, n_mfcc=13)
-    audio_hashes = []
-    for mfcc in mfccs.T:
-        audio_hash = imagehash.average_hash(Image.fromarray(mfcc.reshape(13, 1)))
-        audio_hashes.append(str(audio_hash))
-    logging.info("Finished computing audio hashes.")
-    return audio_hashes
+    logger.info("Computing audio hashes")
+    try:
+        out, _ = (
+            ffmpeg
+            .input('pipe:0')
+            .output('pipe:1', format='f32le', acodec='pcm_f32le', ac=1, ar='44100')
+            .run(input=video_bytes, capture_stdout=True, capture_stderr=True)
+        )
+        
+        audio_array = np.frombuffer(out, np.float32)
+        mfccs = librosa.feature.mfcc(y=audio_array, sr=44100, n_mfcc=13)
+        
+        audio_hashes = []
+        for mfcc in mfccs.T:
+            audio_hash = imagehash.average_hash(Image.fromarray(mfcc.reshape(13, 1)))
+            audio_hashes.append(str(audio_hash))
+        
+        logger.info("Finished computing audio hashes.")
+        return audio_hashes
+    except ffmpeg.Error as e:
+        logger.error(f"FFmpeg error in compute_audio_hashes: {e.stderr.decode()}")
+        raise
+    except Exception as e:
+        logger.error(f"Error in compute_audio_hashes: {str(e)}", exc_info=True)
+        raise
