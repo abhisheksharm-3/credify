@@ -1,6 +1,6 @@
 aiohttp==3.10.5
 fastapi==0.109.2
-ffmpeg==1.4
+# ffmpeg==1.4
 ffmpeg-python==0.2.0
 firebase_admin==6.5.0
 imagehash==4.3.1
