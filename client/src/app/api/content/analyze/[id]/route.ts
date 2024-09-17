@@ -1,160 +1,183 @@
+// File: src/pages/api/content/analyze/[id].ts
+
 import { NextRequest, NextResponse } from 'next/server';
-import fetch, { Response } from 'node-fetch';
+import { Buffer } from 'buffer';
+import fetch from 'node-fetch';
 import FormData from 'form-data';
-import { initializeNeo4j, getContentVerificationAndUser, ensureNeo4jConnection, VerificationResult, getContentVerificationOnly } from '@/lib/server/neo4jhelpers';
-import { getLoggedInUser } from '@/lib/server/appwrite';
+import { initializeNeo4j, getContentVerificationOnly, ensureNeo4jConnection, VerificationResult } from '@/lib/server/neo4jhelpers';
+import {
+  ContentDownloadError,
+  ContentHashError,
+  DatabaseError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  RateLimitError,
+  ExternalServiceError
+} from '@/lib/errors';
+import logger from '@/lib/logger';
+import { rateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
-const VERIFICATION_SERVICE_BASE_URL = 'https://credify-ndpx.onrender.com';
+const VERIFICATION_SERVICE_BASE_URL = process.env.VERIFICATION_SERVICE_BASE_URL;
+const UPLOAD_SERVICE_BASE_URL = process.env.UPLOAD_SERVICE_BASE_URL;
 
-async function downloadContent(url: string): Promise<{ buffer: Buffer; contentType: string }> {
-    console.log(`[downloadContent] Attempting to download content from URL: ${url}`);
-    try {
-        const response: Response = await fetch(url);
-        if (!response.ok) {
-            console.error(`[downloadContent] Failed to download content: ${response.status} ${response.statusText}`);
-            throw new Error(`Failed to download content: ${response.status} ${response.statusText}`);
-        }
-        const contentType = response.headers.get('content-type') || 'application/octet-stream';
-        console.log(`[downloadContent] Content type: ${contentType}`);
-        const buffer = await response.buffer();
-        console.log(`[downloadContent] Content downloaded successfully. Buffer size: ${buffer.length} bytes`);
-        return { buffer, contentType };
-    } catch (error) {
-        console.error('[downloadContent] Error downloading content:', error);
-        throw new Error('Failed to download content');
-    }
+interface DownloadResult {
+  buffer: Buffer;
+  contentType: string;
+}
+interface ApiResponse {
+  message: string;
+  result: {
+    frame_hashes: string[];
+    audio_hashes: string[];
+    robust_image_hash: string | null;
+    robust_video_hash: string;
+  }
 }
 
-async function getContentHash(contentBuffer: Buffer, contentType: string, filename: string): Promise<string> {
-    console.log(`[getContentHash] Preparing to get content hash for file: ${filename}, Content-Type: ${contentType}`);
-    const formData = new FormData();
-    const isImage = contentType.startsWith('image');
-    const endpoint = isImage ? 'verify_image' : 'verify_video';
-    const fileAttributeName = isImage ? 'image_file' : 'video_file';
+async function downloadContent(url: string): Promise<DownloadResult> {
+  logger.info(`Attempting to download content from URL: ${url}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new ContentDownloadError(`Failed to download content: ${response.status} ${response.statusText}`);
+    }
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    const buffer = await response.arrayBuffer().then(Buffer.from);
+    logger.info(`Content downloaded successfully. Buffer size: ${buffer.length} bytes`);
+    return { buffer, contentType };
+  } catch (error) {
+    logger.error('Error downloading content:', error);
+    throw new ContentDownloadError('Failed to download content');
+  }
+}
 
-    formData.append(fileAttributeName, contentBuffer, {
-        filename,
-        contentType,
+async function getContentHash(contentBuffer: Buffer, contentType: string, filename: string, contentUrl: string): Promise<string> {
+  logger.info(`Preparing to get content hash for file: ${filename}, Content-Type: ${contentType}`);
+  const formData = new FormData();
+  const isImage = contentType.startsWith('image');
+  const endpoint = isImage ? 'verify_image' : 'fingerprint';
+  const fileAttributeName = isImage ? 'image_file' : 'video_file';
+
+  formData.append(fileAttributeName, contentBuffer, { filename, contentType });
+
+  try {
+    const response = await fetch(`${VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
+      method: 'POST',
+      body: JSON.stringify({ url: contentUrl }),
+      headers: formData.getHeaders(),
     });
 
-    console.log(`[getContentHash] Sending request to ${VERIFICATION_SERVICE_BASE_URL}/${endpoint}`);
-    try {
-        const response: Response = await fetch(`${VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
-            method: 'POST',
-            body: formData as any,
-            headers: formData.getHeaders(),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`[getContentHash] Verification service error: ${errorText}`);
-            throw new Error(`Verification service error: ${errorText}`);
-        }
-
-        const result: VerificationResult = await response.json() as VerificationResult;
-        console.log(`[getContentHash] Verification service response:`, result);
-        const hash = result.image_hash || result.video_hash;
-        if (!hash) {
-            console.error('[getContentHash] No hash returned from verification service');
-            throw new Error('No hash returned from verification service');
-        }
-        console.log(`[getContentHash] Content hash obtained: ${hash}`);
-        return hash;
-    } catch (error) {
-        console.error('[getContentHash] Error getting content hash:', error);
-        throw new Error('Failed to get content hash');
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ContentHashError(`Verification service error: ${errorText}`);
     }
+
+    
+  const apiResponse: ApiResponse = await response.json() as ApiResponse;
+  const result = apiResponse.result;
+    const hash = result.robust_image_hash || result.robust_video_hash;
+    if (!hash) {
+      throw new ContentHashError('No hash returned from verification service');
+    }
+    logger.info(`Content hash obtained: ${hash}`);
+    return hash;
+  } catch (error) {
+    logger.error('Error getting content hash:', error);
+    throw new ContentHashError('Failed to get content hash');
+  }
 }
 
 let isNeo4jInitialized = false;
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ): Promise<NextResponse> {
+  try {
+    // Apply rate limiting
+    const rateLimitResult = await rateLimit(request);
+    if (!rateLimitResult.success) {
+      throw new RateLimitError('Too many requests, please try again later.');
+    }
+
     const contentId = params.id;
-    console.log('[GET] Received request to /api/content/analyze for content ID:', contentId);
+    logger.info(`Received request to /api/content/analyze for content ID: ${contentId}`);
 
     if (!contentId) {
-        console.error('[GET] Content ID is missing');
-        return NextResponse.json({ error: 'Content ID is required' }, { status: 400 });
+      throw new ValidationError('Content ID is required');
     }
 
-    try {
-        if (!isNeo4jInitialized) {
-            console.log('[GET] Initializing Neo4j...');
-            await initializeNeo4j();
-            isNeo4jInitialized = true;
-            console.log('[GET] Neo4j initialized successfully');
-        }
-        ensureNeo4jConnection();
-        console.log('[GET] Neo4j connection ensured');
+    // TODO: Add authentication check here
+    // if (!isAuthenticated(request)) {
+    //   throw new AuthenticationError('User is not authenticated');
+    // }
 
-        const contentUrl = `https://utfs.io/f/${contentId}`;
-        console.log('[GET] Content URL:', contentUrl);
+    // TODO: Add authorization check here
+    // if (!isAuthorized(request, 'analyze_content')) {
+    //   throw new AuthorizationError('User is not authorized to analyze content');
+    // }
 
-        let contentBuffer: Buffer;
-        let contentType: string;
-        try {
-            console.log('[GET] Downloading content...');
-            ({ buffer: contentBuffer, contentType } = await downloadContent(contentUrl));
-            console.log('[GET] Content downloaded successfully. Content type:', contentType);
-        } catch (error) {
-            console.error('[GET] Error downloading content:', error);
-            return NextResponse.json({ error: 'Failed to download content' }, { status: 500 });
-        }
-
-        const filename = `content_${contentId}.${contentType.split('/')[1]}`;
-
-        let contentHash: string;
-        try {
-            console.log('[GET] Getting content hash from verification service...');
-            contentHash = await getContentHash(contentBuffer, contentType, filename);
-            console.log('[GET] Content hash:', contentHash);
-        } catch (error) {
-            console.error('[GET] Error getting content hash:', error);
-            return NextResponse.json({ error: 'Failed to get content hash' }, { status: 500 });
-        }
-
-        try {
-            console.log('[GET] Querying database for content verification and user...');
-            const { verificationResult: existingResult, uploadInfo } = await getContentVerificationOnly(contentHash);
-            console.log('[GET] Database query result:', existingResult);
-
-            if (existingResult) {
-                console.log('[GET] Hash found in database:', existingResult);
-                return NextResponse.json({
-                    contentHash,
-                    status: 'found',
-                    message: 'Content hash found in database',
-                    verificationResult: existingResult,
-                    creatorsId: uploadInfo
-                });
-            }
-        } catch (error) {
-            if (error instanceof Error && error.message.includes('Invalid contentHash or userId provided')) {
-                console.log('[GET] Content hash not found in database');
-            } else {
-                console.error('[GET] Unexpected error during database query:', error);
-                return NextResponse.json({ error: 'Unexpected error during database query' }, { status: 500 });
-            }
-        }
-
-        // If we reach here, it means the content was not found
-        console.log('[GET] Content hash not found in database');
-        return NextResponse.json({
-            contentHash,
-            status: 'not_found',
-            message: 'Content hash not found in database'
-        });
-
-    } catch (error) {
-        console.error('[GET] Unhandled error in content verification:', error);
-        return NextResponse.json(
-            { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
-            { status: 500 }
-        );
+    if (!isNeo4jInitialized) {
+      await initializeNeo4j();
+      isNeo4jInitialized = true;
+      logger.info('Neo4j initialized successfully');
     }
+    ensureNeo4jConnection();
+
+    const contentUrl = `${UPLOAD_SERVICE_BASE_URL}/${contentId}`;
+    logger.info(`Content URL: ${contentUrl}`);
+
+    const { buffer: contentBuffer, contentType } = await downloadContent(contentUrl);
+
+    const filename = `content_${contentId}.${contentType.split('/')[1]}`;
+    const contentHash = await getContentHash(contentBuffer, contentType, filename, contentUrl);
+
+    const { verificationResult: existingResult, uploadInfo } = await getContentVerificationOnly(contentHash);
+
+    if (existingResult) {
+      logger.info(`Hash found in database: ${contentHash}`);
+      return NextResponse.json({
+        contentHash,
+        status: 'found',
+        message: 'Content hash found in database',
+        verificationResult: existingResult,
+        creatorsId: uploadInfo
+      });
+    }
+
+    logger.info(`Content hash not found in database: ${contentHash}`);
+    return NextResponse.json({
+      contentHash,
+      status: 'not_found',
+      message: 'Content hash not found in database'
+    });
+
+  } catch (error) {
+    logger.error('Unhandled error in content verification:', error);
+    if (error instanceof ContentDownloadError) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else if (error instanceof ContentHashError) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else if (error instanceof DatabaseError) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else if (error instanceof ValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    } else if (error instanceof AuthenticationError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    } else if (error instanceof AuthorizationError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    } else if (error instanceof RateLimitError) {
+      return NextResponse.json({ error: error.message }, { status: 429 });
+    } else if (error instanceof ExternalServiceError) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
+    } else {
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+  }
 }

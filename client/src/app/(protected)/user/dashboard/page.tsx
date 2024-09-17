@@ -27,6 +27,7 @@ import {
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { LoadingSkeleton } from "@/components/Layout/LoadingSkeleton";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
+import { UploadVideoDialog } from "@/components/User/UploadVideoDialog";
 
 const chartData: ChartDataPoint[] = [
   { month: "January", desktop: 186 },
@@ -105,10 +106,13 @@ export default function Dashboard() {
     <LoggedInLayout>
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <main className="flex flex-col gap-8 p-4 sm:px-6 sm:py-8 md:gap-12 lg:px-8 xl:px-12">
-          {user && (
-            <div className="mb-4">
+        {user && (
+            <div className="mb-4 flex flex-col md:flex-row w-full justify-between">
+              <div className="mb-4 md:mb-0">
               <h1 className="text-2xl font-bold">Welcome, {user.name}!</h1>
               <p>Email: {user.email}</p>
+              </div>
+              <UploadVideoDialog />
             </div>
           )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: credify
+    env: python
+    buildCommand: |
+      apt-get update && apt-get install -y ffmpeg
+      chmod +x $(which ffmpeg)
+      ffmpeg -version
+      pip install --upgrade pip
+      pip install --use-pep517 -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT

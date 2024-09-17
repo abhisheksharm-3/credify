@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Content } from '@/lib/types'
+import { FileInfo } from '@/lib/types'
 
 interface ContentDetailsSheetProps {
-  content: Content | null
+  content: FileInfo | null
   isEditing: boolean
   onClose: () => void
   onEdit: () => void
-  onSave: (updatedContent: Content) => void
+  onSave: (updatedContent: FileInfo) => void
 }
 
 export default function ContentDetailsSheet({
@@ -22,7 +22,7 @@ export default function ContentDetailsSheet({
   onEdit,
   onSave
 }: ContentDetailsSheetProps) {
-  const [editedContent, setEditedContent] = React.useState<Content | null>(null)
+  const [editedContent, setEditedContent] = React.useState<FileInfo | null>(null)
 
   React.useEffect(() => {
     setEditedContent(content)
@@ -32,11 +32,11 @@ export default function ContentDetailsSheet({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setEditedContent((prev: Content | null) => prev ? { ...prev, [name]: value } : null)
+    setEditedContent((prev: FileInfo | null) => prev ? { ...prev, [name]: value } : null)
   }
 
   const handleSelectChange = (name: string, value: string) => {
-    setEditedContent((prev: Content | null) => prev ? { ...prev, [name]: value } : null)
+    setEditedContent((prev: FileInfo | null) => prev ? { ...prev, [name]: value } : null)
   }
 
   const handleSave = () => {
@@ -49,112 +49,57 @@ export default function ContentDetailsSheet({
     <Sheet open={!!content} onOpenChange={onClose}>
       <SheetContent className="sm:max-w-[540px]">
         <SheetHeader>
-          <SheetTitle>{isEditing ? 'Edit Content' : 'Content Details'}</SheetTitle>
+          <SheetTitle>{isEditing ? 'Edit File Information' : 'File Details'}</SheetTitle>
           <SheetDescription>
-            {isEditing ? 'Make changes to your content here.' : 'View detailed information about your content.'}
+            {isEditing ? 'Make changes to your file information here.' : 'View detailed information about your file.'}
           </SheetDescription>
         </SheetHeader>
         <div className="mt-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="fileName">File Name</Label>
             <Input
-              id="title"
-              name="title"
-              value={editedContent?.title || ''}
+              id="fileName"
+              name="fileName"
+              value={editedContent?.fileName || ''}
               onChange={handleInputChange}
               readOnly={!isEditing}
               className={isEditing ? '' : 'bg-muted'}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={editedContent?.description || ''}
+            <Label htmlFor="fileSize">File Size</Label>
+            <Input
+              id="fileSize"
+              name="fileSize"
+              value={editedContent?.fileSize || ''}
               onChange={handleInputChange}
               readOnly={!isEditing}
               className={isEditing ? '' : 'bg-muted'}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
+            <Label htmlFor="fileType">File Type</Label>
             <Input
-              id="type"
-              value={editedContent?.type || ''}
-              readOnly
-              className="bg-muted"
+              id="fileType"
+              name="fileType"
+              value={editedContent?.fileType || ''}
+              onChange={handleInputChange}
+              readOnly={!isEditing}
+              className={isEditing ? '' : 'bg-muted'}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            {isEditing ? (
-              <Select
-                value={editedContent?.status}
-                onValueChange={(value) => handleSelectChange('status', value)}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Published">Published</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Under Review">Under Review</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                id="status"
-                value={editedContent?.status || ''}
-                readOnly
-                className="bg-muted"
-              />
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="creator">Creator</Label>
+            <Label htmlFor="fileUrl">File URL</Label>
             <Input
-              id="creator"
-              value={editedContent?.creator || ''}
-              readOnly
-              className="bg-muted"
+              id="fileUrl"
+              name="fileUrl"
+              value={editedContent?.fileUrl || ''}
+              onChange={handleInputChange}
+              readOnly={!isEditing}
+              className={isEditing ? '' : 'bg-muted'}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="uploadDate">Upload Date</Label>
-            <Input
-              id="uploadDate"
-              value={editedContent?.uploadDate || ''}
-              readOnly
-              className="bg-muted"
-            />
-          </div>
-          {editedContent?.type === 'video' && (
-            <div className="space-y-2">
-              <Label htmlFor="duration">Duration</Label>
-              <Input
-                id="duration"
-                name="duration"
-                value={editedContent?.duration || ''}
-                onChange={handleInputChange}
-                readOnly={!isEditing}
-                className={isEditing ? '' : 'bg-muted'}
-              />
-            </div>
-          )}
-          {editedContent?.type === 'image' && (
-            <div className="space-y-2">
-              <Label htmlFor="dimensions">Dimensions</Label>
-              <Input
-                id="dimensions"
-                name="dimensions"
-                value={editedContent?.dimensions || ''}
-                onChange={handleInputChange}
-                readOnly={!isEditing}
-                className={isEditing ? '' : 'bg-muted'}
-              />
-            </div>
-          )}
+          {/* Add any additional fields if needed */}
         </div>
         <SheetFooter className="mt-6">
           {isEditing ? (

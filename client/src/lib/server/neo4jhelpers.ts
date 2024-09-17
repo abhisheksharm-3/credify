@@ -4,12 +4,13 @@ import neo4j from 'neo4j-driver';
 let driver: Driver | null = null;
 
 export interface VerificationResult {
-  video_hash?: string;
+  robust_video_hash?: string;
   collective_audio_hash?: string;
-  image_hash?: string;
+  robust_image_hash?: string;
   audio_hash?: string;
   frame_hash?: string;
   is_tampered?: boolean;
+  is_deepfake?: boolean;
 }
 
 export interface User {
@@ -85,7 +86,7 @@ export async function runQuery(cypher: string, params: Record<string, any>): Pro
 }
 
 export async function storeContentVerificationAndUser(verificationResult: VerificationResult, userId: string): Promise<void> {
-  const contentHash = verificationResult.image_hash || verificationResult.video_hash;
+  const contentHash = verificationResult.robust_image_hash || verificationResult.robust_video_hash;
   
   if (!contentHash) {
     throw new ContentVerificationError('No image_hash or video_hash found in verificationResult');

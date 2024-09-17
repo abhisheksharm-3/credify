@@ -38,15 +38,31 @@ export interface VideoData {
   };
 
   export interface FileType {
-    userId: string;
-    fileId: string;
-    fileName: string;
-    fileSize: number;
-    fileType: string;
-    fileUrl: string;
+    $collectionId?: string;
+    $createdAt?: string;
+    $databaseId?: string;
     $id: string;
-    $createdAt: string;
-    $updatedAt: string;
+    $permissions?: any[];
+    $updatedAt?: string;
+    fileId?: string;
+    fileName?: string;
+    fileSize?: number;
+    fileType?: 'image' | 'video'; 
+    fileUrl?: string;
+    userId?: string;
+    verified?: boolean;
+    tampered?: boolean; // Optional field
+  
+    video_hash?: string;
+    collective_audio_hash?: string;
+    image_hash?: string;
+    is_tampered?: boolean;
+    is_deepfake?: boolean;
+    media_title?: string;
+    media_type?: string;
+    verificationDate?: string; 
+    fact_check?: string;
+    geminiAnalysis?: string;
   }
 
   export interface VerificationResult {
@@ -76,3 +92,49 @@ export interface VideoData {
     dimensions?: string
     description: string
   }
+
+/*   export interface FileInfo {
+    $collectionId: string;
+    $createdAt: string;
+    $databaseId: string;
+    $id: string;
+    $permissions: any[];
+    $updatedAt: string;
+    fileId: string;
+    fileName: string;
+    fileSize: number;
+    fileType: 'image' | 'video'; 
+    fileUrl: string;
+    userId: string;
+    verified: boolean;
+    tampered?: boolean; // Optional field
+    
+  } */
+  
+  export interface FileInfo {
+    $collectionId?: string;
+    $createdAt?: string;
+    $databaseId?: string;
+    $id: string;
+    $permissions?: any[];
+    $updatedAt?: string;
+    fileId?: string;
+    fileName?: string;
+    fileSize?: number;
+    fileType?: 'image' | 'video'; 
+    fileUrl?: string;
+    userId?: string;
+    verified?: boolean;
+    tampered?: boolean; // Optional field
+  
+    video_hash?: string;
+    collective_audio_hash?: string;
+    image_hash?: string;
+    is_tampered?: boolean;
+    is_deepfake?: boolean;
+    media_title?: string;
+    media_type?: string;
+    verificationDate?: string; 
+    fact_check?: string;
+  }
+  

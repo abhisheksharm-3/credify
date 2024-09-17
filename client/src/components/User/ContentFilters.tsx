@@ -26,9 +26,9 @@ export default function ContentFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="All">All Statuses</SelectItem>
-          <SelectItem value="Published">Published</SelectItem>
-          <SelectItem value="Draft">Draft</SelectItem>
-          <SelectItem value="Under Review">Under Review</SelectItem>
+          <SelectItem value="Verified">Verified</SelectItem>
+          <SelectItem value="Not Verified">Not Verified</SelectItem>
+          <SelectItem value="Tampered">Tampered</SelectItem>
         </SelectContent>
       </Select>
       <Select value={filterType} onValueChange={setFilterType}>
