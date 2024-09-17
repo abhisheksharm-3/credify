@@ -5,39 +5,63 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Edit, Eye, Image as ImageIcon, MoreVertical, Trash2, Video } from 'lucide-react'
 import { toast } from 'sonner'
-import { Content } from '@/lib/types'
+import { Content, FileInfo } from '@/lib/types'
 
 interface ContentTableProps {
-  content: Content[]
-  onViewContent: (content: Content) => void
-  onEditContent: (content: Content) => void
+  files: FileInfo[]
 }
 
-export default function ContentTable({ content, onViewContent, onEditContent }: ContentTableProps) {
-
-  const getStatusColor = (status: Content['status']) => {
-    switch (status) {
-      case 'Published': return 'bg-green-500 text-white'
-      case 'Draft': return 'bg-yellow-500 text-black'
-      case 'Under Review': return 'bg-blue-500 text-white'
-      default: return 'bg-gray-500 text-white'
-    }
+export default function ContentTable({ files }: ContentTableProps) {
+  function formatDate(dateString?: string): string {
+    if (!dateString) return 'N/A'; // Handle undefined case
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); 
+    const year = date.getFullYear();
+  
+    return `${day}-${month}-${year}`;
   }
 
-  const getContentTypeIcon = (type: Content['type']) => {
+  const handleVerificationRedirect = (file: FileInfo) => {
+    let redirectUrl;
+    if (!file.verified) {
+      redirectUrl = `/content/${file.fileId}`;
+    } else if (file.video_hash) {
+      redirectUrl = `/verify/${file.video_hash}`;
+    } else {
+      redirectUrl = `/verify/${file.image_hash}`;
+    }
+    window.open(redirectUrl, '_blank'); // Open in a new tab
+  };
+
+  const getStatusColor = (file: FileInfo) => {
+    if (file.tampered) {
+      return 'bg-red-600 text-white'; 
+    }
+    return file.verified ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'; 
+  }
+
+  const getStatusText = (file: FileInfo) => {
+    if (file.tampered) {
+      return 'Tampered';
+    }
+    return file.verified ? 'Verified' : 'Unverified';
+  }
+
+  const getContentTypeIcon = (type: FileInfo['fileType']) => {
     return type === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />
   }
 
-  const handleDelete = (content: Content) => {
-    toast("Delete Content",{
-      description: `Are you sure you want to delete "${content.title}"?`,
+  const handleDelete = (content: FileInfo) => {
+    toast("Delete Content", {
+      description: `Are you sure you want to delete "${content.fileName}"?`,
       action: (
         <Button variant="destructive" size="sm" onClick={() => {
           // Implement delete logic here
           toast("Content Deleted", {
-            description: `"${content.title}" has been deleted.`,
+            description: `"${content.fileName}" has been deleted.`,
           })
-        }}>
+        }} >
           Delete
         </Button>
       ),
@@ -52,31 +76,30 @@ export default function ContentTable({ content, onViewContent, onEditContent }: 
           <TableHead>Type</TableHead>
           <TableHead>Upload Date</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Creator</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {content.map((item) => (
-          <TableRow key={item.id} className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        {files.map((item) => (
+          <TableRow key={item.fileId} className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <TableCell className="font-medium">
-              <Button variant="link" className="p-0" onClick={() => onViewContent(item)}>
-                {item.title}
+              {/* On clicking the file name, call the handleVerificationRedirect */}
+              <Button variant="link" className="p-0" onClick={() => handleVerificationRedirect(item)}>
+                {item.fileName}
               </Button>
             </TableCell>
             <TableCell>
               <div className="flex items-center space-x-1">
-                {getContentTypeIcon(item.type)}
-                <span className="capitalize">{item.type}</span>
+                {getContentTypeIcon(item.fileType)}
+                <span className="capitalize">{item.fileType}</span>
               </div>
             </TableCell>
-            <TableCell>{item.uploadDate}</TableCell>
+            <TableCell>{formatDate(item.$createdAt)}</TableCell>
             <TableCell>
-              <Badge variant="secondary" className={`${getStatusColor(item.status)} px-2 py-1 rounded-full text-xs font-semibold`}>
-                {item.status}
+              <Badge variant="secondary" className={`${getStatusColor(item)} px-2 py-1 rounded-full text-xs font-semibold`}>
+                {getStatusText(item)}
               </Badge>
             </TableCell>
-            <TableCell>{item.creator}</TableCell>
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -87,19 +110,28 @@ export default function ContentTable({ content, onViewContent, onEditContent }: 
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => onViewContent(item)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    <span>View</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEditContent(item)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    <span>Edit</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
+                  {/* Show "View" if verified, otherwise show "Verify" */}
+                  {item.verified ? (
+                    <DropdownMenuItem onClick={() => handleVerificationRedirect(item)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      <span>View</span>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => handleVerificationRedirect(item)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      <span>Verify</span>
+                    </DropdownMenuItem>
+                  )}
+                  {/* Only show "Delete" if not verified */}
+                  {!item.verified && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>

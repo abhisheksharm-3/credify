@@ -1,4 +1,5 @@
 import cv2
+import ffmpeg
 import numpy as np
 from scipy.fftpack import dct
 import imagehash
@@ -12,6 +13,42 @@ import io
 
 import tempfile
 import os
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+def validate_video_bytes(video_bytes):
+    try:
+        # If video_bytes is already a BytesIO object, use it directly
+        # Otherwise, create a new BytesIO object from the bytes
+        if not isinstance(video_bytes, io.BytesIO):
+            video_bytes = io.BytesIO(video_bytes)
+        
+        # Reset the BytesIO object to the beginning
+        video_bytes.seek(0)
+        
+        # Create a temporary file to store the video data
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_file:
+            temp_file.write(video_bytes.read())
+            temp_file_path = temp_file.name
+
+        # Use ffprobe to get video information
+        probe = ffmpeg.probe(temp_file_path)
+        
+        # Clean up the temporary file
+        os.unlink(temp_file_path)
+        
+        # Check for audio stream
+        audio_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'audio'), None)
+        
+        if audio_stream is None:
+            logger.warning("No audio stream found in the file")
+            return False
+        return True
+    except ffmpeg.Error as e:
+        logger.error(f"Error validating video bytes: {e.stderr.decode()}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error in validate_video_bytes: {str(e)}")
+        return False
 
 async def extract_video_features(firebase_filename):
     logging.info("Extracting video features")
@@ -50,13 +87,17 @@ async def fingerprint_video(video_url):
         
         video_features, _ = await extract_video_features(firebase_filename)
         
-        audio_features = extract_audio_features(video_bytes)
+        if validate_video_bytes(io.BytesIO(video_bytes)):
+            audio_features = extract_audio_features(video_bytes)
+            audio_hashes = compute_audio_hashes(video_bytes)
+            collective_audio_hash = compute_audio_hash(audio_features)
+        else:
+            logging.warning("No audio stream found or invalid video. Skipping audio feature extraction.")
+            audio_hashes = []
+            collective_audio_hash = None
         
         video_hash = compute_video_hash(video_features)
         frame_hashes = compute_frame_hashes(firebase_filename)
-        audio_hashes = compute_audio_hashes(video_bytes)
-        
-        collective_audio_hash = compute_audio_hash(audio_features)
 
         logging.info("Finished fingerprinting video.")
 

@@ -16,13 +16,14 @@ import UserInfo from './UserInfo'
 import EmailVerification from './EmailVerification'
 import ProfilePhotoUpload from './ProfilePhotoUpload'
 import GovIdUpload from './GovIdUpload'
-import { Toaster } from "../ui/sonner";
 import { toast } from 'sonner'
 
 interface UserHeaderProps {
   user: AppwriteUser | null
+  trustScore:number
+  verifiedCount: number
 }
-const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
+const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user,trustScore }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [emailVerified, setEmailVerified] = useState("no");
@@ -225,55 +226,60 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
 
   return (
     <header className="relative bg-gradient-to-b from-purple-600 to-white dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg">
-      <div className="container mx-auto px-4 ml-4 md:ml-6 lg:ml-8 pt-12 lg:py-12 pb-4">
-        <UserInfo user={user} userProfileImage={userProfileImage} />
+      <div className="container pt-12 lg:py-12 pb-4">
+        <UserInfo verifiedCount={verifiedCount} trustScore={trustScore} isVerified={isVerified} user={user} userProfileImage={userProfileImage} />
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="mt-4 ml-0"
+        >
+          {!isVerified && (
+            <div className="container mx-auto pt-2 pl-2 lg:pl-8 xl:pl-0">
+              <div className="flex flex-wrap flex-row justify-start  items-start gap-3">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className="flex  items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full ml-2 px-3 lg:px-4 py-3 shadow-lg cursor-pointer"
+                    >
+                      {isVerified ? (
+                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-500  mr-2" />
+                      )}
+                      <span className="text-xs lg:text-s font-medium dark:text-white">
+                        {isVerified ? "Verified Creator" : "Unverified Creator"}
+                      </span>
+                    </motion.div>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[375px] bg-card text-white">
+                    <DialogHeader className='flex justify-between flex-row'>
+                      <DialogTitle className="text-xl font-bold text-black dark:text-white">Creator Verification Process</DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4 space-y-4">
+                      <EmailVerification emailVerified={emailVerified} openStep={openStep} toggleStep={toggleStep} handleAction={handleAction} />
+                      <ProfilePhotoUpload profileVerified={profileVerified} openStep={openStep} toggleStep={toggleStep} handleAction={handleAction} profileImages={profileImages} handleProfileUpload={handleProfileUpload} setProfileVerified={setProfileVerified} />
+                      <GovIdUpload idVerified={idVerified} idImages={idImages} openStep={openStep} toggleStep={toggleStep} handleAction={handleAction} handleIdUpload={handleIdUpload} setIdVerified={setIdVerified} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={showDialog} onOpenChange={(open) => setShowDialog(open)}>
+                  <DialogContent className="h-svh w-svw max-w-full p-0">
+                    <Camera
+                      onClosed={() => setShowDialog(false)}
+                      onCapturedImages={handleCapturedImages}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+          )}
+
+        </motion.div >
       </div>
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
-        className="p-2 pt-0"
-      >
-        <div className="container mx-auto p-2 pl-6 lg:pl-8">
-          <div className="flex flex-wrap flex-row justify-start gap-3">
-            <Dialog>
-              <DialogTrigger asChild>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="flex items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full px-3 lg:px-4 py-3 shadow-lg cursor-pointer"
-                >
-                  {isVerified ? (
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  ) : (
-                    <X className="w-4 h-4 text-red-500  mr-2" />
-                  )}
-                  <span className="text-xs lg:text-s font-medium dark:text-white">
-                    {isVerified ? "Verified Creator" : "Unverified Creator"}
-                  </span>
-                </motion.div>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[375px] bg-card text-white">
-                <DialogHeader className='flex justify-between flex-row'>
-                  <DialogTitle className="text-xl font-bold text-black dark:text-white">Creator Verification Process</DialogTitle>
-                </DialogHeader>
-                <div className="mt-4 space-y-4">
-                  <EmailVerification emailVerified={emailVerified} openStep={openStep} toggleStep={toggleStep} handleAction={handleAction} />
-                  <ProfilePhotoUpload profileVerified={profileVerified} openStep={openStep} toggleStep={toggleStep} handleAction={handleAction} profileImages={profileImages} handleProfileUpload={handleProfileUpload} setProfileVerified={setProfileVerified} />
-                  <GovIdUpload idVerified={idVerified} idImages={idImages} openStep={openStep} toggleStep={toggleStep} handleAction={handleAction} handleIdUpload={handleIdUpload} setIdVerified={setIdVerified} />
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Dialog open={showDialog} onOpenChange={(open) => setShowDialog(open)}>
-              <DialogContent className="h-svh w-svw max-w-full p-0">
-                <Camera
-                  onClosed={() => setShowDialog(false)}
-                  onCapturedImages={handleCapturedImages}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </motion.div >
+
+
     </header >
   )
 }
