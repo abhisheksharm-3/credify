@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fetch, { Response } from 'node-fetch';
-import FormData from 'form-data';
 import { 
   initializeNeo4j, 
   getContentVerificationAndUser, 
@@ -16,16 +15,22 @@ import { analyzeContentWithGemini } from '@/services/geminiService';
 
 export const dynamic = 'force-dynamic';
 
-const VERIFICATION_SERVICE_BASE_URL = 'https://credify-ndpx.onrender.com';
-
 let isNeo4jInitialized = false;
 
 interface ContentInfo {
-  contentBuffer: Buffer;
+  contentUrl: string;
   contentType: string;
   filename: string;
 }
-
+interface ApiResponse {
+  message: string;
+  result: {
+    frame_hashes: string[];
+    audio_hashes: string[];
+    robust_image_hash: string | undefined;
+    robust_video_hash: string;
+  }
+}
 async function initializeNeo4jIfNeeded() {
   if (!isNeo4jInitialized) {
     await initializeNeo4j();
@@ -34,35 +39,19 @@ async function initializeNeo4jIfNeeded() {
   ensureNeo4jConnection();
 }
 
-async function downloadContent(url: string): Promise<Buffer> {
-  const response: Response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download content: ${response.status} ${response.statusText}`);
-  }
-  return response.buffer();
-}
-
 async function getContentInfo(contentId: string): Promise<ContentInfo> {
   const contentUrl = `https://utfs.io/f/${contentId}`;
-  const contentBuffer: Buffer = await downloadContent(contentUrl);
   const contentTypeResponse: Response = await fetch(contentUrl, { method: 'HEAD' });
   const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
   const filename = `content_${contentId}.${contentType.split('/')[1]}`;
-  return { contentBuffer, contentType, filename };
+  return { contentUrl, contentType, filename };
 }
 
-async function verifyContent({ contentBuffer, contentType, filename }: ContentInfo): Promise<VerificationResult> {
-  const formData = new FormData();
-  const isImage = contentType.startsWith('image');
-  const endpoint = isImage ? 'verify_image' : 'verify_video';
-  const fileAttributeName = isImage ? 'image_file' : 'video_file';
-  
-  formData.append(fileAttributeName, contentBuffer, { filename, contentType });
-
-  const response: Response = await fetch(`${VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
+async function verifyContent({ contentUrl }: ContentInfo): Promise<VerificationResult> {
+  const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/fingerprint`, {
     method: 'POST',
-    body: formData as any,
-    headers: formData.getHeaders(),
+    body: JSON.stringify({ url: contentUrl }),
+    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!response.ok) {
@@ -70,7 +59,8 @@ async function verifyContent({ contentBuffer, contentType, filename }: ContentIn
     throw new Error(`Verification service error: ${errorText}`);
   }
 
-  return response.json() as Promise<VerificationResult>;
+  const apiResponse: ApiResponse = await response.json() as ApiResponse;
+  return apiResponse.result;
 }
 
 async function handleExistingVerification(contentHash: string, userId: string, existingResult: VerificationResult | null, userExists: boolean) {
@@ -89,9 +79,9 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
   const databases = new Databases(account.client);
 
   const verifiedContent = {
-    video_hash: verificationResult.video_hash || null,
+    video_hash: verificationResult.robust_video_hash || null,
     collective_audio_hash: verificationResult.collective_audio_hash || null,
-    image_hash: verificationResult.image_hash || null,
+    image_hash: verificationResult.robust_image_hash || null,
     is_tampered: verificationResult.is_tampered || false,
     is_deepfake: verificationResult.is_deepfake || false,
     userId: userId,
@@ -127,9 +117,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const verificationResult = await verifyContent(contentInfo);
 
     // Perform Gemini API analysis
-    const geminiAnalysis = await analyzeContentWithGemini(contentInfo.contentBuffer, contentInfo.contentType);
+    const contentResponse = await fetch(contentInfo.contentUrl);
+    const contentBuffer = await contentResponse.arrayBuffer();
+    // const geminiAnalysis = await analyzeContentWithGemini(Buffer.from(contentBuffer), contentInfo.contentType);
+    const geminiAnalysis = ""
 
-    const contentHash = verificationResult.image_hash || verificationResult.video_hash;
+    const contentHash = verificationResult.robust_image_hash || verificationResult.robust_video_hash;
     if (!contentHash) {
       throw new Error('No content hash found in verification result');
     }

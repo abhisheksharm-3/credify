@@ -27,6 +27,15 @@ interface DownloadResult {
   buffer: Buffer;
   contentType: string;
 }
+interface ApiResponse {
+  message: string;
+  result: {
+    frame_hashes: string[];
+    audio_hashes: string[];
+    robust_image_hash: string | null;
+    robust_video_hash: string;
+  }
+}
 
 async function downloadContent(url: string): Promise<DownloadResult> {
   logger.info(`Attempting to download content from URL: ${url}`);
@@ -45,11 +54,11 @@ async function downloadContent(url: string): Promise<DownloadResult> {
   }
 }
 
-async function getContentHash(contentBuffer: Buffer, contentType: string, filename: string): Promise<string> {
+async function getContentHash(contentBuffer: Buffer, contentType: string, filename: string, contentUrl: string): Promise<string> {
   logger.info(`Preparing to get content hash for file: ${filename}, Content-Type: ${contentType}`);
   const formData = new FormData();
   const isImage = contentType.startsWith('image');
-  const endpoint = isImage ? 'verify_image' : 'verify_video';
+  const endpoint = isImage ? 'verify_image' : 'fingerprint';
   const fileAttributeName = isImage ? 'image_file' : 'video_file';
 
   formData.append(fileAttributeName, contentBuffer, { filename, contentType });
@@ -57,7 +66,7 @@ async function getContentHash(contentBuffer: Buffer, contentType: string, filena
   try {
     const response = await fetch(`${VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
       method: 'POST',
-      body: formData as any,
+      body: JSON.stringify({ url: contentUrl }),
       headers: formData.getHeaders(),
     });
 
@@ -66,8 +75,10 @@ async function getContentHash(contentBuffer: Buffer, contentType: string, filena
       throw new ContentHashError(`Verification service error: ${errorText}`);
     }
 
-    const result = await response.json() as VerificationResult;
-    const hash = result.image_hash || result.video_hash;
+    
+  const apiResponse: ApiResponse = await response.json() as ApiResponse;
+  const result = apiResponse.result;
+    const hash = result.robust_image_hash || result.robust_video_hash;
     if (!hash) {
       throw new ContentHashError('No hash returned from verification service');
     }
@@ -122,7 +133,7 @@ export async function GET(
     const { buffer: contentBuffer, contentType } = await downloadContent(contentUrl);
 
     const filename = `content_${contentId}.${contentType.split('/')[1]}`;
-    const contentHash = await getContentHash(contentBuffer, contentType, filename);
+    const contentHash = await getContentHash(contentBuffer, contentType, filename, contentUrl);
 
     const { verificationResult: existingResult, uploadInfo } = await getContentVerificationOnly(contentHash);
 
