@@ -38,17 +38,25 @@ async function initializeNeo4jIfNeeded() {
   }
   ensureNeo4jConnection();
 }
-
+let endpoint = '';
 async function getContentInfo(contentId: string): Promise<ContentInfo> {
   const contentUrl = `https://utfs.io/f/${contentId}`;
   const contentTypeResponse: Response = await fetch(contentUrl, { method: 'HEAD' });
   const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
   const filename = `content_${contentId}.${contentType.split('/')[1]}`;
+  if (contentType.startsWith('image/')) {
+    endpoint = 'verify_image';
+  } else if (contentType.startsWith('video/')) {
+    endpoint = 'fingerprint';
+  } else {
+    throw new Error(`Unsupported content type: ${contentType}`);
+  }
+
   return { contentUrl, contentType, filename };
 }
 
 async function verifyContent({ contentUrl }: ContentInfo): Promise<VerificationResult> {
-  const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/fingerprint`, {
+  const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
     method: 'POST',
     body: JSON.stringify({ url: contentUrl }),
     headers: { 'Content-Type': 'application/json' },
