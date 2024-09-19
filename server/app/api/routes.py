@@ -14,6 +14,14 @@ class CompareRequest(BaseModel):
     url1: str
     url2: str
 
+@router.get("/health")
+@router.head("/health")
+async def health_check():
+    """
+    Health check endpoint that responds to both GET and HEAD requests.
+    """
+    return Response(content="OK", media_type="text/plain")
+
 @router.post("/fingerprint")
 async def create_fingerprint(request: ContentRequest):
     try:
