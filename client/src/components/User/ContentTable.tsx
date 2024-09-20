@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Edit, Eye, Image as ImageIcon, MoreVertical, Trash2, Video } from 'lucide-react'
 import { toast } from 'sonner'
-import { Content, FileInfo } from '@/lib/types'
+import {  FileInfo } from '@/lib/types'
 
 interface ContentTableProps {
   files: FileInfo[]

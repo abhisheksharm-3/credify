@@ -1,19 +1,19 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { RiStarFill, RiVerifiedBadgeFill } from '@remixicon/react';
-import { CalendarDays, UserIcon } from 'lucide-react';
+import { RiStarFill } from '@remixicon/react';
+import { CalendarDays, UserIcon, Video } from 'lucide-react';
 import { AppwriteUser } from '@/lib/types';
 import verifiedIcon from '../../../public/images/verified.png'
 import Image from 'next/image';
+import { useFiles } from '@/hooks/useFiles';
 interface UserProfileProps {
   user: AppwriteUser | null;
   userProfileImage: string;
   isVerified: boolean;
-  trustScore: number
-  verifiedCount: number
 }
 
-const UserInfo: FC<UserProfileProps> = ({ verifiedCount, trustScore, isVerified, user, userProfileImage }) => {
+const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) => {
+  const { totalCount } = useFiles();
   function formatDate(dateString?: string): string {
     if (!dateString) return 'N/A'; // Handle undefined case
     const date = new Date(dateString);
@@ -24,13 +24,13 @@ const UserInfo: FC<UserProfileProps> = ({ verifiedCount, trustScore, isVerified,
     return `${day}-${month}-${year}`;
   }
   return (
-    <div  className="flex flex-row items-center justify-between">
+    <div className="flex flex-row items-center justify-between">
       <motion.div
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="flex flex-row items-center md:space-x-8 mb-6 md:mb-0"
-        
+
       >
         <div className="relative">
           <motion.div
@@ -53,17 +53,20 @@ const UserInfo: FC<UserProfileProps> = ({ verifiedCount, trustScore, isVerified,
             )}
           </motion.div>
         </div>
+
         <div className="text-start md:text-left ml-4">
           <motion.h1
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-2xl md:text-2xl lg:text-3xl font-bold dark:text-white flex gap-2 items-center"
-          >
-            {user?.name || ""}
-            {isVerified && 
-                <Image src={verifiedIcon} alt="Verified" width={25} height={25} />
+            className="text-2xl justify-center flex flex-col md:text-2xl lg:text-3xl font-bold dark:text-white flex gap-2 items-start"
+          >   {!isVerified && (
+            <div className="flex items-center justify-start gap-2 text-sm"><Image src={verifiedIcon} alt="Verified" width={25} height={25} /> Verified Creator 
+            </div>
+          )
             }
+            {user?.name || ""}
+
 
           </motion.h1>
           <motion.div
@@ -72,15 +75,13 @@ const UserInfo: FC<UserProfileProps> = ({ verifiedCount, trustScore, isVerified,
             transition={{ delay: 0.6, duration: 0.6 }}
             className="flex items-start flex-col"
           >
-            {trustScore > 0 && (
-              <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
-                <RiStarFill className="text-yellow-500" size={20} />
-                <span>Trust Score: {trustScore}</span>
-              </div>
-            )}
             <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
               <CalendarDays className=" dark:text-gray-500" size={20} />
               <span>Joined on: {formatDate(user?.registration)}</span>
+            </div>
+            <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
+              <Video className="dark:text-gray-500" size={20} />
+              <span>Total Videos: {totalCount}</span>
             </div>
           </motion.div>
         </div>
