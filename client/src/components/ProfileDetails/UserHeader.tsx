@@ -225,8 +225,8 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user,trustScore 
   };
 
   return (
-    <header className="relative bg-gradient-to-b from-purple-600 to-white dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg">
-      <div className="container pt-12 lg:py-12 pb-4">
+    <header  className="relative bg-gradient-to-tl from-white via-purple-300 via-purple-500 to-purple-700  dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg"  >
+     <div className="container pt-12 lg:py-12 pb-4">
         <UserInfo verifiedCount={verifiedCount} trustScore={trustScore} isVerified={isVerified} user={user} userProfileImage={userProfileImage} />
         <motion.div
           initial={{ y: 20, opacity: 0 }}

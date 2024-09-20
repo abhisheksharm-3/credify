@@ -2,9 +2,9 @@ import { FC } from 'react';
 import { motion } from 'framer-motion';
 import { RiStarFill, RiVerifiedBadgeFill } from '@remixicon/react';
 import { CalendarDays, UserIcon } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
 import { AppwriteUser } from '@/lib/types';
-
+import verifiedIcon from '../../../public/images/verified.png'
+import Image from 'next/image';
 interface UserProfileProps {
   user: AppwriteUser | null;
   userProfileImage: string;
@@ -24,12 +24,13 @@ const UserInfo: FC<UserProfileProps> = ({ verifiedCount, trustScore, isVerified,
     return `${day}-${month}-${year}`;
   }
   return (
-    <div className="flex flex-row items-center justify-between">
+    <div  className="flex flex-row items-center justify-between">
       <motion.div
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="flex flex-row items-center md:space-x-8 mb-6 md:mb-0"
+        
       >
         <div className="relative">
           <motion.div
@@ -60,7 +61,8 @@ const UserInfo: FC<UserProfileProps> = ({ verifiedCount, trustScore, isVerified,
             className="text-2xl md:text-2xl lg:text-3xl font-bold dark:text-white flex gap-2 items-center"
           >
             {user?.name || ""}
-            {isVerified && <RiVerifiedBadgeFill className="text-blue-600" size={25} />
+            {isVerified && 
+                <Image src={verifiedIcon} alt="Verified" width={25} height={25} />
             }
 
           </motion.h1>
@@ -76,12 +78,8 @@ const UserInfo: FC<UserProfileProps> = ({ verifiedCount, trustScore, isVerified,
                 <span>Trust Score: {trustScore}</span>
               </div>
             )}
-            {/*             <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
-              <RiVerifiedBadgeFill className="text-blue-600" size={20} />
-              <span>Verified Videos: {verifiedCount}</span>
-            </div> */}
             <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
-              <CalendarDays className="text-gray-500" size={20} />
+              <CalendarDays className=" dark:text-gray-500" size={20} />
               <span>Joined on: {formatDate(user?.registration)}</span>
             </div>
           </motion.div>
