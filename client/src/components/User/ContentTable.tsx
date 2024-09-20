@@ -67,14 +67,16 @@ export default function ContentTable({ files }: ContentTableProps) {
       ),
     })
   }
-
+  const truncateFileName = (name: string) => {
+    return name.length > 20 ? name.slice(0, 20) + "..." : name;
+  };
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Content</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Upload Date</TableHead>
+          <TableHead className="hidden md:table-cell">Type</TableHead>
+          <TableHead className="hidden md:table-cell">Upload Date</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
@@ -85,17 +87,17 @@ export default function ContentTable({ files }: ContentTableProps) {
             <TableCell className="font-medium">
               {/* On clicking the file name, call the handleVerificationRedirect */}
               <Button variant="link" className="p-0" onClick={() => handleVerificationRedirect(item)}>
-                {item.fileName}
+               {truncateFileName(item.fileName || "")}
               </Button>
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden md:table-cell">
               <div className="flex items-center space-x-1">
                 {getContentTypeIcon(item.fileType)}
                 <span className="capitalize">{item.fileType}</span>
               </div>
             </TableCell>
-            <TableCell>{formatDate(item.$createdAt)}</TableCell>
-            <TableCell>
+            <TableCell className="hidden md:table-cell">{formatDate(item.$createdAt)}</TableCell>
+            <TableCell >
               <Badge variant="secondary" className={`${getStatusColor(item)} px-2 py-1 rounded-full text-xs font-semibold`}>
                 {getStatusText(item)}
               </Badge>

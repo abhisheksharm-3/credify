@@ -108,6 +108,9 @@ export function RecentActivity({ userId }: RecentActivityProps) {
     }
     window.location.href = redirectUrl;
   };
+  const truncateFileName = (name: string) => {
+    return name.length > 20 ? name.slice(0, 10) + "..." : name;
+  };
   return (
     <Card className="col-span-2 lg:col-span-1 shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="border-b pb-4">
@@ -127,9 +130,9 @@ export function RecentActivity({ userId }: RecentActivityProps) {
             <TableHeader>
               <TableRow className="">
                 <TableHead className="font-semibold">File Name</TableHead>
-                <TableHead className="font-semibold">Type</TableHead>
-                <TableHead className="font-semibold">Size</TableHead>
-                <TableHead className="font-semibold">Uploaded</TableHead>
+                <TableHead className="hidden md:table-cell font-semibold">Type</TableHead>
+                <TableHead className=" hidden md:table-cell font-semibold">Size</TableHead>
+                <TableHead className=" hidden md:table-cell font-semibold">Uploaded</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
@@ -138,7 +141,7 @@ export function RecentActivity({ userId }: RecentActivityProps) {
               {files.slice(0, 3).map((file) => (
                 <TableRow key={file.$id} className="transition-colors duration-150">
                   <TableCell>
-                    <div className="font-medium">{file.fileName}</div>
+                  <div className="font-medium">{truncateFileName(file.fileName || "")}</div>
                     <div className="text-sm text-gray-500">
                       {file.fileUrl ? (
                         <Link href={file.fileUrl} className="text-blue-600 hover:text-blue-800 hover:underline flex items-center" prefetch={false} target="_blank">
@@ -150,11 +153,11 @@ export function RecentActivity({ userId }: RecentActivityProps) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell" >
                     <Badge variant="secondary" className="bg-gray-100 text-gray-700">{file.fileType?.toUpperCase()}</Badge>
                   </TableCell>
-                  <TableCell>{file.fileSize ? formatFileSize(file.fileSize) : "N/A"}</TableCell>
-                  <TableCell>{file.$createdAt ? formatDate(file.$createdAt) : "Unknown"}</TableCell>
+                  <TableCell className="hidden md:table-cell" >{file.fileSize ? formatFileSize(file.fileSize) : "N/A"}</TableCell>
+                  <TableCell className="hidden md:table-cell" >{file.$createdAt ? formatDate(file.$createdAt) : "Unknown"}</TableCell>
                   <TableCell>
                     {
                       file.tampered ? (

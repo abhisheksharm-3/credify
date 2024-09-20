@@ -99,8 +99,8 @@ const TrustStatistics: FC<{ verifiedCount: number; unverifiedCount: number; tamp
         transition={{ delay: 0.8, duration: 0.6 }}
       >
         <div className="flex items-center gap-4">
-          <div className="bg-gray-600 rounded-full p-3">
-            <UnverifiedIcon className="w-6 h-6 text-card-foreground" />
+          <div className="bg-gray-500 rounded-full p-3">
+            <UnverifiedIcon className="w-6 h-6 text-white" />
           </div>
           <div className="flex flex-col">
             <h3 className="text-lg font-semibold">Unverified Videos</h3>
