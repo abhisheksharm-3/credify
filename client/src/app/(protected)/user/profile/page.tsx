@@ -1,10 +1,8 @@
-import Link from "next/link"
 import ProfileInfo from "../../../../components/User/ProfileInfo"
 import ChangePassword from "../../../../components/User/ChangePassword"
 import VerificationSettings from "../../../../components/User/VerificationSettings"
 import SupportAndHelp from "../../../../components/User/SupportAndHelp"
 import SecuritySetting from "../../../../components/User/SecuritySetting"
-import Layout from "@/components/Layout/Layout"
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { redirect } from "next/navigation";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout"

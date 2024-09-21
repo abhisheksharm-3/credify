@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useState, useMemo, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,8 +14,9 @@ import { toast } from 'sonner'
 import { FileInfo } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 import { UploadVideoDialog } from '@/components/User/UploadVideoDialog'
+import { useFiles } from '@/hooks/useFiles'
 export default function ContentManagement() {
-  const router=useRouter();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('All')
   const [filterType, setFilterType] = useState<string>('All')
@@ -26,102 +26,48 @@ export default function ContentManagement() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  const [files, setFiles] = useState<FileInfo[]>([])
-  // Normalize function to standardize file attributes
-function normalizeFile(file: any): FileInfo {
-  return {
-    $collectionId: file.$collectionId,
-    $createdAt: file.$createdAt,
-    $databaseId: file.$databaseId,
-    $id: file.$id,
-    $permissions: file.$permissions || [],
-    $updatedAt: file.$updatedAt,
-    fileId: file.fileId,
+  const { files } = useFiles();
 
-    fileName: file.fileName || file.media_title,
-    fileSize: file.fileSize,
-    fileType: file.fileType || file.media_type,
-    fileUrl: file.fileUrl,
-    userId: file.userId,
-    verified: file.verified,
-    tampered: file.is_tampered || file.tampered,
-    video_hash: file.video_hash,
-    collective_audio_hash: file.collective_audio_hash,
-    image_hash: file.image_hash,
-    is_tampered: file.is_tampered,
-    is_deepfake: file.is_deepfake,
-    media_title: file.media_title,
-    media_type: file.media_type,
-    verificationDate: file.verificationDate,
-    fact_check: file.fact_check
-  };
-}
-useEffect(() => {
-  const fetchFiles = async () => {
-    try {
-      const response = await fetch('/api/content/get');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+  const filteredFiles = useMemo(() => {
+    return files.filter(file =>
+      (file.fileName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) &&
+      (filterStatus === 'All' ||
+        (filterStatus === 'Verified' && file.verified && !file.tampered) ||
+        (filterStatus === 'Not Verified' && !file.verified && !file.tampered) ||
+        (filterStatus === 'Tampered' && file.tampered)
+      ) &&
+      (filterType === 'All' || file.fileType === filterType)
+    )
+  }, [searchTerm, filterStatus, filterType, files])
+
+  const sortedFiles = useMemo(() => {
+    return [...filteredFiles].sort((a, b) => {
+      if (sortBy === 'Date') {
+        if (!a.$createdAt || !b.$createdAt) return 0; // handle undefined $createdAt
+        return new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime();
       }
-      const data = await response.json();
-      // Normalize files
-      const normalizedFiles = data.files.map(normalizeFile);
-      setFiles(normalizedFiles);
-      console.log(normalizedFiles);
-    } catch (error) {
-      console.error('Error fetching files:', error);
-      toast.error('Failed to load content.');
-    }
-  };
 
-  fetchFiles();
-}, []);
+      if (sortBy === 'Status') {
+        if (a.verified && !a.tampered) return -1;
+        if (!a.verified && !a.tampered) return 1;
+        if (a.tampered) return 1;
+        if (b.tampered) return -1;
+        return 0;
+      }
 
+      if (sortBy === 'Title') {
+        return (a.fileName || '').localeCompare(b.fileName || '');
+      }
 
-const filteredFiles = useMemo(() => {
-  return files.filter(file =>
-    (file.fileName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) &&
-    (filterStatus === 'All' ||
-      (filterStatus === 'Verified' && file.verified && !file.tampered) ||
-      (filterStatus === 'Not Verified' && !file.verified && !file.tampered) ||
-      (filterStatus === 'Tampered' && file.tampered)
-    ) &&
-    (filterType === 'All' || file.fileType === filterType)
-  )
-}, [searchTerm, filterStatus, filterType, files])
-
-const sortedFiles = useMemo(() => {
-  return [...filteredFiles].sort((a, b) => {
-    if (sortBy === 'Date') {
-      if (!a.$createdAt || !b.$createdAt) return 0; // handle undefined $createdAt
-      return new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime();
-    }
-
-    if (sortBy === 'Status') {
-      if (a.verified && !a.tampered) return -1;
-      if (!a.verified && !a.tampered) return 1;
-      if (a.tampered) return 1;
-      if (b.tampered) return -1;
       return 0;
-    }
-
-    if (sortBy === 'Title') {
-      return (a.fileName || '').localeCompare(b.fileName || '');
-    }
-
-    return 0;
-  });
-}, [filteredFiles, sortBy]);
+    });
+  }, [filteredFiles, sortBy]);
 
 
   const paginatedFiles = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
     return sortedFiles.slice(startIndex, startIndex + itemsPerPage)
   }, [sortedFiles, currentPage])
-
-  const handleAddNewContent = () => {
-    router.push('/user/dashboard')
-  }
 
   return (
     <LoggedInLayout className='min-h-screen flex flex-col justify-start'>
@@ -152,7 +98,7 @@ const sortedFiles = useMemo(() => {
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
-          <UploadVideoDialog/>
+          <UploadVideoDialog />
         </div>
 
         <Card className="overflow-hidden">
@@ -166,7 +112,7 @@ const sortedFiles = useMemo(() => {
           setCurrentPage={setCurrentPage}
           totalItems={sortedFiles.length}
           itemsPerPage={itemsPerPage}
-        />   
+        />
         <ContentInsights content={sortedFiles} />
       </div>
     </LoggedInLayout>

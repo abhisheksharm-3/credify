@@ -20,10 +20,9 @@ import { toast } from 'sonner'
 
 interface UserHeaderProps {
   user: AppwriteUser | null
-  trustScore:number
   verifiedCount: number
 }
-const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user,trustScore }) => {
+const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [emailVerified, setEmailVerified] = useState("no");
@@ -225,9 +224,9 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user,trustScore 
   };
 
   return (
-    <header className="relative bg-gradient-to-b from-purple-600 to-white dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg">
-      <div className="container pt-12 lg:py-12 pb-4">
-        <UserInfo verifiedCount={verifiedCount} trustScore={trustScore} isVerified={isVerified} user={user} userProfileImage={userProfileImage} />
+    <header  className="relative bg-gradient-to-tl from-white via-purple-300 via-purple-500 to-purple-700  dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg"  >
+     <div className="container pt-12 lg:py-12 pb-4">
+        <UserInfo isVerified={isVerified} user={user} userProfileImage={userProfileImage} />
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -241,7 +240,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user,trustScore 
                   <DialogTrigger asChild>
                     <motion.div
                       whileHover={{ scale: 1.05 }}
-                      className="flex  items-center bg-white/40 dark:bg-white/10 backdrop-blur-lg rounded-full ml-2 px-3 lg:px-4 py-3 shadow-lg cursor-pointer"
+                      className="flex  items-center bg-white/60 dark:bg-white/10 backdrop-blur-lg rounded-full ml-2 px-3 lg:px-4 py-3 shadow-lg cursor-pointer"
                     >
                       {isVerified ? (
                         <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
