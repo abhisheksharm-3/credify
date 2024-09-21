@@ -1,12 +1,20 @@
 import { useState, useEffect } from 'react';
 import { FileInfo } from '@/lib/types';
 
+interface MonthlyData {
+  month: string;
+  verifiedCount: number;
+  unverifiedCount: number;
+  tamperedCount: number;
+}
+
 export const useFiles = () => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [verifiedCount, setVerifiedCount] = useState(0);
   const [unverifiedCount, setUnverifiedCount] = useState(0);
   const [tamperedCount, setTamperedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
 
   function normalizeFile(file: any): FileInfo {
     return {
@@ -36,6 +44,43 @@ export const useFiles = () => {
     };
   }
 
+  function processMonthlyData(files: FileInfo[]): MonthlyData[] {
+    const currentYear = new Date().getFullYear();
+    const monthlyDataMap: { [key: string]: MonthlyData } = {};
+
+    // Initialize data for all months of the current year
+    for (let month = 0; month < 12; month++) {
+      const monthName = new Date(currentYear, month, 1).toLocaleString('default', { month: 'short' });
+      monthlyDataMap[monthName] = {
+        month: monthName,
+        verifiedCount: 0,
+        unverifiedCount: 0,
+        tamperedCount: 0
+      };
+    }
+
+    // Process files
+    files.forEach(file => {
+      const fileDate = new Date(file.$createdAt || "");
+      if (fileDate.getFullYear() === currentYear) {
+        const monthName = fileDate.toLocaleString('default', { month: 'short' });
+        if (file.verified) {
+          monthlyDataMap[monthName].verifiedCount++;
+        } else if (file.tampered) {
+          monthlyDataMap[monthName].tamperedCount++;
+        } else {
+          monthlyDataMap[monthName].unverifiedCount++;
+        }
+      }
+    });
+
+    // Convert map to array and sort by month
+    return Object.values(monthlyDataMap).sort((a, b) => 
+      new Date(currentYear, "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(a.month) / 3, 1).getTime() - 
+      new Date(currentYear, "JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(b.month) / 3, 1).getTime()
+    );
+  }
+
   useEffect(() => {
     const fetchFiles = async () => {
       try {
@@ -52,14 +97,19 @@ export const useFiles = () => {
         setVerifiedCount(verified);
         setTamperedCount(tampered);
         setUnverifiedCount(unverified);
-        setTotalCount(verified + tampered + unverified); 
+        setTotalCount(verified + tampered + unverified);
+        
+        // Process and set monthly data
+        const monthlyData = processMonthlyData(normalizedFiles);
+        setMonthlyData(monthlyData);
+        console.log(monthlyData);
       } catch (error) {
         console.error('Error fetching files:', error);
       }
     };
 
     fetchFiles();
-  }, [files]);
+  }, []);
 
-  return { files, setFiles, verifiedCount, unverifiedCount, tamperedCount, totalCount };
+  return { files, setFiles, verifiedCount, unverifiedCount, tamperedCount, totalCount, monthlyData };
 };

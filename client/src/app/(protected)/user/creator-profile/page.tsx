@@ -10,7 +10,7 @@ import { useFiles } from '@/hooks/useFiles'; // Import the useFiles hook
 
 const TrustDashboard = () => {
   const { user, loading } = useUser();
-  const { files ,verifiedCount, unverifiedCount, tamperedCount } = useFiles(); 
+  const { files ,verifiedCount, unverifiedCount, tamperedCount,monthlyData } = useFiles(); 
 
   if (loading) {
     return (
@@ -29,7 +29,7 @@ const TrustDashboard = () => {
             unverifiedCount={unverifiedCount}
             tamperedCount={tamperedCount}
           />
-          <TrustScoreTrend />
+          <TrustScoreTrend monthlyData={monthlyData} />
           <VerifiedVideos files={files} />
         </main>
       </div>
