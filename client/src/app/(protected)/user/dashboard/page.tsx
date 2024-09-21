@@ -1,12 +1,10 @@
 "use client"
 import * as React from "react";
 import { RecentActivity } from "@/components/User/RecentActivity";
-import { VerificationTrends } from "@/components/User/VerificationTrendsChart";
 import { AlertsNotifications } from "@/components/User/AlertNotifications";
 import { ActionItems } from "@/components/User/ActionItems";
 import { AccountSettings } from "@/components/User/AccountSettings";
-import { AppwriteUser, CardData, ChartDataPoint, User, VideoData } from "@/lib/types";
-import { TrendingUp } from "lucide-react";
+import { AppwriteUser, CardData, ChartDataPoint, FileInfo } from "@/lib/types";
 import { Label, Pie, PieChart } from "recharts";
 
 import {
@@ -28,28 +26,38 @@ import { LoadingSkeleton } from "@/components/Layout/LoadingSkeleton";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
 import { UploadVideoDialog } from "@/components/User/UploadVideoDialog";
 import { useFiles } from "@/hooks/useFiles";
+import MonthlyFileHistogram from "@/components/User/MonthlyFileHistogram";
 
-const chartData: ChartDataPoint[] = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-];
+function processFilesForChart(files: FileInfo[]): ChartDataPoint[] {
+  const monthlyData: { [key: string]: number } = {};
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-};
+  files.forEach(file => {
+    const date = new Date(file.$createdAt || "");
+    const monthKey = date.toLocaleString('default', { month: 'long' });
 
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = 0;
+    }
+    monthlyData[monthKey]++;
+  });
+
+  const chartData: ChartDataPoint[] = Object.entries(monthlyData).map(([month, desktop]) => ({
+    month,
+    desktop
+  }));
+
+  const monthOrder = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  return chartData.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+}
 
 export default function Dashboard() {
-  const { verifiedCount, unverifiedCount, tamperedCount,totalCount } = useFiles();
+  const { verifiedCount, unverifiedCount, tamperedCount, totalCount, files } = useFiles();
   const [user, setUser] = React.useState<AppwriteUser | null>(null);
   const [loading, setLoading] = React.useState(true);
+
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -64,6 +72,16 @@ export default function Dashboard() {
 
     fetchUser();
   }, []);
+
+  const chartData = React.useMemo(() => processFilesForChart(files), [files]);
+
+  const chartConfig = {
+    desktop: {
+      label: "Total Videos",
+      color: "hsl(var(--chart-1))",
+    },
+  };
+
   const summaryCards: CardData[] = [
     {
       title: "Successful Verifications",
@@ -87,6 +105,7 @@ export default function Dashboard() {
     value: card.value,
     fill: `hsl(var(--chart-${index + 1}))`,
   }));
+
   const pieChartConfig: ChartConfig = Object.fromEntries(
     summaryCards.map((card, index) => [
       card.title.toLowerCase().replace(/\s+/g, '-'),
@@ -96,7 +115,6 @@ export default function Dashboard() {
       },
     ])
   );
-
 
   if (loading) {
     return (
@@ -184,7 +202,7 @@ export default function Dashboard() {
             <RecentActivity userId={user?.$id || ""} />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <VerificationTrends chartData={chartData} chartConfig={chartConfig} />
+            <MonthlyFileHistogram files={files} />
             <AlertsNotifications />
             <div className="flex gap-4 flex-col">
               <ActionItems />

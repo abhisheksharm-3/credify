@@ -46,24 +46,20 @@ export const useFiles = () => {
         const data = await response.json();
         const normalizedFiles = data.files.map(normalizeFile);
         setFiles(normalizedFiles);
-
-        // Calculate counts
         const verified = normalizedFiles.filter((file: { verified: any }) => file.verified).length;
         const tampered = normalizedFiles.filter((file: { tampered: any }) => file.tampered).length;
         const unverified = normalizedFiles.filter((file: { verified: any; tampered: any }) => !file.verified && !file.tampered).length;
-
-        // Update state
         setVerifiedCount(verified);
         setTamperedCount(tampered);
         setUnverifiedCount(unverified);
-        setTotalCount(verified + tampered + unverified); // Calculate total count
+        setTotalCount(verified + tampered + unverified); 
       } catch (error) {
         console.error('Error fetching files:', error);
       }
     };
 
     fetchFiles();
-  }, []);
+  }, [files]);
 
   return { files, setFiles, verifiedCount, unverifiedCount, tamperedCount, totalCount };
 };
