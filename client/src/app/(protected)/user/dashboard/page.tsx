@@ -199,7 +199,7 @@ export default function Dashboard() {
                 </div>
               </CardFooter>
             </Card>
-            <RecentActivity userId={user?.$id || ""} />
+            <RecentActivity files={files} />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MonthlyFileHistogram files={files} />

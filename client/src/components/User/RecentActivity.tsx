@@ -11,14 +11,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useFiles } from "@/hooks/useFiles";
 
 interface RecentActivityProps {
-  userId: string;
+  files: FileInfo[];
 }
 
-export function RecentActivity({ userId }: RecentActivityProps) {
+export function RecentActivity({files}: RecentActivityProps ) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const {setFiles} = useFiles();
 
-  const {files,setFiles}=useFiles();
   useEffect(() => {
     if(files.length>0 ){
       setIsLoading(false);
