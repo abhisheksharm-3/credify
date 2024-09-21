@@ -97,8 +97,8 @@ export default function ContentTable({ files }: ContentTableProps) {
               </div>
             </TableCell>
             <TableCell className="hidden md:table-cell">{formatDate(item.$createdAt)}</TableCell>
-            <TableCell >
-              <Badge variant="secondary" className={`${getStatusColor(item)} px-2 py-1 rounded-full text-xs font-semibold`}>
+            <TableCell  >
+              <Badge variant="secondary" className={`${getStatusColor(item)} px-2 py-1 rounded-full text-xs w-[80px] text-center flex justify-center  font-semibold`}>
                 {getStatusText(item)}
               </Badge>
             </TableCell>

@@ -125,7 +125,7 @@ export function RecentActivity({ userId }: RecentActivityProps) {
                       file.tampered ? (
                         <Badge variant="secondary" className="bg-red-100 text-red-800">Tampered</Badge>
                       ) : file.verified ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">Verified</Badge>
+                        <Badge variant="secondary" className="bg-green-100 px-4 text-green-800">Verified</Badge>
                       ) : (
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Unverified</Badge>
                       )

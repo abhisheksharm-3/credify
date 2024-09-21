@@ -1,6 +1,5 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { RiStarFill } from '@remixicon/react';
 import { CalendarDays, UserIcon, Video } from 'lucide-react';
 import { AppwriteUser } from '@/lib/types';
 import verifiedIcon from '../../../public/images/verified.png'
@@ -37,7 +36,7 @@ const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) 
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-            className={`w-25 h-25 rounded-full overflow-hidden shadow-lg bg-white/5 border-3 border-black dark:border-white backdrop-blur-lg flex items-center justify-center ${userProfileImage.length > 0 ? '' : 'p-1'
+            className={`w-25 h-25 rounded-full overflow-hidden shadow-lg bg-white/5 border-3 border-white backdrop-blur-lg flex items-center justify-center ${userProfileImage.length > 0 ? '' : 'p-1'
               }`}
           >
             {userProfileImage.length > 0 ? (
@@ -49,7 +48,7 @@ const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) 
                 />
               </div>
             ) : (
-              <UserIcon size={135} strokeWidth={1} />
+              <UserIcon size={135} color='#ffffff' strokeWidth={1} />
             )}
           </motion.div>
         </div>
@@ -59,9 +58,9 @@ const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-2xl justify-center flex flex-col md:text-2xl lg:text-3xl font-bold dark:text-white flex gap-2 items-start"
-          >   {!isVerified && (
-            <div className="flex items-center justify-start gap-2 text-sm"><Image src={verifiedIcon} alt="Verified" width={25} height={25} /> Verified Creator 
+            className="text-2xl justify-center flex flex-col md:text-2xl lg:text-3xl font-bold text-white flex gap-2 items-start"
+          >   {isVerified && (
+            <div className="flex items-center justify-start gap-2 text-sm text-white"><Image src={verifiedIcon} alt="Verified" width={25} height={25} /> Verified Creator 
             </div>
           )
             }
@@ -75,12 +74,12 @@ const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) 
             transition={{ delay: 0.6, duration: 0.6 }}
             className="flex items-start flex-col"
           >
-            <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
-              <CalendarDays className=" dark:text-gray-500" size={20} />
+            <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg text-white mt-2">
+              <CalendarDays className=" text-white" size={20} />
               <span>Joined on: {formatDate(user?.registration)}</span>
             </div>
-            <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg dark:text-white mt-2">
-              <Video className="dark:text-gray-500" size={20} />
+            <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg text-white mt-2">
+              <Video className="text-white" size={20} />
               <span>Total Videos: {totalCount}</span>
             </div>
           </motion.div>
