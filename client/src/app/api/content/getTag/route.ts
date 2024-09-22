@@ -144,9 +144,9 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
     const databases = new Databases(account.client);
 
     const verifiedContent = {
-      video_hash: verificationResult.robust_video_hash || null,
+      video_hash: verificationResult.video_hash || null,
       collective_audio_hash: verificationResult.collective_audio_hash || null,
-      image_hash: verificationResult.robust_image_hash || null,
+      image_hash: verificationResult.image_hash || null,
       is_tampered: verificationResult.is_tampered || false,
       is_deepfake: verificationResult.is_deepfake || false,
       userId: userId,
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.log('[POST] Verifying content');
     const verificationResult = await verifyContent(contentInfo);
 
-    const contentHash = verificationResult.robust_image_hash || verificationResult.robust_video_hash;
+    const contentHash = verificationResult.image_hash || verificationResult.video_hash;
     if (!contentHash) {
       console.error('[POST] Error: No content hash found in verification result');
       throw new Error('No content hash found in verification result');
