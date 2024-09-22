@@ -5,7 +5,6 @@ import {
   getContentVerificationAndUser, 
   storeContentVerificationAndUser, 
   addUserToContent, 
-  closeNeo4jConnection, 
   VerificationResult, 
   ensureNeo4jConnection 
 } from '@/lib/server/neo4jhelpers';
@@ -15,10 +14,17 @@ import NodeCache from 'node-cache';
 
 export const dynamic = 'force-dynamic';
 
-// Initialize Neo4j connection outside of the request handler
-initializeNeo4j().then(() => console.log('Neo4j initialized')).catch(console.error);
+let neo4jInitialized = false;
+const initializeNeo4jPromise = initializeNeo4j()
+  .then(() => {
+    neo4jInitialized = true;
+    console.log('[Neo4j] Initialized successfully');
+  })
+  .catch(error => {
+    console.error('[Neo4j] Initialization failed:', error);
+    throw error;
+  });
 
-// Setup caching
 const cache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 
 interface ContentInfo {
@@ -43,15 +49,31 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
 
   console.log(`[getContentInfo] Fetching content info for contentId: ${contentId}`);
   const contentUrl = `https://utfs.io/f/${contentId}`;
-  const contentTypeResponse: Response = await fetch(contentUrl, { method: 'HEAD' });
-  const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
-  const filename = `content_${contentId}.${contentType.split('/')[1]}`;
-  const endpoint = contentType.startsWith('image/') ? 'verify_image' : 'fingerprint';
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-  const contentInfo: ContentInfo = { contentUrl, contentType, filename, endpoint };
-  cache.set(cacheKey, contentInfo);
-  console.log(`[getContentInfo] Content info retrieved and cached: ${JSON.stringify(contentInfo)}`);
-  return contentInfo;
+    const contentTypeResponse: Response = await fetch(contentUrl, { 
+      method: 'HEAD',
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    if (!contentTypeResponse.ok) {
+      throw new Error(`Failed to fetch content type: ${contentTypeResponse.statusText}`);
+    }
+    const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
+    const filename = `content_${contentId}.${contentType.split('/')[1]}`;
+    const endpoint = contentType.startsWith('image/') ? 'verify_image' : 'fingerprint';
+
+    const contentInfo: ContentInfo = { contentUrl, contentType, filename, endpoint };
+    cache.set(cacheKey, contentInfo);
+    console.log(`[getContentInfo] Content info retrieved and cached: ${JSON.stringify(contentInfo)}`);
+    return contentInfo;
+  } catch (error) {
+    console.error(`[getContentInfo] Error fetching content info: ${error}`);
+    throw error;
+  }
 }
 
 async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<VerificationResult> {
@@ -63,67 +85,88 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<Ver
   }
 
   console.log(`[verifyContent] Verifying content at URL: ${contentUrl}`);
-  const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
-    method: 'POST',
-    body: JSON.stringify({ url: contentUrl }),
-    headers: { 'Content-Type': 'application/json' },
-  });
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`[verifyContent] Verification service error: ${errorText}`);
-    throw new Error(`Verification service error: ${errorText}`);
+    const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
+      method: 'POST',
+      body: JSON.stringify({ url: contentUrl }),
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[verifyContent] Verification service error: ${errorText}`);
+      throw new Error(`Verification service error: ${errorText}`);
+    }
+
+    const apiResponse: ApiResponse = await response.json() as ApiResponse;
+    cache.set(cacheKey, apiResponse.result);
+    console.log(`[verifyContent] Content verified successfully and cached`);
+    return apiResponse.result;
+  } catch (error) {
+    console.error(`[verifyContent] Error during content verification: ${error}`);
+    throw error;
   }
-
-  const apiResponse: ApiResponse = await response.json() as ApiResponse;
-  cache.set(cacheKey, apiResponse.result);
-  console.log(`[verifyContent] Content verified successfully and cached`);
-  return apiResponse.result;
 }
 
 async function handleExistingVerification(contentHash: string, userId: string): Promise<VerificationResult | null> {
   console.log(`[handleExistingVerification] Checking existing verification for contentHash: ${contentHash}, userId: ${userId}`);
-  const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentHash, userId);
-  
-  if (existingResult) {
-    if (!userExists) {
-      await addUserToContent(contentHash, userId);
-      console.log(`[handleExistingVerification] User associated with existing content`);
-      return { ...existingResult, message: 'User associated with existing content' } as VerificationResult & { message: string };
+  try {
+    const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentHash, userId);
+    
+    if (existingResult) {
+      if (!userExists) {
+        await addUserToContent(contentHash, userId);
+        console.log(`[handleExistingVerification] User associated with existing content`);
+        return { ...existingResult, message: 'User associated with existing content' } as VerificationResult & { message: string };
+      }
+      console.log(`[handleExistingVerification] Existing verification found`);
+      return existingResult;
     }
-    console.log(`[handleExistingVerification] Existing verification found`);
-    return existingResult;
+    
+    console.log(`[handleExistingVerification] No existing verification found`);
+    return null;
+  } catch (error) {
+    console.error(`[handleExistingVerification] Error checking existing verification: ${error}`);
+    throw error;
   }
-  
-  console.log(`[handleExistingVerification] No existing verification found`);
-  return null;
 }
 
 async function storeVerifiedContent(verificationResult: VerificationResult, userId: string, contentInfo: ContentInfo, contentId: string): Promise<void> {
   console.log(`[storeVerifiedContent] Storing verified content for userId: ${userId}, contentId: ${contentId}`);
-  const { account } = await createAdminClient();
-  const databases = new Databases(account.client);
+  try {
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
 
-  const verifiedContent = {
-    video_hash: verificationResult.robust_video_hash || null,
-    collective_audio_hash: verificationResult.collective_audio_hash || null,
-    image_hash: verificationResult.robust_image_hash || null,
-    is_tampered: verificationResult.is_tampered || false,
-    is_deepfake: verificationResult.is_deepfake || false,
-    userId: userId,
-    media_title: contentInfo.filename,
-    media_type: contentInfo.contentType,
-    contentId: contentId,
-    verificationDate: new Date().toISOString(),
-  };
+    const verifiedContent = {
+      video_hash: verificationResult.robust_video_hash || null,
+      collective_audio_hash: verificationResult.collective_audio_hash || null,
+      image_hash: verificationResult.robust_image_hash || null,
+      is_tampered: verificationResult.is_tampered || false,
+      is_deepfake: verificationResult.is_deepfake || false,
+      userId: userId,
+      media_title: contentInfo.filename,
+      media_type: contentInfo.contentType,
+      contentId: contentId,
+      verificationDate: new Date().toISOString(),
+    };
 
-  await databases.createDocument(
-    process.env.APPWRITE_DATABASE_ID!,
-    process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
-    ID.unique(),
-    verifiedContent
-  );
-  console.log(`[storeVerifiedContent] Verified content stored successfully`);
+    await databases.createDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+      ID.unique(),
+      verifiedContent
+    );
+    console.log(`[storeVerifiedContent] Verified content stored successfully`);
+  } catch (error) {
+    console.error(`[storeVerifiedContent] Error storing verified content: ${error}`);
+    throw error;
+  }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -131,6 +174,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const startTime = Date.now();
   
   try {
+    if (!neo4jInitialized) {
+      console.log('[POST] Waiting for Neo4j initialization...');
+      await initializeNeo4jPromise;
+    }
+
     console.log('[POST] Parsing request body');
     const { contentId } = await req.json();
     if (!contentId) {
@@ -181,5 +229,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   } finally {
     console.log(`[POST] Total execution time: ${Date.now() - startTime}ms`);
+    console.log(`[POST] Memory usage: ${JSON.stringify(process.memoryUsage())}`);
   }
 }
