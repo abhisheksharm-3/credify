@@ -4,12 +4,12 @@ import {
   initializeNeo4j, 
   getContentVerificationAndUser, 
   storeContentVerificationAndUser, 
-  addUserToContent, 
-  VerificationResult, 
-  ensureNeo4jConnection 
+  addUserToContent,
+  ensureNeo4jConnection, 
+  VerificationResult
 } from '@/lib/server/neo4jhelpers';
 import { createAdminClient, getLoggedInUser } from '@/lib/server/appwrite';
-import { Databases, ID } from 'node-appwrite';
+import { Databases, ID, Models } from 'node-appwrite';
 import NodeCache from 'node-cache';
 
 export const dynamic = 'force-dynamic';
@@ -39,11 +39,19 @@ interface ApiResponse {
   result: VerificationResult;
 }
 
+interface JobResponse {
+  job_id: string;
+  status: 'processing' | 'completed' | 'failed';
+  result?: VerificationResult;
+}
+
 async function getContentInfo(contentId: string): Promise<ContentInfo> {
+  console.time('getContentInfo');
   const cacheKey = `contentInfo:${contentId}`;
   const cachedInfo = cache.get<ContentInfo>(cacheKey);
   if (cachedInfo) {
     console.log(`[getContentInfo] Cache hit for contentId: ${contentId}`);
+    console.timeEnd('getContentInfo');
     return cachedInfo;
   }
 
@@ -69,26 +77,31 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
     const contentInfo: ContentInfo = { contentUrl, contentType, filename, endpoint };
     cache.set(cacheKey, contentInfo);
     console.log(`[getContentInfo] Content info retrieved and cached: ${JSON.stringify(contentInfo)}`);
+    console.timeEnd('getContentInfo');
     return contentInfo;
   } catch (error) {
     console.error(`[getContentInfo] Error fetching content info: ${error}`);
+    console.timeEnd('getContentInfo');
     throw error;
   }
 }
 
-async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<VerificationResult> {
+async function verifyContent({ contentUrl, endpoint, contentType }: ContentInfo): Promise<VerificationResult | string> {
+  console.time('verifyContent');
   const cacheKey = `verificationResult:${contentUrl}`;
   const cachedResult = cache.get<VerificationResult>(cacheKey);
   if (cachedResult) {
     console.log(`[verifyContent] Cache hit for URL: ${contentUrl}`);
+    console.timeEnd('verifyContent');
     return cachedResult;
   }
 
   console.log(`[verifyContent] Verifying content at URL: ${contentUrl}`);
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // Reduced timeout to 30 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 55000);
 
+    console.log(`[verifyContent] Sending request to: ${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`);
     const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
       method: 'POST',
       body: JSON.stringify({ url: contentUrl }),
@@ -105,16 +118,51 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<Ver
     }
 
     const apiResponse: ApiResponse = await response.json() as ApiResponse;
-    cache.set(cacheKey, apiResponse.result);
-    console.log(`[verifyContent] Content verified successfully and cached`);
-    return apiResponse.result;
+    
+    if (contentType.startsWith('video/')) {
+      // For videos, return the job ID
+      const jobResponse = apiResponse.result as unknown as JobResponse;
+      console.log(`[verifyContent] Video verification job started: ${jobResponse.job_id}`);
+      console.timeEnd('verifyContent');
+      return jobResponse.job_id;
+    } else {
+      // For images, cache and return the result
+      cache.set(cacheKey, apiResponse.result);
+      console.log(`[verifyContent] Content verified successfully and cached`);
+      console.timeEnd('verifyContent');
+      return apiResponse.result;
+    }
   } catch (error) {
     console.error(`[verifyContent] Error during content verification: ${error}`);
+    console.timeEnd('verifyContent');
+    throw error;
+  }
+}
+
+async function checkVideoVerificationStatus(jobId: string): Promise<JobResponse> {
+  console.log(`[checkVideoVerificationStatus] Checking status for job: ${jobId}`);
+  try {
+    const response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/status/${jobId}`, {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[checkVideoVerificationStatus] Status check error: ${errorText}`);
+      throw new Error(`Status check error: ${errorText}`);
+    }
+
+    const jobResponse: JobResponse = await response.json() as JobResponse;
+    console.log(`[checkVideoVerificationStatus] Job status: ${jobResponse.status} for job: ${jobId}`);
+    return jobResponse;
+  } catch (error) {
+    console.error(`[checkVideoVerificationStatus] Error checking video verification status: ${error}`);
     throw error;
   }
 }
 
 async function handleExistingVerification(contentHash: string, userId: string): Promise<VerificationResult | null> {
+  console.time('handleExistingVerification');
   console.log(`[handleExistingVerification] Checking existing verification for contentHash: ${contentHash}, userId: ${userId}`);
   try {
     const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentHash, userId);
@@ -123,21 +171,27 @@ async function handleExistingVerification(contentHash: string, userId: string): 
       if (!userExists) {
         await addUserToContent(contentHash, userId);
         console.log(`[handleExistingVerification] User associated with existing content`);
-        return { ...existingResult, message: 'User associated with existing content' } as VerificationResult & { message: string };
+        console.timeEnd('handleExistingVerification');
+        console.log(`[handleExistingVerification] User associated with existing content`);
+        return existingResult;
       }
       console.log(`[handleExistingVerification] Existing verification found`);
+      console.timeEnd('handleExistingVerification');
       return existingResult;
     }
     
     console.log(`[handleExistingVerification] No existing verification found`);
+    console.timeEnd('handleExistingVerification');
     return null;
   } catch (error) {
     console.error(`[handleExistingVerification] Error checking existing verification: ${error}`);
+    console.timeEnd('handleExistingVerification');
     throw error;
   }
 }
 
 async function storeVerifiedContent(verificationResult: VerificationResult, userId: string, contentInfo: ContentInfo, contentId: string): Promise<void> {
+  console.time('storeVerifiedContent');
   console.log(`[storeVerifiedContent] Storing verified content for userId: ${userId}, contentId: ${contentId}`);
   try {
     const { account } = await createAdminClient();
@@ -147,6 +201,8 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
       video_hash: verificationResult.video_hash || null,
       collective_audio_hash: verificationResult.collective_audio_hash || null,
       image_hash: verificationResult.image_hash || null,
+      audio_hash: verificationResult.audio_hash || null,
+      frame_hash: verificationResult.frame_hash || null,
       is_tampered: verificationResult.is_tampered || false,
       is_deepfake: verificationResult.is_deepfake || false,
       userId: userId,
@@ -163,8 +219,10 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
       verifiedContent
     );
     console.log(`[storeVerifiedContent] Verified content stored successfully`);
+    console.timeEnd('storeVerifiedContent');
   } catch (error) {
     console.error(`[storeVerifiedContent] Error storing verified content: ${error}`);
+    console.timeEnd('storeVerifiedContent');
     throw error;
   }
 }
@@ -196,6 +254,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     console.log('[POST] Verifying content');
     const verificationResult = await verifyContent(contentInfo);
+
+    if (typeof verificationResult === 'string') {
+      // This is a job ID for video verification
+      console.log(`[POST] Video verification job started: ${verificationResult}`);
+      return NextResponse.json({
+        message: 'Video verification in progress',
+        jobId: verificationResult,
+        status: 'processing'
+      }, { status: 202 });
+    }
 
     const contentHash = verificationResult.image_hash || verificationResult.video_hash;
     if (!contentHash) {
@@ -230,5 +298,54 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } finally {
     console.log(`[POST] Total execution time: ${Date.now() - startTime}ms`);
     console.log(`[POST] Memory usage: ${JSON.stringify(process.memoryUsage())}`);
+  }
+}
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const { searchParams } = new URL(req.url);
+  const jobId = searchParams.get('jobId');
+  const contentId = searchParams.get('contentId');
+
+  if (!jobId || !contentId) {
+    return NextResponse.json({ error: 'Job ID and Content ID are required' }, { status: 400 });
+  }
+
+  try {
+    const jobResponse = await checkVideoVerificationStatus(jobId);
+    if (jobResponse.status === 'completed' && jobResponse.result) {
+      // Video verification completed
+      const contentHash = jobResponse.result.video_hash;
+      if (!contentHash) {
+        throw new Error('No content hash found in verification result');
+      }
+
+      const user = await getLoggedInUser();
+      const userId = user?.$id || "";
+
+      const existingVerificationResult = await handleExistingVerification(contentHash, userId);
+      if (existingVerificationResult) {
+        return NextResponse.json({ ...existingVerificationResult, status: 'completed' });
+      }
+
+      const contentInfo = await getContentInfo(contentId);
+      await Promise.all([
+        storeContentVerificationAndUser(jobResponse.result, userId),
+        storeVerifiedContent(jobResponse.result, userId, contentInfo, contentId)
+      ]);
+
+      return NextResponse.json({ ...jobResponse.result, status: 'completed' });
+    } else if (jobResponse.status === 'processing') {
+      // Video verification still in progress
+      return NextResponse.json({ message: 'Video verification in progress', status: 'processing' }, { status: 202 });
+    } else {
+      // Verification failed or unexpected status
+      return NextResponse.json({ error: 'Verification failed or unexpected status', status: 'error' }, { status: 500 });
+    }
+  } catch (error) {
+    console.error('[GET] Error checking video verification status:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : String(error), status: 'error' },
+      { status: 500 }
+    );
   }
 }
