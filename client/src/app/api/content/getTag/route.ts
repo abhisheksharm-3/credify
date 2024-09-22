@@ -22,6 +22,7 @@ interface ContentInfo {
   contentType: string;
   filename: string;
 }
+
 interface ApiResponse {
   message: string;
   result: {
@@ -31,6 +32,7 @@ interface ApiResponse {
     robust_video_hash: string;
   }
 }
+
 async function initializeNeo4jIfNeeded() {
   if (!isNeo4jInitialized) {
     await initializeNeo4j();
@@ -40,6 +42,7 @@ async function initializeNeo4jIfNeeded() {
 }
 let endpoint = '';
 async function getContentInfo(contentId: string): Promise<ContentInfo> {
+  console.log(`[getContentInfo] Fetching content info for contentId: ${contentId}`);
   const contentUrl = `https://utfs.io/f/${contentId}`;
   const contentTypeResponse: Response = await fetch(contentUrl, { method: 'HEAD' });
   const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
@@ -51,11 +54,12 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
   } else {
     throw new Error(`Unsupported content type: ${contentType}`);
   }
-
+  console.log(`[getContentInfo] Content info retrieved: ${JSON.stringify({ contentUrl, contentType, filename, endpoint })}`);
   return { contentUrl, contentType, filename };
 }
 
 async function verifyContent({ contentUrl }: ContentInfo): Promise<VerificationResult> {
+  console.log(`[verifyContent] Verifying content at URL: ${contentUrl}`);
   const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
     method: 'POST',
     body: JSON.stringify({ url: contentUrl }),
@@ -64,25 +68,32 @@ async function verifyContent({ contentUrl }: ContentInfo): Promise<VerificationR
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`[verifyContent] Verification service error: ${errorText}`);
     throw new Error(`Verification service error: ${errorText}`);
   }
 
   const apiResponse: ApiResponse = await response.json() as ApiResponse;
+  console.log(`[verifyContent] Content verified successfully`);
   return apiResponse.result;
 }
 
 async function handleExistingVerification(contentHash: string, userId: string, existingResult: VerificationResult | null, userExists: boolean) {
+  console.log(`[handleExistingVerification] Checking existing verification for contentHash: ${contentHash}, userId: ${userId}`);
   if (existingResult) {
     if (!userExists) {
       await addUserToContent(contentHash, userId);
+      console.log(`[handleExistingVerification] User associated with existing content`);
       return { ...existingResult, message: 'User associated with existing content' };
     }
+    console.log(`[handleExistingVerification] Existing verification found`);
     return existingResult;
   }
+  console.log(`[handleExistingVerification] No existing verification found`);
   return null;
 }
 
 async function storeVerifiedContent(verificationResult: VerificationResult, userId: string, contentInfo: ContentInfo, contentId: string, geminiAnalysis: string) {
+  console.log(`[storeVerifiedContent] Storing verified content for userId: ${userId}, contentId: ${contentId}`);
   const { account } = await createAdminClient();
   const databases = new Databases(account.client);
 
@@ -100,63 +111,75 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
     fact_check: geminiAnalysis,
   };
 
-  return databases.createDocument(
+  const storedContent = await databases.createDocument(
     process.env.APPWRITE_DATABASE_ID!,
     process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
     ID.unique(),
     verifiedContent
   );
+  console.log(`[storeVerifiedContent] Verified content stored successfully, documentId: ${storedContent.$id}`);
+  return storedContent;
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  console.log('Received request to /api/content/getTag');
+  console.log('[POST] Received request to /api/content/getTag');
+  const startTime = Date.now();
   try {
+    console.log('[POST] Initializing Neo4j');
     await initializeNeo4jIfNeeded();
     
+    console.log('[POST] Parsing request body');
     const { contentId } = await req.json();
     if (!contentId) {
+      console.log('[POST] Error: Content ID is required');
       return NextResponse.json({ error: 'Content ID is required' }, { status: 400 });
     }
 
-    const user = await getLoggedInUser();
+    console.log(`[POST] Processing content with ID: ${contentId}`);
+    const [user, contentInfo] = await Promise.all([
+      getLoggedInUser(),
+      getContentInfo(contentId)
+    ]);
     const userId = user?.$id || "";
+    console.log(`[POST] User ID: ${userId}`);
 
-    const contentInfo = await getContentInfo(contentId);
+    console.log('[POST] Verifying content');
     const verificationResult = await verifyContent(contentInfo);
-
-    // Perform Gemini API analysis
-    const contentResponse = await fetch(contentInfo.contentUrl);
-    const contentBuffer = await contentResponse.arrayBuffer();
-    // const geminiAnalysis = await analyzeContentWithGemini(Buffer.from(contentBuffer), contentInfo.contentType);
-    const geminiAnalysis = ""
 
     const contentHash = verificationResult.robust_image_hash || verificationResult.robust_video_hash;
     if (!contentHash) {
+      console.error('[POST] Error: No content hash found in verification result');
       throw new Error('No content hash found in verification result');
     }
 
+    console.log('[POST] Checking for existing verification');
     const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentHash, userId);
     const existingVerificationResult = await handleExistingVerification(contentHash, userId, existingResult, userExists);
     if (existingVerificationResult) {
-      return NextResponse.json({...existingVerificationResult, geminiAnalysis});
+      console.log('[POST] Returning existing verification result');
+      return NextResponse.json({...existingVerificationResult, geminiAnalysis: ""});
     }
 
-    await storeContentVerificationAndUser(verificationResult, userId);
-    const storedContent = await storeVerifiedContent(verificationResult, userId, contentInfo, contentId, geminiAnalysis);
+    console.log('[POST] Storing new verification result');
+    await Promise.all([
+      storeContentVerificationAndUser(verificationResult, userId),
+      storeVerifiedContent(verificationResult, userId, contentInfo, contentId, "")
+    ]);
 
+    console.log('[POST] Returning new verification result');
     return NextResponse.json({
       ...verificationResult,
-      storedContentId: storedContent.$id,
-      geminiAnalysis,
+      geminiAnalysis: "",
       message: 'New content verified and stored',
     });
   } catch (error) {
-    console.error('Error in content verification:', error);
+    console.error('[POST] Error in content verification:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   } finally {
     await closeNeo4jConnection();
+    console.log(`[POST] Total execution time: ${Date.now() - startTime}ms`);
   }
 }
