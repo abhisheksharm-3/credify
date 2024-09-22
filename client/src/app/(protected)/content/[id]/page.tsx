@@ -13,25 +13,31 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { VerificationResult } from "@/lib/server/neo4jhelpers";
 
 enum VerificationStatus {
   PENDING = "pending",
-  PROCESSING = "processing",
   COMPLETE = "complete",
   ERROR = "error"
+}
+
+interface VerificationResult {
+  video_hash?: string;
+  collective_audio_hash?: string;
+  image_hash?: string;
+  audio_hash?: string;
+  frame_hash?: string;
+  is_tampered?: boolean;
 }
 
 const VerificationDetailPage: React.FC = () => {
   const params = useParams();
   const contentId = params.id as string;
 
-  const [status, setStatus] = useState<VerificationStatus>(VerificationStatus.PROCESSING);
+  const [status, setStatus] = useState<VerificationStatus>(VerificationStatus.PENDING);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [shareableLink, setShareableLink] = useState<string>("");
   const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false);
-  const [jobId, setJobId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVerificationData = async () => {
@@ -44,15 +50,14 @@ const VerificationDetailPage: React.FC = () => {
 
         if (!response.ok) throw new Error('Failed to fetch verification data');
 
-        const data = await response.json();
+        const data: VerificationResult = await response.json();
+        setStatus(VerificationStatus.COMPLETE);
+        setResult(data);
+        const contentHash = data.image_hash || data.video_hash;
+        setShareableLink(`${window.location.origin}/verify/${contentHash}`);
 
-        if (data.status === 'processing' && data.jobId) {
-          setStatus(VerificationStatus.PROCESSING);
-          setJobId(data.jobId);
-        } else if (data.status === 'completed') {
-          handleCompletedVerification(data);
-        } else {
-          setStatus(VerificationStatus.ERROR);
+        if (data && !data.is_tampered) {
+          await deleteVerifiedContent(contentId);
         }
       } catch (error) {
         console.error('Error fetching verification data:', error);
@@ -60,54 +65,20 @@ const VerificationDetailPage: React.FC = () => {
       }
     };
 
+    const simulateProgress = () => {
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          const next = prev + Math.random() * 5;
+          return next > 95 ? 95 : next;
+        });
+      }, 3000);
+      return () => clearInterval(interval);
+    };
+
     fetchVerificationData();
+    const cleanup = simulateProgress();
+    return cleanup;
   }, [contentId]);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    const pollVerificationStatus = async () => {
-      if (status === VerificationStatus.PROCESSING && jobId) {
-        try {
-          const response = await fetch(`/api/content/getTag?jobId=${jobId}&contentId=${contentId}`);
-          if (!response.ok) throw new Error('Failed to fetch verification status');
-
-          const data = await response.json();
-
-          if (data.status === 'completed') {
-            handleCompletedVerification(data);
-            clearInterval(intervalId);
-          } else if (data.status === 'error') {
-            setStatus(VerificationStatus.ERROR);
-            clearInterval(intervalId);
-          }
-        } catch (error) {
-          console.error('Error polling verification status:', error);
-          setStatus(VerificationStatus.ERROR);
-          clearInterval(intervalId);
-        }
-      }
-    };
-
-    if (status === VerificationStatus.PROCESSING) {
-      intervalId = setInterval(pollVerificationStatus, 5000); // Poll every 5 seconds
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [status, jobId, contentId]);
-
-  const handleCompletedVerification = (data: VerificationResult) => {
-    setStatus(VerificationStatus.COMPLETE);
-    setResult(data);
-    const contentHash = data.image_hash || data.video_hash;
-    setShareableLink(`${window.location.origin}/verify/${contentHash}`);
-
-    if (data && !data.is_tampered) {
-      deleteVerifiedContent(contentId);
-    }
-  };
 
   const deleteVerifiedContent = async (id: string): Promise<void> => {
     try {
@@ -145,7 +116,6 @@ const VerificationDetailPage: React.FC = () => {
   const renderContent = (): JSX.Element => {
     switch (status) {
       case VerificationStatus.PENDING:
-      case VerificationStatus.PROCESSING:
         return (
           <motion.div 
             className="flex flex-col items-center gap-6 p-8 mt-4 rounded-lg bg-secondary/10"
