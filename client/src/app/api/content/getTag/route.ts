@@ -51,7 +51,7 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
   const contentUrl = `https://utfs.io/f/${contentId}`;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     const contentTypeResponse: Response = await fetch(contentUrl, { 
       method: 'HEAD',
@@ -87,7 +87,7 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<Ver
   console.log(`[verifyContent] Verifying content at URL: ${contentUrl}`);
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // Reduced timeout to 30 seconds
 
     const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
       method: 'POST',
