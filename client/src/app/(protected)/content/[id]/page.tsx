@@ -26,7 +26,7 @@ const VerificationDetailPage: React.FC = () => {
   const params = useParams();
   const contentId = params.id as string;
 
-  const [status, setStatus] = useState<VerificationStatus>(VerificationStatus.PENDING);
+  const [status, setStatus] = useState<VerificationStatus>(VerificationStatus.PROCESSING);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [shareableLink, setShareableLink] = useState<string>("");
