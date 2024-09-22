@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"; // Ensure this path is correct
+} from "@/components/ui/dialog";
 
 interface ProfileInfoProps {
   user: UserType;
@@ -149,15 +149,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
                 Edit
               </button>
             )}
-          </div>
-        </div>
-        <div className="grid gap-2">
-          <label className="font-semibold text-sm mb-3">Profile Picture</label>
-          <div className="flex items-center gap-8 ml-3">
-            <User size={34} color="#aaaaaa" strokeWidth={1.25} />
-            <button className="border-[1px] dark:text-gray-300 text-[#2e2e2e] border-[#b9b9b9] p-2 rounded-lg text-sm font-semibold px-3 bg-opacity-30  shadow-lg">
-              Change
-            </button>
           </div>
         </div>
       </div>

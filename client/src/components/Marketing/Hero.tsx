@@ -15,7 +15,7 @@ export const Hero = () => (
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
-              href="#"
+              href="/login"
               className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-white shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               prefetch={false}
             >
