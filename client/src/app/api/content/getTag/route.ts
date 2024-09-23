@@ -209,10 +209,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.log('[POST] Performing Gemini analysis');
     let geminiAnalysis: string;
     console.log("contenttype=======>",contentInfo.contentType);
+    console.log(contentInfo.contentUrl);
     if (contentInfo.contentType.startsWith('image/')) {
       geminiAnalysis = await analyzeImageWithGemini(contentBuffer, contentInfo.contentType);
     } else {
-      geminiAnalysis = await analyzeVideoWithGemini(contentBuffer, contentInfo.contentType);
+      geminiAnalysis = await analyzeVideoWithGemini(contentInfo.contentUrl, contentInfo.contentType);
     }
     console.log('[POST] Gemini analysis result:', geminiAnalysis);
 
