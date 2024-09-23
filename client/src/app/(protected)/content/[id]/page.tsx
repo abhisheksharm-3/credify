@@ -49,7 +49,7 @@ const VerificationDetailPage: React.FC = () => {
         });
 
         if (!response.ok) throw new Error('Failed to fetch verification data');
-
+        console.log(response.json());
         const data: VerificationResult = await response.json();
         setStatus(VerificationStatus.COMPLETE);
         setResult(data);
