@@ -6,7 +6,7 @@ import axios from 'axios';
 import { pipeline } from 'stream/promises';
 
 
-const IMAGE_MODEL_NAME = "gemini-pro-vision";
+const IMAGE_MODEL_NAME = "gemini-1.5-flash";
 const VIDEO_MODEL_NAME = "gemini-1.5-pro";
 
 const API_KEY = process.env.GEMINI_API_KEY!;
