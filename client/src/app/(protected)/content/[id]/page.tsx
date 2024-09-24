@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, Link as LinkIcon, RefreshCw, Lock, Info } from "lucide-react";
+import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, Link as LinkIcon, RefreshCw, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 enum VerificationStatus {
   PENDING = "pending",
-  COMPLETE = "complete",
+  COMPLETE = "completed",
   ERROR = "error"
 }
 
@@ -27,6 +27,7 @@ interface VerificationResult {
   audio_hash?: string;
   frame_hash?: string;
   is_tampered?: boolean;
+  geminiAnalysis?: string;
 }
 
 const VerificationDetailPage: React.FC = () => {
@@ -39,48 +40,65 @@ const VerificationDetailPage: React.FC = () => {
   const [shareableLink, setShareableLink] = useState<string>("");
   const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchVerificationData = async () => {
-      try {
-        const response = await fetch('/api/content/getTag', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contentId }),
-        });
-    
-        if (!response.ok) throw new Error('Failed to fetch verification data');
-        
-        const data: VerificationResult = await response.json();
-        console.log(data); // Log the parsed data instead of the response
-        
+  const fetchVerificationData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/content/getTag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentId }),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch verification data');
+      
+      const data = await response.json();
+      console.log(data);
+      
+      if (data.status === VerificationStatus.COMPLETE) {
         setStatus(VerificationStatus.COMPLETE);
-        setResult(data);
-        const contentHash = data.image_hash || data.video_hash;
+        setResult(data.result);
+        const contentHash = data.result.image_hash || data.result.video_hash;
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
-    
-        if (data && !data.is_tampered) {
-          await deleteVerifiedContent(contentId);
-        }
-      } catch (error) {
-        console.error('Error fetching verification data:', error);
+        return true; // Polling can stop
+      } else if (data.status === VerificationStatus.ERROR) {
         setStatus(VerificationStatus.ERROR);
+        return true; // Polling can stop
+      } else {
+        // Still pending, continue polling
+        return false;
       }
-    };
-
-    const simulateProgress = () => {
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          const next = prev + Math.random() * 5;
-          return next > 95 ? 95 : next;
-        });
-      }, 3000);
-      return () => clearInterval(interval);
-    };
-
-    fetchVerificationData();
-    const cleanup = simulateProgress();
-    return cleanup;
+    } catch (error) {
+      console.error('Error fetching verification data:', error);
+      setStatus(VerificationStatus.ERROR);
+      return true; // Stop polling on error
+    }
   }, [contentId]);
+
+  useEffect(() => {
+    const pollInterval = 5000; // Poll every 5 seconds
+    const maxAttempts = 120; // Maximum 5 minutes (60 * 5 seconds)
+    let attempts = 0;
+
+    const poll = async () => {
+      const shouldStop = await fetchVerificationData();
+      attempts++;
+
+      if (shouldStop || attempts >= maxAttempts) {
+        return; // Stop polling
+      }
+
+      // Update progress
+      setProgress(Math.min((attempts / maxAttempts) * 100, 95));
+
+      // Schedule next poll
+      setTimeout(poll, pollInterval);
+    };
+
+    poll(); // Start polling
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, [fetchVerificationData]);
 
   const deleteVerifiedContent = async (id: string): Promise<void> => {
     try {
