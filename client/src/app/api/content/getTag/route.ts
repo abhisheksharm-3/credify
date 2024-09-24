@@ -256,3 +256,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.log(`[POST] Memory usage: ${JSON.stringify(process.memoryUsage())}`);
   }
 }
+
+export const config = {
+  runtime: 'edge',
+};
