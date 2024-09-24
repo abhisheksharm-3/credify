@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fetch, { Response } from 'node-fetch';
+import NodeCache from 'node-cache';
 import {
   initializeNeo4j,
   getContentVerificationAndUser,
@@ -10,11 +11,11 @@ import {
 } from '@/lib/server/neo4jhelpers';
 import { createAdminClient, getLoggedInUser } from '@/lib/server/appwrite';
 import { Databases, ID } from 'node-appwrite';
-import NodeCache from 'node-cache';
 import { analyzeImageWithGemini, analyzeVideoWithGemini } from '@/services/geminiService';
 
 export const dynamic = 'force-dynamic';
 
+// Initialize Neo4j
 let neo4jInitialized = false;
 const initializeNeo4jPromise = initializeNeo4j()
   .then(() => {
@@ -26,8 +27,10 @@ const initializeNeo4jPromise = initializeNeo4j()
     throw error;
   });
 
+// Initialize cache
 const cache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
 
+// Interfaces
 interface ContentInfo {
   contentUrl: string;
   contentType: string;
@@ -35,11 +38,14 @@ interface ContentInfo {
   endpoint: string;
 }
 
-interface ApiResponse {
-  message: string;
-  result: VerificationResult;
+interface VerificationStatus {
+  status: 'pending' | 'completed' | 'error';
+  result?: VerificationResult;
+  geminiAnalysis?: string;
+  message?: string;
 }
 
+// Helper Functions
 async function getContentInfo(contentId: string): Promise<ContentInfo> {
   const cacheKey = `contentInfo:${contentId}`;
   const cachedInfo = cache.get<ContentInfo>(cacheKey);
@@ -52,7 +58,7 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
   const contentUrl = `https://utfs.io/f/${contentId}`;
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 600000);
 
     const contentTypeResponse: Response = await fetch(contentUrl, {
       method: 'HEAD',
@@ -77,7 +83,7 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
   }
 }
 
-async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<VerificationResult> {
+async function verifyContent({ contentUrl, endpoint }: ContentInfo, geminiAnalysis: string): Promise<VerificationResult> {
   const cacheKey = `verificationResult:${contentUrl}`;
   const cachedResult = cache.get<VerificationResult>(cacheKey);
   if (cachedResult) {
@@ -88,11 +94,11 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<Ver
   console.log(`[verifyContent] Verifying content at URL: ${contentUrl}`);
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // Reduced timeout to 30 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
       method: 'POST',
-      body: JSON.stringify({ url: contentUrl }),
+      body: JSON.stringify({ url: contentUrl, geminiAnalysis }),
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal
     });
@@ -105,7 +111,7 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<Ver
       throw new Error(`Verification service error: ${errorText}`);
     }
 
-    const apiResponse: ApiResponse = await response.json() as ApiResponse;
+    const apiResponse = await response.json() as { message: string; result: VerificationResult };
     cache.set(cacheKey, apiResponse.result);
     console.log(`[verifyContent] Content verified successfully and cached`);
     return apiResponse.result;
@@ -114,7 +120,6 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo): Promise<Ver
     throw error;
   }
 }
-
 async function handleExistingVerification(contentHash: string, userId: string): Promise<VerificationResult | null> {
   console.log(`[handleExistingVerification] Checking existing verification for contentHash: ${contentHash}, userId: ${userId}`);
   try {
@@ -124,7 +129,7 @@ async function handleExistingVerification(contentHash: string, userId: string): 
       if (!userExists) {
         await addUserToContent(contentHash, userId);
         console.log(`[handleExistingVerification] User associated with existing content`);
-        return { ...existingResult, message: 'User associated with existing content' } as VerificationResult & { message: string };
+        return { ...existingResult};
       }
       console.log(`[handleExistingVerification] Existing verification found`);
       return existingResult;
@@ -138,7 +143,7 @@ async function handleExistingVerification(contentHash: string, userId: string): 
   }
 }
 
-async function storeVerifiedContent(verificationResult: VerificationResult, userId: string, contentInfo: ContentInfo, contentId: string): Promise<void> {
+async function storeVerifiedContent(verificationResult: VerificationResult, userId: string, contentInfo: ContentInfo, contentId: string, geminiAnalysis: string): Promise<void> {
   console.log(`[storeVerifiedContent] Storing verified content for userId: ${userId}, contentId: ${contentId}`);
   try {
     const { account } = await createAdminClient();
@@ -155,6 +160,7 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
       media_type: contentInfo.contentType,
       contentId: contentId,
       verificationDate: new Date().toISOString(),
+      fact_check: geminiAnalysis,
     };
 
     await databases.createDocument(
@@ -169,6 +175,7 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
     throw error;
   }
 }
+
 async function fetchContentBuffer(contentUrl: string): Promise<Buffer> {
   const response = await fetch(contentUrl);
   if (!response.ok) {
@@ -177,12 +184,56 @@ async function fetchContentBuffer(contentUrl: string): Promise<Buffer> {
   return Buffer.from(await response.arrayBuffer());
 }
 
+async function processVerification(contentId: string, userId: string): Promise<void> {
+  try {
+    const contentInfo = await getContentInfo(contentId);
+    const contentBuffer = await fetchContentBuffer(contentInfo.contentUrl);
+    
+    console.log('[processVerification] Performing Gemini analysis');
+    const geminiAnalysis = contentInfo.contentType.startsWith('image/') 
+      ? await analyzeImageWithGemini(contentBuffer, contentInfo.contentType)
+      : await analyzeVideoWithGemini(contentInfo.contentUrl, contentInfo.contentType);
+    console.log('[processVerification] Gemini analysis completed');
+
+    console.log('[processVerification] Starting content verification');
+    const verificationResult = await verifyContent(contentInfo, geminiAnalysis);
+    const contentHash = verificationResult.image_hash || verificationResult.video_hash;
+
+    if (!contentHash) {
+      throw new Error('No content hash found in verification result');
+    }
+
+    const existingVerificationResult = await handleExistingVerification(contentHash, userId);
+    if (!existingVerificationResult) {
+      await Promise.all([
+        storeContentVerificationAndUser(verificationResult, userId),
+        storeVerifiedContent(verificationResult, userId, contentInfo, contentId, geminiAnalysis)
+      ]);
+    }
+
+    const finalResult: VerificationStatus = {
+      status: 'completed',
+      result: verificationResult,
+      geminiAnalysis,
+      message: existingVerificationResult ? 'Existing content verified' : 'New content verified, stored, and analyzed with Gemini',
+    };
+
+    cache.set(`verification:${contentId}`, finalResult);
+  } catch (error) {
+    console.error('[processVerification] Error:', error);
+    cache.set(`verification:${contentId}`, {
+      status: 'error',
+      message: 'Verification process failed',
+    });
+  }
+}
+
+// Main POST handler
 export async function POST(req: NextRequest): Promise<NextResponse> {
   console.log('[POST] Received request to /api/content/getTag');
   const startTime = Date.now();
 
   try {
-    
     if (!neo4jInitialized) {
       console.log('[POST] Waiting for Neo4j initialization...');
       await initializeNeo4jPromise;
@@ -196,55 +247,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     console.log(`[POST] Processing content with ID: ${contentId}`);
-    const [user, contentInfo] = await Promise.all([
-      getLoggedInUser(),
-      getContentInfo(contentId)
-    ]);
+    const user = await getLoggedInUser();
     const userId = user?.$id || "";
     console.log(`[POST] User ID: ${userId}`);
 
-    console.log('[POST] Fetching content for Gemini analysis');
-    const contentBuffer = await fetchContentBuffer(contentInfo.contentUrl);
+    const cacheKey = `verification:${contentId}`;
+    let verificationStatus = cache.get<VerificationStatus>(cacheKey);
 
-    console.log('[POST] Performing Gemini analysis');
-    let geminiAnalysis: string;
-    console.log("contenttype=======>",contentInfo.contentType);
-    console.log(contentInfo.contentUrl);
-    if (contentInfo.contentType.startsWith('image/')) {
-      geminiAnalysis = await analyzeImageWithGemini(contentBuffer, contentInfo.contentType);
-    } else {
-      geminiAnalysis = await analyzeVideoWithGemini(contentInfo.contentUrl, contentInfo.contentType);
-    }
-    console.log('[POST] Gemini analysis result:', geminiAnalysis);
-
-
-    console.log('[POST] Verifying content');
-    const verificationResult = await verifyContent(contentInfo);
-
-    const contentHash = verificationResult.image_hash || verificationResult.video_hash;
-    if (!contentHash) {
-      console.error('[POST] Error: No content hash found in verification result');
-      throw new Error('No content hash found in verification result');
+    if (!verificationStatus) {
+      // Start the verification process
+      verificationStatus = { status: 'pending', message: 'Verification process started' };
+      cache.set(cacheKey, verificationStatus);
+      processVerification(contentId, userId).catch(console.error);
     }
 
-    console.log('[POST] Checking for existing verification');
-    const existingVerificationResult = await handleExistingVerification(contentHash, userId);
-    if (existingVerificationResult) {
-      console.log('[POST] Returning existing verification result');
-      return NextResponse.json(existingVerificationResult);
-    }
-    console.log('[POST] Storing new verification result');
-    await Promise.all([
-      storeContentVerificationAndUser(verificationResult, userId),
-      storeVerifiedContent(verificationResult, userId, contentInfo, contentId)
-    ]);
-
-    console.log('[POST] Returning new verification result');
-    return NextResponse.json({
-      ...verificationResult,
-      geminiAnalysis,
-      message: 'New content verified, stored, and analyzed with Gemini',
-    });
+    console.log('[POST] Returning verification status');
+    return NextResponse.json(verificationStatus);
   } catch (error) {
     console.error('[POST] Error in content verification:', error);
     return NextResponse.json(
@@ -256,5 +274,3 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.log(`[POST] Memory usage: ${JSON.stringify(process.memoryUsage())}`);
   }
 }
-
-export const runtime = "edge"
