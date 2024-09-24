@@ -257,6 +257,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 }
 
-export const config = {
-  runtime: 'edge',
-};
+export const runtime = "edge"
