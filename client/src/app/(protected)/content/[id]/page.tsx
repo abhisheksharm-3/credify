@@ -58,6 +58,7 @@ const VerificationDetailPage: React.FC = () => {
         setResult(data.result);
         const contentHash = data.result.image_hash || data.result.video_hash;
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
+        deleteVerifiedContent(contentId)
         return true; // Polling can stop
       } else if (data.status === VerificationStatus.ERROR) {
         setStatus(VerificationStatus.ERROR);
