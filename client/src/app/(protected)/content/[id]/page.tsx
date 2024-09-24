@@ -75,7 +75,7 @@ const VerificationDetailPage: React.FC = () => {
 
   useEffect(() => {
     const pollInterval = 5000; // Poll every 5 seconds
-    const maxAttempts = 60; // Maximum 5 minutes (60 * 5 seconds)
+    const maxAttempts = 120; // Maximum 5 minutes (60 * 5 seconds)
     let attempts = 0;
 
     const poll = async () => {
