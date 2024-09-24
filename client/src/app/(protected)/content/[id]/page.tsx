@@ -47,15 +47,17 @@ const VerificationDetailPage: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentId }),
         });
-
+    
         if (!response.ok) throw new Error('Failed to fetch verification data');
-        console.log(response.json());
+        
         const data: VerificationResult = await response.json();
+        console.log(data); // Log the parsed data instead of the response
+        
         setStatus(VerificationStatus.COMPLETE);
         setResult(data);
         const contentHash = data.image_hash || data.video_hash;
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
-
+    
         if (data && !data.is_tampered) {
           await deleteVerifiedContent(contentId);
         }
