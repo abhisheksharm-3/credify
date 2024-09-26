@@ -65,7 +65,7 @@ export default function CredibilityOverviewPage() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const creatorId = Array.isArray(params.creatorId) ? params.creatorId[0] : params.creatorId;
+        const creatorId = Array.isArray(params.id) ? params.id[0] : params.id;
         const result = await getUserById(creatorId);
         if (result.success) {
           setUserData({

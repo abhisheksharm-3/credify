@@ -69,12 +69,11 @@ async function getContentHash(contentBuffer: Buffer, contentType: string, filena
 
   formData.append(fileAttributeName, contentBuffer, { filename, contentType });
 
-  const response = await fetch(`${VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
+  const response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
     method: 'POST',
     body: JSON.stringify({ url: contentUrl }),
-    headers: formData.getHeaders(),
+    headers: { 'Content-Type': 'application/json' }
   });
-
   if (!response.ok) {
     const errorText = await response.text();
     throw new ContentHashError(`Verification service error: ${errorText}`);
@@ -102,7 +101,7 @@ async function ensureNeo4jInitialized() {
 
 async function processAnalysis(contentId: string): Promise<AnalysisStatus> {
   try {
-    const contentUrl = `${UPLOAD_SERVICE_BASE_URL}/${contentId}`;
+    const contentUrl = `https://utfs.io/f/${contentId}`;
     logger.info(`Processing content: ${contentUrl}`);
 
     const { buffer: contentBuffer, contentType } = await downloadContent(contentUrl);
