@@ -53,3 +53,14 @@ def get_file_stream(filename: str) -> io.BytesIO:
     except Exception as e:
         logging.error(f"Error getting file stream from Firebase: {str(e)}")
         raise
+    
+
+async def upload_file_to_firebase(file_content: bytes, filename: str) -> str:
+    try:
+        blob = firebase_bucket.blob(filename)
+        blob.upload_from_string(file_content, content_type='application/octet-stream')
+        logging.info(f"File uploaded to Firebase: {filename}")
+        return filename
+    except Exception as e:
+        logging.error(f"Error uploading file to Firebase: {str(e)}")
+        raise

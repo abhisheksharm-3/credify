@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.api.routes import router
 from app.core.logging_config import configure_logging
 from app.core.firebase_config import initialize_firebase
+from app.api.forgery_routes import router as forgery_router
 import logging
 
 app = FastAPI()
@@ -14,6 +15,7 @@ async def startup_event():
     initialize_firebase()
 
 app.include_router(router)
+app.include_router(forgery_router)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
