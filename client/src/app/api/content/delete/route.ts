@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/server/appwrite';
 import { Databases, ID, Query } from 'node-appwrite';
@@ -9,24 +10,38 @@ const deleteRequestSchema = z.object({
   id: z.string().nonempty('ID is required'),
 });
 
+const APPWRITE_DATABASE_ID = process.env.APPWRITE_DATABASE_ID!;
+const APPWRITE_COLLECTION_ID = process.env.APPWRITE_COLLECTION_ID!;
+
+class FileNotFoundError extends Error {
+  constructor(message: string = 'File not found') {
+    super(message);
+    this.name = 'FileNotFoundError';
+  }
+}
+
+class DeleteError extends Error {
+  constructor(service: string, id: string, originalError: unknown) {
+    super(`Failed to delete ${service} with ID: ${id}`);
+    this.name = 'DeleteError';
+    this.cause = originalError;
+  }
+}
+
 async function getFileDocument(databases: Databases, id: string) {
   try {
-    return await databases.getDocument(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_COLLECTION_ID!,
-      id
-    );
+    return await databases.getDocument(APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID, id);
   } catch (error) {
     const documents = await databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_COLLECTION_ID!,
+      APPWRITE_DATABASE_ID,
+      APPWRITE_COLLECTION_ID,
       [Query.equal('fileId', id)]
     );
 
     if (documents.documents.length > 0) {
       return documents.documents[0];
     }
-    throw new Error('File not found');
+    throw new FileNotFoundError();
   }
 }
 
@@ -35,22 +50,16 @@ async function deleteUploadThingFile(utapi: UTApi, fileId: string) {
     await utapi.deleteFiles(fileId);
     logger.info(`File deleted from UploadThing: ${fileId}`);
   } catch (error) {
-    logger.error(`Error deleting file from UploadThing: ${fileId}`, error);
-    throw new Error('Failed to delete file from UploadThing');
+    throw new DeleteError('UploadThing file', fileId, error);
   }
 }
 
 async function deleteAppwriteDocument(databases: Databases, documentId: string) {
   try {
-    await databases.deleteDocument(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_COLLECTION_ID!,
-      documentId
-    );
+    await databases.deleteDocument(APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID, documentId);
     logger.info(`Document deleted from Appwrite: ${documentId}`);
   } catch (error) {
-    logger.error(`Error deleting document from Appwrite: ${documentId}`, error);
-    throw new Error('Failed to delete document from Appwrite');
+    throw new DeleteError('Appwrite document', documentId, error);
   }
 }
 
@@ -58,9 +67,7 @@ export async function DELETE(req: Request) {
   const utapi = new UTApi();
   
   try {
-    const body = await req.json();
-    const { id } = deleteRequestSchema.parse(body);
-
+    const { id } = deleteRequestSchema.parse(await req.json());
     logger.info(`Deleting content with ID: ${id}`);
 
     const { account } = await createAdminClient();
@@ -82,11 +89,12 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
 
-    if (error instanceof Error) {
-      if (error.message === 'File not found') {
-        return NextResponse.json({ error: 'File not found' }, { status: 404 });
-      }
-      logger.error('Error deleting file', error);
+    if (error instanceof FileNotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+
+    if (error instanceof DeleteError) {
+      logger.error(error.message, error.cause);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

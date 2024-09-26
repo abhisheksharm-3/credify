@@ -1,4 +1,5 @@
-// src/lib/server/appwrite.js
+
+// src/lib/server/appwrite.ts
 "use server";
 import { Client, Account, ID, Users, Databases } from "node-appwrite";
 import { cookies } from "next/headers";
@@ -162,7 +163,7 @@ export async function getUserById(userId: string) {
 export async function sendVerificationEmail() {
   try {
     const { account } = await createSessionClient();
-    await account.createVerification(process.env.VERIFICATION_URL!);
+    await account.createVerification(`${process.env.DEPLOYMENT_ADDRESS!}/verify-email`);
     return { success: true, message: "Verification email sent." };
   } catch (error) {
     console.error("Failed to send verification email:", error);
