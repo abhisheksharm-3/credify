@@ -137,4 +137,23 @@ export interface VideoData {
     verificationDate?: string; 
     fact_check?: string;
   }
+
+  export interface DownloadResult {
+    buffer: Buffer;
+    contentType: string;
+  }
+  
+  export interface ForgeryDetectionResult {
+    status: 'pending' | 'completed' | 'error';
+    contentType?: 'image' | 'video' | 'unknown';
+    isManipulated?: boolean;
+    manipulationProbability?: number;
+    detectionMethods?: {
+      imageManipulation?: boolean;
+      ganGenerated?: boolean;
+      faceManipulation?: boolean;
+      audioDeepfake?: boolean;
+    };
+    message?: string;
+  }
   

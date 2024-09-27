@@ -1,5 +1,6 @@
 import { Driver, Session, Result } from 'neo4j-driver';
 import neo4j from 'neo4j-driver';
+import logger from '../logger';
 
 let driver: Driver | null = null;
 
@@ -31,7 +32,15 @@ export class ContentVerificationError extends Error {
     this.name = 'ContentVerificationError';
   }
 }
-
+let isNeo4jInitialized = false;
+export async function ensureNeo4jInitialized(): Promise<void> {
+  if (!isNeo4jInitialized) {
+    await initializeNeo4j();
+    isNeo4jInitialized = true;
+    logger.info('Neo4j initialized');
+  }
+  ensureNeo4jConnection();
+}
 export async function initializeNeo4j(): Promise<void> {
   if (driver) {
     return; // Connection already initialized
