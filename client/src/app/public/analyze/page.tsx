@@ -1,6 +1,7 @@
+
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '@/components/Layout/Layout';
 import UploadSection from '@/components/PublicComponents/PublicAnalyzeUpload';
@@ -10,52 +11,85 @@ import VerificationResultSection from '@/components/PublicComponents/Verificatio
 import { VerificationResult, User } from '@/lib/types';
 import { toast } from 'sonner';
 
+const POLLING_INTERVAL = 5000; // 5 seconds
+
 export default function ContentVerificationPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [contentId, setContentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const pollAnalysis = async () => {
+      if (contentId && isAnalyzing) {
+        try {
+          const response = await fetch(`/api/content/analyze/${contentId}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch data');
+          }
+          const data = await response.json();
+
+          if (data.status !== 'pending') {
+            clearInterval(intervalId);
+            setIsAnalyzing(false);
+
+            const result: VerificationResult = {
+              verified: data.status === 'found',
+              status: data.status,
+              message: data.message,
+              uploader: data.verificationResult?.uploader,
+              timestamp: data.verificationResult?.timestamp,
+              isTampered: data.status === 'not_found'
+            };
+
+            setVerificationResult(result);
+            setVerificationComplete(true);
+
+            if (result.verified) {
+              await fetchUploaderHierarchy(data.contentHash);
+            }
+
+            await deleteVerifiedContent(contentId);
+          }
+        } catch (error) {
+          clearInterval(intervalId);
+          setIsAnalyzing(false);
+          toast.error('Error during verification');
+          setError("Oops, it looks like there was an issue verifying your content. Please try again later.");
+        }
+      }
+    };
+
+    if (contentId && isAnalyzing) {
+      intervalId = setInterval(pollAnalysis, POLLING_INTERVAL);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [contentId, isAnalyzing]);
 
   const handleUploadComplete = async (res: { key: string; url: string; name: string }[]) => {
     if (res && res.length > 0) {
       setIsAnalyzing(true);
       setError(null);
-      const contentId = res[0].key;
-      try {
-        const response = await fetch(`/api/content/analyze/${contentId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        const data = await response.json();
+      setContentId(res[0].key);
+    }
+  };
 
-        const result: VerificationResult = {
-          verified: data.status === 'found',
-          status: data.status,
-          message: data.message,
-          uploader: data.verificationResult?.uploader,
-          timestamp: data.verificationResult?.timestamp,
-          isTampered: data.status === 'not_found'
-        };
-
-        setVerificationResult(result);
-        setVerificationComplete(true);
-        const contentHash = data.contentHash;
-
-        if (result.verified) {
-          const lineageResponse = await fetch(`/api/content/get-lineage/${contentHash}`);
-          if (lineageResponse.ok) {
-            const lineageData = await lineageResponse.json();
-            setUploaderHierarchy(lineageData.uploaderHierarchy);
-          }
-        }
-      } catch (error) {
-        toast.error('Error during verification');
-        setError("Oops, it looks like there was an issue verifying your content. Please try again later.");
-      } finally {
-        setIsAnalyzing(false);
-        await deleteVerifiedContent(contentId);
+  const fetchUploaderHierarchy = async (contentHash: string) => {
+    try {
+      const lineageResponse = await fetch(`/api/content/get-lineage/${contentHash}`);
+      if (lineageResponse.ok) {
+        const lineageData = await lineageResponse.json();
+        setUploaderHierarchy(lineageData.uploaderHierarchy);
       }
+    } catch (error) {
+      console.error('Error fetching uploader hierarchy:', error);
     }
   };
 
@@ -78,6 +112,7 @@ export default function ContentVerificationPage() {
   const resetVerification = () => {
     setVerificationComplete(false);
     setVerificationResult(null);
+    setContentId(null);
   };
 
   return (

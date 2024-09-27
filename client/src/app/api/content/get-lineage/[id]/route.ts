@@ -1,19 +1,23 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeNeo4j, getConnectedUsers } from '@/lib/server/neo4jhelpers';
 import { getUserById } from '@/lib/server/appwrite';
-import  logger  from '@/lib/logger';
+import logger from '@/lib/logger';
 import { z } from 'zod';
 
+// Schemas
 const ParamsSchema = z.object({
   id: z.string().nonempty('Content ID is required'),
 });
 
+// Interfaces
 interface UserNode {
   userId: string;
   name: string;
   children: UserNode[];
 }
 
+// Helper functions
 async function fetchUserDetails(userId: string): Promise<UserNode> {
   try {
     const result = await getUserById(userId);
@@ -28,6 +32,7 @@ async function fetchUserDetails(userId: string): Promise<UserNode> {
   }
 }
 
+// Route handler
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

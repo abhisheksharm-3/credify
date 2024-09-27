@@ -98,7 +98,7 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo, geminiAnalys
 
     const response: Response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
       method: 'POST',
-      body: JSON.stringify({ url: contentUrl, geminiAnalysis }),
+      body: JSON.stringify({ url: contentUrl }),
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal
     });
