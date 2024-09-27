@@ -48,12 +48,12 @@ class ImageManipulationService:
         predicted_class = int(np.argmax(prediction, axis=1)[0])
         confidence = float(np.max(prediction) * 100)
         
-        is_manipulated = bool(predicted_class == 0 and confidence > 90)
+        check_manipulated = bool(predicted_class == 0 and confidence > 90)
 
         result = {
             "class": self.class_names[predicted_class],
             "confidence": f"{confidence:.2f}%",
-            "is_manipulated": is_manipulated
+            "is_manipulated": check_manipulated
         }
 
         return result
