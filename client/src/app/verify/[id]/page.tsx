@@ -15,15 +15,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface VerificationResult {
-  video_hash: string;
-  collective_audio_hash: string;
-  image_hash: string;
-  audio_hash: string;
-  frame_hash: string;
-  is_tampered: boolean;
-}
+import { VerificationResult } from "@/lib/server/neo4jhelpers";
 
 interface User {
   userId: string;

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 from app.services import video_service, image_service, antispoof_service
 from app.services.antispoof_service import antispoof_service
@@ -13,6 +13,14 @@ class ContentRequest(BaseModel):
 class CompareRequest(BaseModel):
     url1: str
     url2: str
+
+@router.get("/health")
+@router.head("/health")
+async def health_check():
+    """
+    Health check endpoint that responds to both GET and HEAD requests.
+    """
+    return Response(content="OK", media_type="text/plain")
 
 @router.post("/fingerprint")
 async def create_fingerprint(request: ContentRequest):
