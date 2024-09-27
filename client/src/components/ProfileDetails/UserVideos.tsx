@@ -57,6 +57,11 @@ const VerifiedVideos: FC<VerifiedVideosProps> = ({ files }) => {
     handleVerificationRedirect(file);
   };
 
+  // Utility to truncate the filename
+  const truncateFileName = (fileName: string, maxLength: number = 20) => {
+    return fileName.length > maxLength ? `${fileName.slice(0, maxLength)}...` : fileName;
+  };
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -90,7 +95,9 @@ const VerifiedVideos: FC<VerifiedVideosProps> = ({ files }) => {
                         )}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold">{file.fileName || file.media_title}</h3>
+                        <h3 className="text-lg font-semibold">
+                          {truncateFileName(file.fileName || file.media_title || "")} {/* Truncate filename */}
+                        </h3>
                         <div className="flex flex-col gap-2 text-sm text-muted-foreground mt-2">
                           {/* Status */}
                           <div className="flex items-center gap-2">
