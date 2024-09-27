@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import os
 import logging
+import uuid
 
 async def extract_audio(firebase_filename):
     try:
