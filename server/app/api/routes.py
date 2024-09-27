@@ -62,7 +62,6 @@ async def verify_image_route(request: ContentRequest):
 @router.post("/compare_images")
 async def compare_images_route(request: CompareRequest):
     try:
-        # Call the image comparison service with the URLs from the request body
         result = await compare_images(request.url1, request.url2)
         return {"message": "Image comparison completed", "result": result}
     except Exception as e:
