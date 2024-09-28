@@ -46,6 +46,7 @@ interface VerificationStatus {
 }
 
 // Helper Functions
+
 async function getContentInfo(contentId: string): Promise<ContentInfo> {
   const cacheKey = `contentInfo:${contentId}`;
   const cachedInfo = cache.get<ContentInfo>(cacheKey);
@@ -70,7 +71,10 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
       throw new Error(`Failed to fetch content type: ${contentTypeResponse.statusText}`);
     }
     const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
-    const filename = contentTypeResponse.headers.get('content-disposition')?.split('filename=')[1] || 'unknown';
+    const filename = contentTypeResponse.headers.get('content-disposition')
+  ?.split('filename=')[1]
+  ?.replace(/["']/g, '') // Remove surrounding quotes
+  || 'unknown';
     const endpoint = contentType.startsWith('image/') ? 'verify_image' : 'fingerprint';
 
     const contentInfo: ContentInfo = { contentUrl, contentType, filename, endpoint };
