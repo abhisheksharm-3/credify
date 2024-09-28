@@ -5,7 +5,8 @@ from app.services.audio_deepfake_service import AudioDeepfakeService
 from app.services.gan_detection_service import GANDetectionService
 from app.utils.file_utils import download_file, remove_temp_file, get_file_content
 from app.utils.forgery_image_utils import detect_face
-from app.utils.forgery_video_utils import extract_audio, extract_frames, compress_and_process_video
+from app.utils.forgery_video_utils import extract_audio, extract_frames, compress_and_process_video, detect_speech # Adjust the import path if necessary
+
 import os
 import logging
 import traceback
@@ -92,23 +93,29 @@ async def process_video(firebase_filename: str):
         logging.info(f"Video compressed: {compressed_video_filename}")
         
         audio_filename = await extract_audio(compressed_video_filename)
-        logging.info(f"Audio extracted: {audio_filename}")
-        
+        if audio_filename:
+            logging.info(f"Audio extracted successfully: {audio_filename}")
+            audio_content = get_file_content(audio_filename)
+            if detect_speech(audio_content):
+                logging.info("Speech detected in the audio")
+                results = {"audio_deepfake": audio_deepfake_service.detect_deepfake(audio_filename)}
+            else:
+                logging.info("No speech detected in the audio")
+                results = {"audio_deepfake": {"prediction": "No speech detected", "confidence": 1.0, "raw_prediction": 1.0}}
+            await remove_temp_file(audio_filename)
+            logging.info(f"Temporary audio file removed: {audio_filename}")
+        else:
+            logging.warning("No audio detected or extracted from the video")
+            results = {"audio_deepfake": {"prediction": "No audio", "confidence": 1.0, "raw_prediction": 1.0}}
+
         frames = await extract_frames(compressed_video_filename)
         logging.info(f"Frames extracted: {len(frames)} frames")
 
-        results = {
-            "audio_deepfake": None,
+        results.update({
             "image_manipulation": [],
             "face_manipulation": [],
             "gan_detection": []
-        }
-
-        if audio_filename:
-            results["audio_deepfake"] = audio_deepfake_service.detect_deepfake(audio_filename)
-            logging.info(f"Audio deepfake detection result: {results['audio_deepfake']}")
-            await remove_temp_file(audio_filename)
-            logging.info(f"Temporary audio file removed: {audio_filename}")
+        })
 
         face_frames = []
         for i, frame in enumerate(frames):
