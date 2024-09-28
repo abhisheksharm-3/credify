@@ -70,7 +70,7 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
       throw new Error(`Failed to fetch content type: ${contentTypeResponse.statusText}`);
     }
     const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
-    const filename = `content_${contentId}.${contentType.split('/')[1]}`;
+    const filename = contentTypeResponse.headers.get('content-disposition')?.split('filename=')[1] || 'unknown';
     const endpoint = contentType.startsWith('image/') ? 'verify_image' : 'fingerprint';
 
     const contentInfo: ContentInfo = { contentUrl, contentType, filename, endpoint };
