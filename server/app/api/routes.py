@@ -4,6 +4,7 @@ from app.services import video_service, image_service, antispoof_service
 from app.services.antispoof_service import antispoof_service
 from app.services.image_service import compare_images
 import logging
+import os
 
 router = APIRouter()
 
@@ -13,6 +14,17 @@ class ContentRequest(BaseModel):
 class CompareRequest(BaseModel):
     url1: str
     url2: str
+    
+SUPPORTED_VIDEO_FORMATS = ['mp4', 'avi', 'mov', 'flv', 'wmv']
+SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
+
+def is_supported_video_format(url: str) -> bool:
+    file_extension = os.path.splitext(url)[1][1:].lower()
+    return file_extension in SUPPORTED_VIDEO_FORMATS
+
+def is_supported_image_format(url: str) -> bool:
+    file_extension = os.path.splitext(url)[1][1:].lower()
+    return file_extension in SUPPORTED_IMAGE_FORMATS
 
 @router.get("/health")
 @router.head("/health")
@@ -24,6 +36,8 @@ async def health_check():
 
 @router.post("/fingerprint")
 async def create_fingerprint(request: ContentRequest):
+    if not is_supported_video_format(request.url):
+        raise HTTPException(status_code=400, detail="Video format not supported")
     try:
         result = await video_service.fingerprint_video(request.url)
         return {"message": "Fingerprint processing completed", "result": result}
@@ -33,6 +47,8 @@ async def create_fingerprint(request: ContentRequest):
 
 @router.post("/verify_video_only")
 async def verify_video_only(request: ContentRequest):
+    if not is_supported_video_format(request.url):
+        raise HTTPException(status_code=400, detail="Video format not supported")
     try:
         result = await video_service.fingerprint_video(request.url)
         return {"message": "Video verification completed", "result": result}
@@ -42,6 +58,8 @@ async def verify_video_only(request: ContentRequest):
 
 @router.post("/verify_liveness")
 async def verify_liveness(request: ContentRequest):
+    if not is_supported_image_format(request.url):
+        raise HTTPException(status_code=400, detail="Image format not supported")
     try:
         result = await antispoof_service.verify_liveness(request.url)
         return {"message": "Liveness verification completed", "result": result}
@@ -51,6 +69,8 @@ async def verify_liveness(request: ContentRequest):
 
 @router.post("/compare_videos")
 async def compare_videos_route(request: CompareRequest):
+    if not is_supported_video_format(request.url1) or not is_supported_video_format(request.url2):
+        raise HTTPException(status_code=400, detail="Video format not supported")
     try:
         result = await video_service.compare_videos(request.url1, request.url2)
         return {"message": "Video comparison completed", "result": result}
@@ -60,6 +80,8 @@ async def compare_videos_route(request: CompareRequest):
 
 @router.post("/verify_image")
 async def verify_image_route(request: ContentRequest):
+    if not is_supported_image_format(request.url):
+        raise HTTPException(status_code=400, detail="Image format not supported")
     try:
         result = await image_service.verify_image(request.url)
         return {"message": "Image verification completed", "result": result}
@@ -69,6 +91,8 @@ async def verify_image_route(request: ContentRequest):
 
 @router.post("/compare_images")
 async def compare_images_route(request: CompareRequest):
+    if not is_supported_image_format(request.url1) or not is_supported_image_format(request.url2):
+        raise HTTPException(status_code=400, detail="Image format not supported")
     try:
         result = await compare_images(request.url1, request.url2)
         return {"message": "Image comparison completed", "result": result}
