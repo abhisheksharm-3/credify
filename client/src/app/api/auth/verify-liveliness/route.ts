@@ -1,10 +1,6 @@
 
+import { VerifyLivenessResponseType } from '@/lib/types';
 import { NextRequest } from 'next/server';
-
-interface VerifyLivenessResponse {
-    result?: any;
-    error?: string;
-}
 
 export async function GET(request: NextRequest) {
     const url = new URL(request.url).searchParams.get('url');
@@ -24,7 +20,7 @@ export async function GET(request: NextRequest) {
             body: JSON.stringify({ url }),
         });
 
-        const data: VerifyLivenessResponse = await response.json();
+        const data: VerifyLivenessResponseType = await response.json();
 
         if (!response.ok) {
             return new Response(JSON.stringify({ error: data.error ?? 'Unknown error' }), {

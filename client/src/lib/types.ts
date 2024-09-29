@@ -156,4 +156,7 @@ export interface VideoData {
     };
     message?: string;
   }
-  
+  export interface VerifyLivenessResponseType {
+    result?: any;
+    error?: string;
+}
