@@ -46,7 +46,7 @@ async def detect_forgery(request: DetectForgeryRequest):
         firebase_filename = await download_file(file_url)
         logging.info(f"File downloaded and saved as: {firebase_filename}")
         
-        if file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp']:
+        if file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'gif', 'tiff', 'webp']:
             logging.info(f"Processing image file: {firebase_filename}")
             return await process_image(firebase_filename)
         elif file_extension in ['mp4', 'avi', 'mov', 'flv', 'wmv']:

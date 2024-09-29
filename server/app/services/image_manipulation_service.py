@@ -16,6 +16,9 @@ class ImageManipulationService:
             self.preprocessing_params = json.load(f)
 
     def convert_to_ela_image(self, image, quality):
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        
         temp_buffer = io.BytesIO()
         image.save(temp_buffer, 'JPEG', quality=quality)
         temp_buffer.seek(0)
