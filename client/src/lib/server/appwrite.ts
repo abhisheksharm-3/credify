@@ -3,7 +3,6 @@
 "use server";
 import { Client, Account, ID, Users, Databases, Query } from "node-appwrite";
 import { cookies } from "next/headers";
-// import { ContentInfo } from "@/app/api/content/get-lineage/[id]/route";
 import logger from "../logger";
 
 export async function createSessionClient() {
@@ -244,29 +243,31 @@ export async function setUserAsVerified() {
   }
 }
 
-// export async function getFileUploadDate(userId: string, contentInfo: ContentInfo): Promise<string | undefined> {
-//   try {
-//     let document;
-//     const { account } = await createAdminClient();
-//     const databases = new Databases(account.client);
-//     if (contentInfo.video_hash) {
-//       document = await databases.listDocuments('your_database_id', 'your_collection_id', [
-//         Query.equal('userId', userId),
-//         Query.equal('video_hash', contentInfo.video_hash)
-//       ]);
-//     } else if (contentInfo.image_hash) {
-//       document = await databases.listDocuments('your_database_id', 'your_collection_id', [
-//         Query.equal('userId', userId),
-//         Query.equal('image_hash', contentInfo.image_hash)
-//       ]);
-//     }
+export async function getFileUploadDateByHash(hash: string, userId: string): Promise<string | undefined> {
+  const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+  try {
+      const response = await databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+          [
+              Query.equal('userId', userId),
+              Query.equal('$or', [
+                  Query.equal('image_hash', hash),
+                  Query.equal('video_hash', hash)
+              ])
+          ]
+      );
 
-//     if (document && document.documents.length > 0) {
-//       return document.documents[0].createdAt;
-//     }
-//     return undefined;
-//   } catch (error) {
-//     logger.error(`Error fetching file upload date for user ${userId}:`, error);
-//     return undefined;
-//   }
-// }
+      if (response.documents.length > 0) {
+          const file = response.documents[0];
+          return file.verificationDate;
+      } else {
+          logger.warn(`No file found for hash ${hash} and user ${userId}`);
+          return undefined;
+      }
+  } catch (error) {
+      logger.error(`Error fetching file upload date for hash ${hash} and user ${userId}:`, error);
+      throw error;
+  }
+}
