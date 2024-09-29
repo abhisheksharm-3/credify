@@ -1,8 +1,10 @@
 
 // src/lib/server/appwrite.ts
 "use server";
-import { Client, Account, ID, Users, Databases } from "node-appwrite";
+import { Client, Account, ID, Users, Databases, Query } from "node-appwrite";
 import { cookies } from "next/headers";
+// import { ContentInfo } from "@/app/api/content/get-lineage/[id]/route";
+import logger from "../logger";
 
 export async function createSessionClient() {
   const client = new Client()
@@ -241,3 +243,30 @@ export async function setUserAsVerified() {
     return { success: false, error: "Failed to set user as verified." };
   }
 }
+
+// export async function getFileUploadDate(userId: string, contentInfo: ContentInfo): Promise<string | undefined> {
+//   try {
+//     let document;
+//     const { account } = await createAdminClient();
+//     const databases = new Databases(account.client);
+//     if (contentInfo.video_hash) {
+//       document = await databases.listDocuments('your_database_id', 'your_collection_id', [
+//         Query.equal('userId', userId),
+//         Query.equal('video_hash', contentInfo.video_hash)
+//       ]);
+//     } else if (contentInfo.image_hash) {
+//       document = await databases.listDocuments('your_database_id', 'your_collection_id', [
+//         Query.equal('userId', userId),
+//         Query.equal('image_hash', contentInfo.image_hash)
+//       ]);
+//     }
+
+//     if (document && document.documents.length > 0) {
+//       return document.documents[0].createdAt;
+//     }
+//     return undefined;
+//   } catch (error) {
+//     logger.error(`Error fetching file upload date for user ${userId}:`, error);
+//     return undefined;
+//   }
+// }

@@ -33,7 +33,7 @@ async function getFileDocument(databases: Databases, id: string) {
     if (documents.documents.length > 0) {
       return documents.documents[0];
     }
-    return null; // Return null instead of throwing an error
+    return null;
   }
 }
 
