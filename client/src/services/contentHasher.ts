@@ -1,16 +1,20 @@
+import { Buffer } from 'buffer';
 import fetch from 'node-fetch';
-import { ContentHashError } from '@/lib/errors';
+import FormData from 'form-data';
 import logger from '@/lib/logger';
+import { ContentHashError } from '@/lib/errors';
 import { ApiResponseType } from '@/lib/types';
-
-const VERIFICATION_SERVICE_BASE_URL = process.env.VERIFICATION_SERVICE_BASE_URL;
 
 export async function getContentHash(contentBuffer: Buffer, contentType: string, filename: string, contentUrl: string): Promise<string> {
   logger.info(`Getting content hash for file: ${filename}, Type: ${contentType}`);
+  const formData = new FormData();
   const isImage = contentType.startsWith('image');
   const endpoint = isImage ? 'verify_image' : 'fingerprint';
+  const fileAttributeName = isImage ? 'image_file' : 'video_file';
 
-  const response = await fetch(`${VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
+  formData.append(fileAttributeName, contentBuffer, { filename, contentType });
+
+  const response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
     method: 'POST',
     body: JSON.stringify({ url: contentUrl }),
     headers: { 'Content-Type': 'application/json' }

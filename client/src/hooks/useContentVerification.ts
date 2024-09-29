@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { VerificationResult, User } from '@/lib/types';
+import { VerificationResultType, User } from '@/lib/types';
 
 interface UseContentVerificationReturn {
     isAnalyzing: boolean;
     verificationComplete: boolean;
-    verificationResult: VerificationResult | null;
+    verificationResult: VerificationResultType | null;
     uploaderHierarchy: User | null;
     error: string | null;
     handleUploadComplete: (res: { key: string; url: string; name: string }[]) => Promise<void>;
@@ -14,7 +14,7 @@ interface UseContentVerificationReturn {
 export function useContentVerification(): UseContentVerificationReturn {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [verificationComplete, setVerificationComplete] = useState(false);
-    const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+    const [verificationResult, setVerificationResult] = useState<VerificationResultType | null>(null);
     const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,13 +29,12 @@ export function useContentVerification(): UseContentVerificationReturn {
                 }
                 const data = await response.json();
 
-                const result: VerificationResult = {
+                const result: VerificationResultType = {
                     verified: data.status === 'found',
                     status: data.status,
                     message: data.message,
                     uploader: data.creatorsId.userId,
                     timestamp: data.verificationResult?.timestamp,
-                    isTampered: data.status === 'not_found'
                 };
 
                 setVerificationResult(result);

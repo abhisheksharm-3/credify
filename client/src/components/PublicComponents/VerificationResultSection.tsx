@@ -9,10 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ShieldAlert, ShieldCheck, CheckCircle, Upload, ChevronRight } from "lucide-react";
-import { VerificationResult, User } from '@/lib/types';
+import { VerificationResultType, User } from '@/lib/types';
 
 interface VerificationResultSectionProps {
-  verificationResult: VerificationResult;
+  verificationResult: VerificationResultType;
   uploaderHierarchy: User | null;
   onResetVerification: () => void;
 }
@@ -64,10 +64,10 @@ export default function VerificationResultSection({
           <CardTitle className="flex items-center justify-between">
             <span>Verification Status</span>
             <Badge
-              variant={verificationResult.isTampered ? "destructive" : "secondary"}
+              variant={verificationResult.verified ? "secondary" : "destructive"}
               className="animate-pulse text-lg py-1 px-3"
             >
-              {verificationResult.isTampered ? "UNVERIFIED" : "VERIFIED"}
+              VERIFIED
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -75,13 +75,13 @@ export default function VerificationResultSection({
           <div className="space-y-6">
             <motion.div
               className={`flex items-center gap-4 p-6 rounded-lg ${
-                verificationResult.isTampered ? 'bg-destructive/20' : 'bg-secondary/20'
+                verificationResult.verified ? 'bg-secondary/20' : 'bg-destructive/20'
               }`}
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              {verificationResult.isTampered ? (
+              {!verificationResult.verified ? (
                 <>
                   <ShieldAlert className="w-12 h-12 text-destructive" />
                   <div>
@@ -100,7 +100,7 @@ export default function VerificationResultSection({
               )}
             </motion.div>
 
-            {!verificationResult.isTampered && (
+            {verificationResult.verified && (
               <Tabs defaultValue="details" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="details" className="text-lg py-2">Verification Details</TabsTrigger>

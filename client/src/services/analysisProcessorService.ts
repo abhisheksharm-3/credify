@@ -1,8 +1,8 @@
-import { getContentVerificationOnly } from '@/lib/server/neo4jhelpers';
-import { AnalysisStatus } from '@/lib/types';
-import logger from '@/lib/logger';
-import { downloadContent } from '@/lib/serverUtils/contentDownloader';
+import { downloadContent } from './contentDownloader';
 import { getContentHash } from './contentHasher';
+import { getContentVerificationOnly } from '@/lib/server/neo4jhelpers';
+import logger from '@/lib/logger';
+import { AnalysisStatus } from '@/lib/types';
 
 export async function processAnalysis(contentId: string): Promise<AnalysisStatus> {
   try {
@@ -17,14 +17,15 @@ export async function processAnalysis(contentId: string): Promise<AnalysisStatus
 
     if (existingResult) {
       return {
+        verified: true,
         status: 'found',
         contentHash,
-        verificationResult: existingResult,
         creatorsId: uploadInfo?.userId,
         message: 'Content hash found in database'
       };
     } else {
       return {
+        verified: false,
         status: 'not_found',
         contentHash,
         message: 'Content hash not found in database'

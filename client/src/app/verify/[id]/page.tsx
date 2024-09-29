@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { VerificationResult } from "@/lib/server/neo4jhelpers";
+import { VerificationResultType } from "@/lib/types";
 
 interface User {
   userId: string;
@@ -27,7 +27,7 @@ interface User {
 const VerifyContent: React.FC = () => {
   const params = useParams();
   const contentHash = params?.id as string;
-  const [verificationData, setVerificationData] = useState<VerificationResult | null>(null);
+  const [verificationData, setVerificationData] = useState<VerificationResultType | null>(null);
   const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -207,10 +207,10 @@ const VerifyContent: React.FC = () => {
                 <CardTitle className="flex items-center justify-between">
                   <span>Verification Status</span>
                   <Badge
-                    variant={verificationData.is_tampered ? "destructive" : "secondary"}
+                    variant={verificationData.verified ? "destructive" : "secondary"}
                     className="animate-pulse text-lg py-1 px-3"
                   >
-                    {verificationData.is_tampered ? "TAMPERED" : "VERIFIED"}
+                    VERIFIED
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -218,13 +218,13 @@ const VerifyContent: React.FC = () => {
                 <div className="space-y-6">
                   <motion.div
                     className={`flex items-center gap-4 p-6 rounded-lg ${
-                      verificationData.is_tampered ? 'bg-destructive/20' : 'bg-secondary/20'
+                      verificationData.verified ? 'bg-destructive/20' : 'bg-secondary/20'
                     }`}
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ duration: 0.3 }}
                   >
-                    {verificationData.is_tampered ? (
+                    {verificationData.verified ? (
                       <>
                         <ShieldAlert className="w-12 h-12 text-destructive" />
                         <div>
