@@ -8,7 +8,7 @@ import UploadSection from '@/components/PublicComponents/PublicAnalyzeUpload';
 import AnalyzingSection from '@/components/PublicComponents/AnalyzingLoader';
 import ErrorSection from '@/components/PublicComponents/Error';
 import VerificationResultSection from '@/components/PublicComponents/VerificationResultSection';
-import { VerificationResult, User } from '@/lib/types';
+import { VerificationResultType, User } from '@/lib/types';
 import { toast } from 'sonner';
 
 const POLLING_INTERVAL = 5000; // 5 seconds
@@ -16,7 +16,7 @@ const POLLING_INTERVAL = 5000; // 5 seconds
 export default function ContentVerificationPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [verificationComplete, setVerificationComplete] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [verificationResult, setVerificationResult] = useState<VerificationResultType | null>(null);
   const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [contentId, setContentId] = useState<string | null>(null);
@@ -37,13 +37,12 @@ export default function ContentVerificationPage() {
             clearInterval(intervalId);
             setIsAnalyzing(false);
 
-            const result: VerificationResult = {
+            const result: VerificationResultType = {
               verified: data.status === 'found',
               status: data.status,
               message: data.message,
               uploader: data.verificationResult?.uploader,
               timestamp: data.verificationResult?.timestamp,
-              isTampered: data.status === 'not_found'
             };
 
             setVerificationResult(result);

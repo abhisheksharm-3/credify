@@ -1,7 +1,7 @@
 
 // src/lib/server/appwrite.ts
 "use server";
-import { Client, Account, ID, Users, Databases } from "node-appwrite";
+import { Client, Account, ID, Users, Databases, Query } from "node-appwrite";
 import { cookies } from "next/headers";
 
 export async function createSessionClient() {
@@ -239,5 +239,31 @@ export async function setUserAsVerified() {
   } catch (error) {
     console.error("Failed to set user as verified:", error);
     return { success: false, error: "Failed to set user as verified." };
+  }
+}
+
+export async function getFileUploadDateByHash(hash: string, userId: string): Promise<string | undefined> {
+  const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+  try {
+      const response = await databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+          [
+              Query.equal('userId', userId),
+              Query.or([
+                  Query.equal('image_hash', hash),
+                  Query.equal('video_hash', hash)
+              ])
+          ]
+      );
+      if (response.documents.length > 0) {
+          const file = response.documents[0];
+          return file.verificationDate;
+      } else {
+          return undefined;
+      }
+  } catch (error) {
+      throw error;
   }
 }

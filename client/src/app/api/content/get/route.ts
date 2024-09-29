@@ -49,11 +49,10 @@ export const GET = async (request: NextRequest) => {
       .sort((a, b) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime());
 
     const totalFiles = unverifiedFiles.length + verifiedFiles.length;
-    const hasMore = totalFiles > combinedFiles.length;
 
     logger.info(`Successfully fetched ${totalFiles} files for user: ${userId}`);
 
-    return NextResponse.json({ files: combinedFiles, hasMore }, { status: 200 });
+    return NextResponse.json({ files: combinedFiles }, { status: 200 });
   } catch (error) {
     logger.error("Error processing request:", error);
     return NextResponse.json({ message: "Error processing request" }, { status: 500 });

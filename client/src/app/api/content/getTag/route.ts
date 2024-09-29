@@ -6,12 +6,12 @@ import {
   getContentVerificationAndUser,
   storeContentVerificationAndUser,
   addUserToContent,
-  VerificationResult,
   ensureNeo4jConnection
 } from '@/lib/server/neo4jhelpers';
 import { createAdminClient, getLoggedInUser } from '@/lib/server/appwrite';
 import { Databases, ID } from 'node-appwrite';
 import { analyzeImageWithGemini, analyzeVideoWithGemini } from '@/services/geminiService';
+import { VerificationResultType } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,12 +40,13 @@ interface ContentInfo {
 
 interface VerificationStatus {
   status: 'pending' | 'completed' | 'error';
-  result?: VerificationResult;
+  result?: VerificationResultType;
   geminiAnalysis?: string;
   message?: string;
 }
 
 // Helper Functions
+
 async function getContentInfo(contentId: string): Promise<ContentInfo> {
   const cacheKey = `contentInfo:${contentId}`;
   const cachedInfo = cache.get<ContentInfo>(cacheKey);
@@ -70,7 +71,10 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
       throw new Error(`Failed to fetch content type: ${contentTypeResponse.statusText}`);
     }
     const contentType: string = contentTypeResponse.headers.get('content-type') || 'application/octet-stream';
-    const filename = contentTypeResponse.headers.get('content-disposition')?.split('filename=')[1] || 'unknown';
+    const filename = contentTypeResponse.headers.get('content-disposition')
+  ?.split('filename=')[1]
+  ?.replace(/["']/g, '') // Remove surrounding quotes
+  || 'unknown';
     const endpoint = contentType.startsWith('image/') ? 'verify_image' : 'fingerprint';
 
     const contentInfo: ContentInfo = { contentUrl, contentType, filename, endpoint };
@@ -83,9 +87,9 @@ async function getContentInfo(contentId: string): Promise<ContentInfo> {
   }
 }
 
-async function verifyContent({ contentUrl, endpoint }: ContentInfo, geminiAnalysis: string): Promise<VerificationResult> {
+async function verifyContent({ contentUrl, endpoint }: ContentInfo, geminiAnalysis: string): Promise<VerificationResultType> {
   const cacheKey = `verificationResult:${contentUrl}`;
-  const cachedResult = cache.get<VerificationResult>(cacheKey);
+  const cachedResult = cache.get<VerificationResultType>(cacheKey);
   if (cachedResult) {
     console.log(`[verifyContent] Cache hit for URL: ${contentUrl}`);
     return cachedResult;
@@ -111,7 +115,7 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo, geminiAnalys
       throw new Error(`Verification service error: ${errorText}`);
     }
 
-    const apiResponse = await response.json() as { message: string; result: VerificationResult };
+    const apiResponse = await response.json() as { message: string; result: VerificationResultType };
     cache.set(cacheKey, apiResponse.result);
     console.log(`[verifyContent] Content verified successfully and cached`);
     return apiResponse.result;
@@ -120,7 +124,7 @@ async function verifyContent({ contentUrl, endpoint }: ContentInfo, geminiAnalys
     throw error;
   }
 }
-async function handleExistingVerification(contentHash: string, userId: string): Promise<VerificationResult | null> {
+async function handleExistingVerification(contentHash: string, userId: string): Promise<VerificationResultType | null> {
   console.log(`[handleExistingVerification] Checking existing verification for contentHash: ${contentHash}, userId: ${userId}`);
   try {
     const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentHash, userId);
@@ -143,7 +147,7 @@ async function handleExistingVerification(contentHash: string, userId: string): 
   }
 }
 
-async function storeVerifiedContent(verificationResult: VerificationResult, userId: string, contentInfo: ContentInfo, contentId: string, geminiAnalysis: string): Promise<void> {
+async function storeVerifiedContent(verificationResult: VerificationResultType, userId: string, contentInfo: ContentInfo, contentId: string, geminiAnalysis: string): Promise<void> {
   console.log(`[storeVerifiedContent] Storing verified content for userId: ${userId}, contentId: ${contentId}`);
   try {
     const { account } = await createAdminClient();
@@ -153,8 +157,6 @@ async function storeVerifiedContent(verificationResult: VerificationResult, user
       video_hash: verificationResult.video_hash || null,
       collective_audio_hash: verificationResult.collective_audio_hash || null,
       image_hash: verificationResult.image_hash || null,
-      is_tampered: verificationResult.is_tampered || false,
-      is_deepfake: verificationResult.is_deepfake || false,
       userId: userId,
       media_title: contentInfo.filename,
       media_type: contentInfo.contentType,

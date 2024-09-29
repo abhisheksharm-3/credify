@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/server/appwrite';
 import { Databases, ID, Query } from 'node-appwrite';
@@ -12,13 +11,6 @@ const deleteRequestSchema = z.object({
 
 const APPWRITE_DATABASE_ID = process.env.APPWRITE_DATABASE_ID!;
 const APPWRITE_COLLECTION_ID = process.env.APPWRITE_COLLECTION_ID!;
-
-class FileNotFoundError extends Error {
-  constructor(message: string = 'File not found') {
-    super(message);
-    this.name = 'FileNotFoundError';
-  }
-}
 
 class DeleteError extends Error {
   constructor(service: string, id: string, originalError: unknown) {
@@ -41,7 +33,7 @@ async function getFileDocument(databases: Databases, id: string) {
     if (documents.documents.length > 0) {
       return documents.documents[0];
     }
-    throw new FileNotFoundError();
+    return null;
   }
 }
 
@@ -49,8 +41,10 @@ async function deleteUploadThingFile(utapi: UTApi, fileId: string) {
   try {
     await utapi.deleteFiles(fileId);
     logger.info(`File deleted from UploadThing: ${fileId}`);
+    return true;
   } catch (error) {
-    throw new DeleteError('UploadThing file', fileId, error);
+    logger.warn(`Failed to delete UploadThing file: ${fileId}`, error);
+    return false;
   }
 }
 
@@ -58,8 +52,10 @@ async function deleteAppwriteDocument(databases: Databases, documentId: string) 
   try {
     await databases.deleteDocument(APPWRITE_DATABASE_ID, APPWRITE_COLLECTION_ID, documentId);
     logger.info(`Document deleted from Appwrite: ${documentId}`);
+    return true;
   } catch (error) {
-    throw new DeleteError('Appwrite document', documentId, error);
+    logger.warn(`Failed to delete Appwrite document: ${documentId}`, error);
+    return false;
   }
 }
 
@@ -68,34 +64,48 @@ export async function DELETE(req: Request) {
   
   try {
     const { id } = deleteRequestSchema.parse(await req.json());
-    logger.info(`Deleting content with ID: ${id}`);
+    logger.info(`Attempting to delete content with ID: ${id}`);
 
     const { account } = await createAdminClient();
     const databases = new Databases(account.client);
 
     const file = await getFileDocument(databases, id);
-    logger.info(`File retrieved: ${JSON.stringify(file)}`);
+    
+    let uploadThingDeleted = false;
+    let appwriteDeleted = false;
 
-    if (file.fileId) {
-      await deleteUploadThingFile(utapi, file.fileId);
+    // Always attempt to delete from UploadThing
+    uploadThingDeleted = await deleteUploadThingFile(utapi, id);
+
+    // If file exists in Appwrite, attempt to delete it
+    if (file) {
+      logger.info(`File found in Appwrite: ${JSON.stringify(file)}`);
+      appwriteDeleted = await deleteAppwriteDocument(databases, file.$id);
+      
+      // If file.fileId is different from id, try deleting that as well from UploadThing
+      if (file.fileId && file.fileId !== id) {
+        await deleteUploadThingFile(utapi, file.fileId);
+      }
+    } else {
+      logger.info(`No file found in Appwrite with ID: ${id}`);
     }
 
-    await deleteAppwriteDocument(databases, file.$id);
+    if (uploadThingDeleted || appwriteDeleted) {
+      return NextResponse.json({ 
+        message: 'Deletion attempted', 
+        uploadThingDeleted, 
+        appwriteDeleted 
+      }, { status: 200 });
+    } else {
+      return NextResponse.json({ 
+        error: 'File not found in either UploadThing or Appwrite' 
+      }, { status: 404 });
+    }
 
-    return NextResponse.json({ message: 'File deleted successfully' }, { status: 200 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       logger.warn('Validation error', error.errors);
       return NextResponse.json({ error: error.errors }, { status: 400 });
-    }
-
-    if (error instanceof FileNotFoundError) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
-    }
-
-    if (error instanceof DeleteError) {
-      logger.error(error.message, error.cause);
-      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     logger.error('Unexpected error', error);

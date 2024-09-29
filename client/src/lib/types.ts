@@ -65,13 +65,17 @@ export interface VideoData {
     geminiAnalysis?: string;
   }
 
-  export interface VerificationResult {
+  export interface VerificationResultType {
     verified: boolean;
     status: string;
     message: string;
     uploader?: string;
     timestamp?: string;
-    isTampered: boolean;
+    video_hash?: string;
+    collective_audio_hash?: string;
+    image_hash?: string;
+    audio_hash?: string;
+    frame_hash?: string;
   }
   
   export interface User {
@@ -156,4 +160,30 @@ export interface VideoData {
     };
     message?: string;
   }
-  
+  export interface VerifyLivenessResponseType {
+    result?: any;
+    error?: string;
+}
+export interface DownloadResultType {
+  buffer: Buffer;
+  contentType: string;
+}
+
+export interface ApiResponseType {
+  message: string;
+  result: {
+    frame_hashes: string[];
+    audio_hashes: string[];
+    image_hash: string | null;
+    video_hash: string;
+  }
+}
+
+export interface AnalysisStatus {
+  status: 'pending' | 'found' | 'not_found' | 'error';
+  verified?: boolean;
+  contentHash?: string;
+  verificationResult?: VerificationResultType;
+  creatorsId?: string;
+  message?: string;
+}

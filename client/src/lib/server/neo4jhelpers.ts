@@ -1,18 +1,9 @@
 import { Driver, Session, Result } from 'neo4j-driver';
 import neo4j from 'neo4j-driver';
 import logger from '../logger';
+import { VerificationResultType } from '../types';
 
 let driver: Driver | null = null;
-
-export interface VerificationResult {
-  video_hash?: string;
-  collective_audio_hash?: string;
-  image_hash?: string;
-  audio_hash?: string;
-  frame_hash?: string;
-  is_tampered?: boolean;
-  is_deepfake?: boolean;
-}
 
 export interface User {
   userId: string;
@@ -94,7 +85,7 @@ export async function runQuery(cypher: string, params: Record<string, any>): Pro
   }
 }
 
-export async function storeContentVerificationAndUser(verificationResult: VerificationResult, userId: string): Promise<void> {
+export async function storeContentVerificationAndUser(verificationResult: VerificationResultType, userId: string): Promise<void> {
   const contentHash = verificationResult.image_hash || verificationResult.video_hash;
   
   if (!contentHash) {
@@ -125,7 +116,7 @@ export async function storeContentVerificationAndUser(verificationResult: Verifi
   }
 }
 
-export async function getContentVerificationAndUser(contentHash: string, userId: string): Promise<{ verificationResult: VerificationResult | null, userExists: boolean, uploadInfo: { userId: string } | null }> {
+export async function getContentVerificationAndUser(contentHash: string, userId: string): Promise<{ verificationResult: VerificationResultType | null, userExists: boolean, uploadInfo: { userId: string } | null }> {
   if (!contentHash || !userId) {
     throw new ContentVerificationError('Invalid contentHash or userId provided');
   }
@@ -152,7 +143,7 @@ export async function getContentVerificationAndUser(contentHash: string, userId:
 }
 
 export async function getContentVerificationOnly(contentHash: string): Promise<{ 
-  verificationResult: VerificationResult | null, 
+  verificationResult: VerificationResultType | null, 
   userExists: boolean, 
   uploadInfo: { userId: string } | null 
 }> {
