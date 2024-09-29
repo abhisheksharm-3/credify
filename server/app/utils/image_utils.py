@@ -7,15 +7,6 @@ import imghdr
 from fastapi import HTTPException
 from app.utils.file_utils import get_file_content
 
-SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp']
-
-def verify_image_format(filename: str):
-    content = get_file_content(filename)
-    file_ext = '.' + (imghdr.what(BytesIO(content)) or '')
-    
-    if file_ext not in SUPPORTED_IMAGE_FORMATS:
-        raise HTTPException(status_code=400, detail=f"Unsupported image format. Supported formats are: {', '.join(SUPPORTED_IMAGE_FORMATS)}")
-
 def preprocess_image(image: Union[str, np.ndarray, Image.Image], hash_size: int = 32) -> np.ndarray:
     if isinstance(image, str):
         content = get_file_content(image)
