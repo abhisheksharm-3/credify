@@ -18,9 +18,7 @@ interface UserNode {
 }
 
 interface ContentNode {
-  contentId: string;
-  imageHash?: string;
-  videoHash?: string;
+  contentHash: string;
 }
 
 // Helper functions
@@ -44,23 +42,52 @@ const fetchUserDetails = async (userId: string, contentNode: ContentNode): Promi
 };
 
 const fetchFileUploadDate = async (userId: string, contentNode: ContentNode): Promise<string | undefined> => {
-  const hash = contentNode.imageHash || contentNode.videoHash;
-  if (!hash) return undefined;
+  const hash = contentNode.contentHash;
+  logger.info(`Attempting to fetch upload date for user ${userId} with hash ${hash}`);
+  
+  if (!hash) {
+    logger.warn(`No hash found for user ${userId}`);
+    return undefined;
+  }
 
   try {
     const uploadDate = await getFileUploadDateByHash(hash, userId);
+    logger.info(`Fetched upload date for user ${userId}: ${uploadDate}`);
     return uploadDate;
   } catch (error) {
     logger.error(`Error fetching file upload date for user ${userId} and hash ${hash}:`, error);
     return undefined;
   }
 };
+const includeUploadDates = (node: UserNode): any => {
+  return {
+    userId: node.userId,
+    name: node.name,
+    dateOfUpload: node.dateOfUpload,
+    children: node.children.map(includeUploadDates)
+  };
+};
 
 const buildUploaderHierarchy = async (users: { userId: string }[], contentNode: ContentNode): Promise<UserNode | null> => {
-  const userDetails = await Promise.all(users.map(user => fetchUserDetails(user.userId, contentNode)));
-  return userDetails.length > 0 
-    ? { ...userDetails[0], children: userDetails.slice(1) } 
-    : null;
+  logger.info(`Building uploader hierarchy for ${users.length} users`);
+  const userDetails = await Promise.all(users.map(async user => {
+    const details = await fetchUserDetails(user.userId, contentNode);
+    logger.info(`Fetched details for user ${user.userId}:`, details);
+    return details;
+  }));
+  
+  if (userDetails.length > 0) {
+    const baseUser = userDetails[0];
+    baseUser.dateOfUpload = await fetchFileUploadDate(baseUser.userId, contentNode);
+    logger.info(`Fetched upload date for base user ${baseUser.userId}: ${baseUser.dateOfUpload}`);
+    
+    const hierarchy = { ...baseUser, children: userDetails.slice(1) };
+    logger.info(`Constructed uploader hierarchy:`, hierarchy);
+    return includeUploadDates(hierarchy);
+  } else {
+    logger.info(`No users found for hierarchy`);
+    return null;
+  }
 };
 
 const parseVerificationResult = (result: string | null): any => {
@@ -100,15 +127,13 @@ export async function GET(
       logger.warn(`Content not found for ID: ${id}`);
       return NextResponse.json({ error: "Content not found" }, { status: 404 });
     }
-
+const verificationResult = await parseVerificationResult(content.verificationResult)
     const contentNode: ContentNode = {
-      contentId: id,
-      imageHash: content.imageHash,
-      videoHash: content.videoHash,
+      contentHash: id,
     };
+    logger.info(`Constructed content node:`, contentNode, `Verification Result:`, verificationResult);
 
-    const [verificationResult, uploaderHierarchy] = await Promise.all([
-      parseVerificationResult(content.verificationResult),
+    const [ uploaderHierarchy] = await Promise.all([
       buildUploaderHierarchy(users, contentNode)
     ]);
 

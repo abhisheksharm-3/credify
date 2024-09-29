@@ -252,13 +252,13 @@ export async function getFileUploadDateByHash(hash: string, userId: string): Pro
         process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
           [
               Query.equal('userId', userId),
-              Query.equal('$or', [
+              Query.or([
                   Query.equal('image_hash', hash),
                   Query.equal('video_hash', hash)
               ])
           ]
       );
-
+      logger.info("Files Found")
       if (response.documents.length > 0) {
           const file = response.documents[0];
           return file.verificationDate;
