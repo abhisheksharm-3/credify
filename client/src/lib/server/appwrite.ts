@@ -3,7 +3,6 @@
 "use server";
 import { Client, Account, ID, Users, Databases, Query } from "node-appwrite";
 import { cookies } from "next/headers";
-import logger from "../logger";
 
 export async function createSessionClient() {
   const client = new Client()
@@ -258,16 +257,13 @@ export async function getFileUploadDateByHash(hash: string, userId: string): Pro
               ])
           ]
       );
-      logger.info("Files Found")
       if (response.documents.length > 0) {
           const file = response.documents[0];
           return file.verificationDate;
       } else {
-          logger.warn(`No file found for hash ${hash} and user ${userId}`);
           return undefined;
       }
   } catch (error) {
-      logger.error(`Error fetching file upload date for hash ${hash} and user ${userId}:`, error);
       throw error;
   }
 }
