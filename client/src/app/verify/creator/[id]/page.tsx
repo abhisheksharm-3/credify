@@ -1,13 +1,7 @@
 'use client'
-
 import React, { useEffect, useState } from 'react';
-import { getUserById, setProfilePhoto } from '@/lib/server/appwrite'; // Adjust the import path as needed
-import {
-  StarIcon,
-  FlagIcon,
-  ShieldCheckIcon,
-  ScaleIcon,
-} from 'lucide-react';
+import { getUserById, setProfilePhoto } from '@/lib/server/appwrite';
+import { StarIcon, FlagIcon, ShieldCheckIcon, ScaleIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,26 +11,7 @@ import { useParams } from 'next/navigation';
 import { RiCheckboxCircleFill, RiGraduationCapFill, RiGroupFill, RiVidicon2Fill } from '@remixicon/react';
 import Layout from '@/components/Layout/Layout';
 import { toast } from 'sonner';
-
-// Define types
-type UserStats = {
-  totalVerifiedVideos: number;
-  contentCredibilityScore: number;
-  attributionsEarned: number;
-  communityTrustLevel: string;
-  videosFlagged: number;
-  successfulVerifications: number;
-  disputedClaims: number;
-  appealsResolved: number;
-};
-
-type UserData = {
-  name: string;
-  isVerified: boolean;
-  credibilityScore: number;
-  profilePicture: string;
-  stats: UserStats;
-};
+import { UserData } from '@/lib/frontend-types';
 
 const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string | number }> = ({ icon: Icon, title, value }) => {
   return (
@@ -51,11 +26,6 @@ const StatCard: React.FC<{ icon: React.ElementType; title: string; value: string
     </Card>
   );
 };
-
-type CredibilityOverviewPageProps = {
-  params: { creatorId: string };
-};
-
 export default function CredibilityOverviewPage() {
   const params = useParams();
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -94,36 +64,15 @@ export default function CredibilityOverviewPage() {
         setLoading(false);
       }
     }
-
     fetchUser();
   }, [params.creatorId]);
-
-  const handleProfilePictureUpload = async (imageUrl: string) => {
-    setUpdatingProfilePicture(true);
-    try {
-      const creatorId = Array.isArray(params.creatorId) ? params.creatorId[0] : params.creatorId;
-      await setProfilePhoto(creatorId, imageUrl);
-      setUserData((prevData) => ({
-        ...prevData!,
-        profilePicture: imageUrl,
-      }));
-      toast.success("Profile picture updated!");
-    } catch (error) {
-      console.error('Error updating profile picture:', error);
-      toast.error('Failed to update profile picture. Please try again.');
-    } finally {
-      setUpdatingProfilePicture(false);
-    }
-  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
-
   if (!userData) {
     return <div className="flex items-center justify-center h-screen">User not found</div>;
   }
-
   return (
     <Layout className="min-h-screen">
       <div className="container mx-auto p-6">
@@ -214,10 +163,10 @@ export default function CredibilityOverviewPage() {
         </Card>
 
         <div className="text-center">
-        <Button variant="destructive">
-          Report User
-        </Button>
-      </div>
+          <Button variant="destructive">
+            Report User
+          </Button>
+        </div>
       </div>
     </Layout>
   );

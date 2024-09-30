@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import { FileInfo } from '@/lib/types';
+import { MonthlyFileHistogramProps } from '@/lib/frontend-types';
 
 const processFileData = (files: FileInfo[]) => {
   const monthlyData: { [key: string]: { verified: number, unverified: number, tampered: number } } = {};
@@ -47,13 +48,8 @@ const chartConfig: ChartConfig = {
   },
 };
 
-interface MonthlyFileHistogramProps {
-  files: FileInfo[];
-}
-
 export default function MonthlyFileHistogram({ files }: MonthlyFileHistogramProps) {
   const data = useMemo(() => processFileData(files), [files]);
-
   return (
     <Card className="col-span-2 lg:col-span-2">
       <CardHeader>

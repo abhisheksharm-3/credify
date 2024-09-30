@@ -1,11 +1,6 @@
 import React from 'react'
 import { FingerprintIcon, MonitorCheckIcon, CopyrightIcon } from 'lucide-react'
-
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}
+import { FeatureCardProps } from '@/lib/frontend-types'
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description }) => (
   <div className="flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">

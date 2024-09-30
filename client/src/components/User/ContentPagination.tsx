@@ -1,12 +1,6 @@
 import React from 'react'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-
-interface ContentPaginationProps {
-  currentPage: number
-  setCurrentPage: (page: number) => void
-  totalItems: number
-  itemsPerPage: number
-}
+import { ContentPaginationProps } from '@/lib/frontend-types'
 
 export default function ContentPagination({
   currentPage,

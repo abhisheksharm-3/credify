@@ -244,4 +244,9 @@ export  interface UseContentVerificationReturn {
   handleUploadComplete: (res: { key: string; url: string; name: string }[]) => Promise<void>;
   resetVerification: () => void;
 }
+export interface VerificationResultSectionProps {
+  verificationResult: VerificationResultType;
+  uploaderHierarchy: User | null;
+  onResetVerification: () => void;
+}
 

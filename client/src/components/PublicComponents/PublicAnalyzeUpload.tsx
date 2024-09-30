@@ -1,13 +1,8 @@
 'use client'
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { UploadDropzone } from '@/lib/uploadthing';
-
-interface UploadSectionProps {
-  onUploadComplete: (res: { key: string; url: string; name: string }[]) => void;
-  onUploadError: (error: string) => void;
-}
+import { UploadSectionProps } from '@/lib/frontend-types';
 
 export default function UploadSection({ onUploadComplete, onUploadError }: UploadSectionProps) {
   return (

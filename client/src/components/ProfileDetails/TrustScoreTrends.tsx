@@ -2,12 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number }>;
-  label?: string;
-}
+import { CustomTooltipProps, TrustScoreTrendProps } from '@/lib/frontend-types';
 
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -22,15 +17,6 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label })
   }
   return null;
 };
-
-interface TrustScoreTrendProps {
-  monthlyData: Array<{
-    month: string;
-    verifiedCount: number;
-    unverifiedCount: number;
-    tamperedCount: number;
-  }>;
-}
 
 const TrustScoreTrend: React.FC<TrustScoreTrendProps> = ({ monthlyData }) => {
   const [activeIndex, setActiveIndex] = useState(0);

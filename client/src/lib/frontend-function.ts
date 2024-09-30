@@ -1,10 +1,9 @@
 import { FileInfo } from "./types";
 
-export const truncateFileName = (name: string, maxLength: number = 13): string => {
+export const truncateFileName = (name: string, maxLength: number): string => {
     if (name.length <= maxLength) return name;
-    return name.slice(0, 10) + '...';
+    return name.slice(0, maxLength - 3) + '...';
 };
-
 
 export const handleVerificationRedirect = (file: FileInfo): void => {
     let redirectUrl: string;
@@ -19,6 +18,7 @@ export const handleVerificationRedirect = (file: FileInfo): void => {
 };
 
 export const formatDate = (dateString: string): string => {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0'); // Get day and pad with leading zero if necessary
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Get month (0-indexed) and pad with leading zero
@@ -36,3 +36,15 @@ export const formatFileSize = (bytes: number): string => {
 
     return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
 };
+export const getStatusText = (file: FileInfo) => {
+    if (file.tampered) {
+        return 'Tampered';
+    }
+    return file.verified ? 'Verified' : 'Unverified';
+}
+
+//
+
+/* const getContentTypeIcon = (type: FileInfo['fileType']) => {
+    return type === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />
+  } */

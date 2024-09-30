@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UploadIcon, SendIcon, MessageCircleIcon } from "lucide-react";
+import { SendIcon, MessageCircleIcon } from "lucide-react";
 import { UploadVideoDialog } from "./UploadVideoDialog";
 
 export function ActionItems() {

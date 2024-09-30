@@ -1,5 +1,4 @@
 "use client";
-import { AppwriteUser as UserType } from "@/lib/types";
 import { useState, useRef } from "react";
 import { updatePhoneNumber } from "@/lib/server/appwrite";
 import { toast } from "sonner";
@@ -11,17 +10,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-
-interface ProfileInfoProps {
-  user: UserType;
-}
+import { ProfileInfoProps } from "@/lib/frontend-types";
 
 const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [phone, setPhone] = useState(user.phone || "No Number Provided");
-  const [password, setPassword] = useState(""); // State to manage password input
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
 
   const handleEditClick = () => {
@@ -34,8 +29,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
 
   const handleDoneClick = async () => {
     setLoading(true);
-    setError(null);
-
     if (phone === "") {
       setPhone(user.phone || "No Number Provided");
       setIsEditing(false);
@@ -154,5 +147,4 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
     </div>
   );
 };
-
 export default ProfileInfo;

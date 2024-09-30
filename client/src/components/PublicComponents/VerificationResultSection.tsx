@@ -9,13 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ShieldAlert, ShieldCheck, CheckCircle, Upload, ChevronRight } from "lucide-react";
-import { VerificationResultType, User } from '@/lib/types';
-
-interface VerificationResultSectionProps {
-  verificationResult: VerificationResultType;
-  uploaderHierarchy: User | null;
-  onResetVerification: () => void;
-}
+import {  User, VerificationResultSectionProps } from '@/lib/types';
 
 export default function VerificationResultSection({
   verificationResult,
