@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, Link as LinkIcon, RefreshCw, Lock } from "lucide-react";
+import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, Link as LinkIcon, RefreshCw, Lock, FileText, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 enum VerificationStatus {
   PENDING = "pending",
   COMPLETE = "completed",
@@ -29,8 +29,22 @@ interface VerificationResult {
   is_tampered?: boolean;
   geminiAnalysis?: string;
 }
+interface ForgeryDetectionResult {
+  status: "pending" | "completed" | "error";
+  contentType: "image" | "video" | "audio" | "document";
+  detectionMethods: {
+    imageManipulation: boolean;
+    ganGenerated: boolean;
+    faceManipulation: boolean;
+    audioDeepfake: boolean;
+  };
+  isManipulated: boolean;
+  manipulationProbability: number | null;
+}
 
-const VerificationDetailPage: React.FC = () => {
+
+
+export default function Component() {
   const params = useParams();
   const contentId = params.id as string;
 
@@ -39,8 +53,10 @@ const VerificationDetailPage: React.FC = () => {
   const [progress, setProgress] = useState<number>(0);
   const [shareableLink, setShareableLink] = useState<string>("");
   const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false);
+  const [forgeryResult, setForgeryResult] = useState<ForgeryDetectionResult | null>(null);
+  const [geminiAnalysis, setGeminiAnalysis] = useState<string>("");
 
-  const fetchVerificationData = useCallback(async () => {
+  const fetchVerificationData = useCallback(async (): Promise<boolean> => {
     try {
       const response = await fetch('/api/content/getTag', {
         method: 'POST',
@@ -49,57 +65,57 @@ const VerificationDetailPage: React.FC = () => {
       });
 
       if (!response.ok) throw new Error('Failed to fetch verification data');
-      
+
       const data = await response.json();
-      console.log(data);
-      
+      setGeminiAnalysis(data.geminiAnalysis || "");
       if (data.status === VerificationStatus.COMPLETE) {
         setStatus(VerificationStatus.COMPLETE);
         setResult(data.result);
         const contentHash = data.result.image_hash || data.result.video_hash;
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
-        deleteVerifiedContent(contentId)
-        return true; // Polling can stop
+        return true; // Verification complete
       } else if (data.status === VerificationStatus.ERROR) {
         setStatus(VerificationStatus.ERROR);
-        return true; // Polling can stop
+        return true; // Verification failed
       } else {
-        // Still pending, continue polling
-        return false;
+        return false; // Still pending
       }
     } catch (error) {
       console.error('Error fetching verification data:', error);
       setStatus(VerificationStatus.ERROR);
-      return true; // Stop polling on error
+      return true; // Error occurred
     }
   }, [contentId]);
 
-  useEffect(() => {
-    const pollInterval = 5000; // Poll every 5 seconds
-    const maxAttempts = 120; // Maximum 5 minutes (60 * 5 seconds)
-    let attempts = 0;
+  const fetchForgeryData = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/content/detect-forgery/${contentId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
 
-    const poll = async () => {
-      const shouldStop = await fetchVerificationData();
-      attempts++;
-
-      if (shouldStop || attempts >= maxAttempts) {
-        return; // Stop polling
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
 
-      // Update progress
-      setProgress(Math.min((attempts / maxAttempts) * 100, 95));
+      const data: ForgeryDetectionResult = await response.json();
+      console.log("Forgery detection data:", data);
+      setForgeryResult(data);
 
-      // Schedule next poll
-      setTimeout(poll, pollInterval);
-    };
-
-    poll(); // Start polling
-
-    return () => {
-      // Cleanup if needed
-    };
-  }, [fetchVerificationData]);
+      return data.status === 'completed';
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error fetching forgery data:', error.message);
+        toast.error("Error in forgery detection", {
+          description: error.message,
+        });
+      } else {
+        console.error('Unknown error in forgery detection');
+        toast.error("Unknown error in forgery detection");
+      }
+      return true; // Error occurred
+    }
+  }, [contentId]);
 
   const deleteVerifiedContent = async (id: string): Promise<void> => {
     try {
@@ -116,6 +132,43 @@ const VerificationDetailPage: React.FC = () => {
       console.error('Error deleting verified content:', error);
     }
   };
+
+  useEffect(() => {
+    const pollInterval = 5000; // Poll every 5 seconds
+    const maxAttempts = 120; // Maximum 5 minutes (60 * 5 seconds)
+    let attempts = 0;
+
+    const poll = async () => {
+      // Step 1: Verification
+      const verificationComplete = await fetchVerificationData();
+      if (!verificationComplete) {
+        attempts++;
+        setProgress(Math.min((attempts / maxAttempts) * 100, 95));
+        setTimeout(poll, pollInterval);
+        return;
+      }
+
+      // Step 2: Forgery Detection
+      const forgeryComplete = await fetchForgeryData();
+      if (!forgeryComplete) {
+        attempts++;
+        setProgress(Math.min((attempts / maxAttempts) * 100, 95));
+        setTimeout(poll, pollInterval);
+        return;
+      }
+
+      // Step 3: Deletion
+      await deleteVerifiedContent(contentId);
+
+      setProgress(100);
+    };
+
+    poll(); // Start polling
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, [contentId, fetchVerificationData, fetchForgeryData]);
 
   const handleCopyLink = (): void => {
     navigator.clipboard.writeText(shareableLink)
@@ -138,7 +191,7 @@ const VerificationDetailPage: React.FC = () => {
     switch (status) {
       case VerificationStatus.PENDING:
         return (
-          <motion.div 
+          <motion.div
             className="flex flex-col items-center gap-6 p-8 mt-4 rounded-lg bg-secondary/10"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -147,7 +200,7 @@ const VerificationDetailPage: React.FC = () => {
             <RefreshCw className="w-20 h-20 text-primary animate-spin" />
             <h3 className="text-3xl font-semibold">Verification in Progress</h3>
             <p className="text-center text-muted-foreground max-w-md">
-              We&apos;re meticulously analyzing your content to ensure its authenticity. This process guarantees the highest level of accuracy and integrity.
+              We're meticulously analyzing your content to ensure its authenticity. This process guarantees the highest level of accuracy and integrity.
             </p>
             <Progress value={progress} className="w-full mt-4" />
             <p className="text-sm font-medium text-muted-foreground">{Math.round(progress)}% Complete</p>
@@ -155,7 +208,7 @@ const VerificationDetailPage: React.FC = () => {
         );
       case VerificationStatus.COMPLETE:
         return result ? (
-          <motion.div 
+          <motion.div
             className="space-y-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -180,6 +233,79 @@ const VerificationDetailPage: React.FC = () => {
                 </>
               )}
             </Alert>
+            <Tabs defaultValue="verification" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="verification">Verification</TabsTrigger>
+                <TabsTrigger value="gemini">Gemini Analysis</TabsTrigger>
+                <TabsTrigger value="forgery">Forgery Analysis</TabsTrigger>
+              </TabsList>
+              <TabsContent value="verification">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Verification Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {result.video_hash && <li><strong>Video Hash:</strong> {result.video_hash}</li>}
+                      {result.collective_audio_hash && <li><strong>Collective Audio Hash:</strong> {result.collective_audio_hash}</li>}
+                      {result.image_hash && <li><strong>Image Hash:</strong> {result.image_hash}</li>}
+                      {result.audio_hash && <li><strong>Audio Hash:</strong> {result.audio_hash}</li>}
+                      {result.frame_hash && <li><strong>Frame Hash:</strong> {result.frame_hash}</li>}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="gemini">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      <svg fill="none" width={"24"} height={"24"}  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M16 8.016A8.522 8.522 0 008.016 16h-.032A8.521 8.521 0 000 8.016v-.032A8.521 8.521 0 007.984 0h.032A8.522 8.522 0 0016 7.984v.032z" fill="url(#prefix__paint0_radial_980_20147)"/><defs><radialGradient id="prefix__paint0_radial_980_20147" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(16.1326 5.4553 -43.70045 129.2322 1.588 6.503)"><stop offset=".067" stop-color="#9168C0"/><stop offset=".343" stop-color="#5684D1"/><stop offset=".672" stop-color="#1BA1E3"/></radialGradient></defs></svg>
+                      Gemini Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {typeof geminiAnalysis === "string" && geminiAnalysis.length > 0 ? (
+                      <p className="whitespace-pre-wrap">{geminiAnalysis}</p>
+                    ) : (
+                      <p className="text-muted-foreground">No Gemini analysis available for this content.</p>
+                    )}
+
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              <TabsContent value="forgery">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Forgery Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {forgeryResult ? (
+                      <div className="space-y-4">
+                        <Alert variant={forgeryResult.isManipulated ? "destructive" : "default"}>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>
+                            {forgeryResult.isManipulated ? "Potential Tampering Detected" : "No Tampering Detected"}
+                          </AlertTitle>
+                          {forgeryResult.isManipulated && (
+                            <div>
+                              <p className="mt-2">Detection methods confirmed:</p>
+                              <ul className="list-disc ml-6">
+                                {forgeryResult.detectionMethods.imageManipulation && <li>Image Manipulation</li>}
+                                {forgeryResult.detectionMethods.ganGenerated && <li>GAN Generated</li>}
+                                {forgeryResult.detectionMethods.faceManipulation && <li>Face Manipulation</li>}
+                                {forgeryResult.detectionMethods.audioDeepfake && <li>Audio Deepfake</li>}
+                              </ul>
+                            </div>
+                          )}
+                        </Alert>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">Forgery analysis data is not available.</p>
+                    )}
+
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
             <div className="space-y-4">
               <h4 className="text-xl font-semibold">Share Verification Result</h4>
               <p className="text-sm text-muted-foreground">
@@ -223,8 +349,8 @@ const VerificationDetailPage: React.FC = () => {
 
   return (
     <LoggedInLayout className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-background to-secondary/20">
-      <div className="container max-w-3xl mx-auto p-6">
-        <motion.h1 
+      <div className="container max-w-4xl mx-auto p-6">
+        <motion.h1
           className="text-5xl font-bold mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -244,14 +370,16 @@ const VerificationDetailPage: React.FC = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-3xl font-semibold">Verification Details</CardTitle>
-                  <Badge variant={status === VerificationStatus.COMPLETE ? "default" : "secondary"} className="animate-pulse text-sm py-1 px-3">
+                  <Badge variant={status === VerificationStatus.COMPLETE ? "default"
+                    : status === VerificationStatus.ERROR ? "destructive" : "secondary"}
+                    className="animate-pulse text-sm py-1 px-3">
                     {status === VerificationStatus.PENDING ? "IN PROGRESS" : status.toUpperCase()}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 {renderContent()}
-                <motion.div 
+                <motion.div
                   className="mt-8 flex items-center justify-center text-sm text-muted-foreground bg-secondary/10 p-4 rounded-lg"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -267,6 +395,4 @@ const VerificationDetailPage: React.FC = () => {
       </div>
     </LoggedInLayout>
   );
-};
-
-export default VerificationDetailPage;
+}

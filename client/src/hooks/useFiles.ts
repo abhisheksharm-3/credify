@@ -102,7 +102,6 @@ export const useFiles = () => {
         // Process and set monthly data
         const monthlyData = processMonthlyData(normalizedFiles);
         setMonthlyData(monthlyData);
-        console.log(monthlyData);
       } catch (error) {
         console.error('Error fetching files:', error);
       }
