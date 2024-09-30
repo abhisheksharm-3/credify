@@ -1,6 +1,6 @@
 import { getContentInfo } from './contentInfoService';
 import { analyzeImageWithGemini, analyzeVideoWithGemini } from '@/services/geminiService';
-import { VerificationResultType, VerificationStatus } from '@/lib/types';
+import { VerificationStatus } from '@/lib/types';
 import NodeCache from 'node-cache';
 import { verifyContent } from './contentVerifcationService';
 import { handleExistingVerification, storeVerifiedContent } from './storageService';
@@ -25,13 +25,16 @@ export async function processVerification(contentId: string, userId: string, cac
       throw new Error('No content hash found in verification result');
     }
 
-    const existingVerificationResult = await handleExistingVerification(contentHash, userId);
+    const {verificationResult: existingVerificationResult, userExists} = await handleExistingVerification(contentHash, userId);
     if (!existingVerificationResult) {
       await Promise.all([
         storeContentVerificationAndUser(verificationResult, userId),
         storeVerifiedContent(verificationResult, userId, contentInfo, contentId, geminiAnalysis)
       ]);
+    } else if(!userExists) {
+      await storeVerifiedContent(verificationResult, userId, contentInfo, contentId, geminiAnalysis)
     }
+    console.log('[processVerification] Content verification completed')
 
     const finalResult: VerificationStatus = {
       status: 'completed',

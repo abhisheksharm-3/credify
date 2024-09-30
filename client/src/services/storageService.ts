@@ -3,8 +3,12 @@ import { createAdminClient } from '@/lib/server/appwrite';
 import { Databases, ID } from 'node-appwrite';
 import { VerificationResultType, ContentInfo } from '@/lib/types';
 
-export async function handleExistingVerification(contentHash: string, userId: string): Promise<VerificationResultType | null> {
+export async function handleExistingVerification(
+  contentHash: string, 
+  userId: string
+): Promise<{ verificationResult: VerificationResultType | null, userExists: boolean }> {
   console.log(`[handleExistingVerification] Checking existing verification for contentHash: ${contentHash}, userId: ${userId}`);
+  
   try {
     const { verificationResult: existingResult, userExists } = await getContentVerificationAndUser(contentHash, userId);
 
@@ -12,14 +16,14 @@ export async function handleExistingVerification(contentHash: string, userId: st
       if (!userExists) {
         await addUserToContent(contentHash, userId);
         console.log(`[handleExistingVerification] User associated with existing content`);
-        return { ...existingResult};
+      } else {
+        console.log(`[handleExistingVerification] Existing verification found for user`);
       }
-      console.log(`[handleExistingVerification] Existing verification found`);
-      return existingResult;
+      return { verificationResult: existingResult, userExists };
     }
 
     console.log(`[handleExistingVerification] No existing verification found`);
-    return null;
+    return { verificationResult: null, userExists: false };
   } catch (error) {
     console.error(`[handleExistingVerification] Error checking existing verification: ${error}`);
     throw error;
