@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, Link as LinkIcon, RefreshCw, Lock, FileText, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertCircle, ShieldCheck, ShieldAlert, Link as LinkIcon, RefreshCw, Lock, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +14,10 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-enum VerificationStatus {
-  PENDING = "pending",
-  COMPLETE = "completed",
-  ERROR = "error"
-}
+import { useForgeryDetection } from "@/hooks/useForgeryDetection";
+
+
+type VerificationStatus = 'pending' | 'completed' | 'error';
 
 interface VerificationResult {
   video_hash?: string;
@@ -26,35 +25,20 @@ interface VerificationResult {
   image_hash?: string;
   audio_hash?: string;
   frame_hash?: string;
-  is_tampered?: boolean;
-  geminiAnalysis?: string;
 }
-interface ForgeryDetectionResult {
-  status: "pending" | "completed" | "error";
-  contentType: "image" | "video" | "audio" | "document";
-  detectionMethods: {
-    imageManipulation: boolean;
-    ganGenerated: boolean;
-    faceManipulation: boolean;
-    audioDeepfake: boolean;
-  };
-  isManipulated: boolean;
-  manipulationProbability: number | null;
-}
-
-
 
 export default function Component() {
   const params = useParams();
   const contentId = params.id as string;
 
-  const [status, setStatus] = useState<VerificationStatus>(VerificationStatus.PENDING);
+  const [status, setStatus] = useState<VerificationStatus>('pending');
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [shareableLink, setShareableLink] = useState<string>("");
   const [isLinkCopied, setIsLinkCopied] = useState<boolean>(false);
-  const [forgeryResult, setForgeryResult] = useState<ForgeryDetectionResult | null>(null);
   const [geminiAnalysis, setGeminiAnalysis] = useState<string>("");
+  const [isExisting, setIsExisting] = useState<boolean>(false);
+  const { forgeryResult, fetchForgeryData } = useForgeryDetection(contentId);
 
   const fetchVerificationData = useCallback(async (): Promise<boolean> => {
     try {
@@ -68,51 +52,24 @@ export default function Component() {
 
       const data = await response.json();
       setGeminiAnalysis(data.geminiAnalysis || "");
-      if (data.status === VerificationStatus.COMPLETE) {
-        setStatus(VerificationStatus.COMPLETE);
+      setIsExisting(data.existing || false);
+
+      if (data.status === 'completed') {
+        setStatus('completed');
         setResult(data.result);
-        const contentHash = data.result.image_hash || data.result.video_hash;
+        const contentHash = data.result?.image_hash || data.result?.video_hash;
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
         return true; // Verification complete
-      } else if (data.status === VerificationStatus.ERROR) {
-        setStatus(VerificationStatus.ERROR);
+      } else if (data.status === 'error') {
+        setStatus('error');
+        toast.error(data.message || "Verification failed");
         return true; // Verification failed
       } else {
         return false; // Still pending
       }
     } catch (error) {
       console.error('Error fetching verification data:', error);
-      setStatus(VerificationStatus.ERROR);
-      return true; // Error occurred
-    }
-  }, [contentId]);
-
-  const fetchForgeryData = useCallback(async (): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/content/detect-forgery/${contentId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status} ${response.statusText}`);
-      }
-
-      const data: ForgeryDetectionResult = await response.json();
-      console.log("Forgery detection data:", data);
-      setForgeryResult(data);
-
-      return data.status === 'completed';
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error fetching forgery data:', error.message);
-        toast.error("Error in forgery detection", {
-          description: error.message,
-        });
-      } else {
-        console.error('Unknown error in forgery detection');
-        toast.error("Unknown error in forgery detection");
-      }
+      setStatus('error');
       return true; // Error occurred
     }
   }, [contentId]);
@@ -147,7 +104,6 @@ export default function Component() {
         setTimeout(poll, pollInterval);
         return;
       }
-
       // Step 2: Forgery Detection
       const forgeryComplete = await fetchForgeryData();
       if (!forgeryComplete) {
@@ -189,7 +145,7 @@ export default function Component() {
 
   const renderContent = (): JSX.Element => {
     switch (status) {
-      case VerificationStatus.PENDING:
+      case 'pending':
         return (
           <motion.div
             className="flex flex-col items-center gap-6 p-8 mt-4 rounded-lg bg-secondary/10"
@@ -206,7 +162,7 @@ export default function Component() {
             <p className="text-sm font-medium text-muted-foreground">{Math.round(progress)}% Complete</p>
           </motion.div>
         );
-      case VerificationStatus.COMPLETE:
+      case 'completed':
         return result ? (
           <motion.div
             className="space-y-8"
@@ -214,8 +170,8 @@ export default function Component() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Alert variant={result.is_tampered ? "destructive" : "default"} className="border-2 shadow-lg">
-              {result.is_tampered ? (
+            <Alert variant={forgeryResult?.isManipulated ? "destructive" : "default"} className="border-2 shadow-lg">
+              {forgeryResult?.isManipulated ? (
                 <>
                   <ShieldAlert className="h-8 w-8" />
                   <AlertTitle className="text-2xl font-semibold mb-2">Content Integrity Alert</AlertTitle>
@@ -233,6 +189,15 @@ export default function Component() {
                 </>
               )}
             </Alert>
+            {isExisting && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Existing Content</AlertTitle>
+                <AlertDescription>
+                  This content has been previously verified, either by you or another user.
+                </AlertDescription>
+              </Alert>
+            )}
             <Tabs defaultValue="verification" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="verification">Verification</TabsTrigger>
@@ -259,7 +224,7 @@ export default function Component() {
                 <Card>
                   <CardHeader>
                     <CardTitle>
-                      <svg fill="none" width={"24"} height={"24"}  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M16 8.016A8.522 8.522 0 008.016 16h-.032A8.521 8.521 0 000 8.016v-.032A8.521 8.521 0 007.984 0h.032A8.522 8.522 0 0016 7.984v.032z" fill="url(#prefix__paint0_radial_980_20147)"/><defs><radialGradient id="prefix__paint0_radial_980_20147" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(16.1326 5.4553 -43.70045 129.2322 1.588 6.503)"><stop offset=".067" stop-color="#9168C0"/><stop offset=".343" stop-color="#5684D1"/><stop offset=".672" stop-color="#1BA1E3"/></radialGradient></defs></svg>
+                      <svg fill="none" width={"24"} height={"24"} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M16 8.016A8.522 8.522 0 008.016 16h-.032A8.521 8.521 0 000 8.016v-.032A8.521 8.521 0 007.984 0h.032A8.522 8.522 0 0016 7.984v.032z" fill="url(#prefix__paint0_radial_980_20147)" /><defs><radialGradient id="prefix__paint0_radial_980_20147" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(16.1326 5.4553 -43.70045 129.2322 1.588 6.503)"><stop offset=".067" stop-color="#9168C0" /><stop offset=".343" stop-color="#5684D1" /><stop offset=".672" stop-color="#1BA1E3" /></radialGradient></defs></svg>
                       Gemini Analysis</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -285,23 +250,28 @@ export default function Component() {
                           <AlertTitle>
                             {forgeryResult.isManipulated ? "Potential Tampering Detected" : "No Tampering Detected"}
                           </AlertTitle>
-                          {forgeryResult.isManipulated && (
-                            <div>
-                              <p className="mt-2">Detection methods confirmed:</p>
-                              <ul className="list-disc ml-6">
-                                {forgeryResult.detectionMethods.imageManipulation && <li>Image Manipulation</li>}
-                                {forgeryResult.detectionMethods.ganGenerated && <li>GAN Generated</li>}
-                                {forgeryResult.detectionMethods.faceManipulation && <li>Face Manipulation</li>}
-                                {forgeryResult.detectionMethods.audioDeepfake && <li>Audio Deepfake</li>}
-                              </ul>
-                            </div>
-                          )}
+                          <AlertDescription>
+                            Content Type: {forgeryResult.contentType || "Unknown"}
+                            {forgeryResult.manipulationProbability !== undefined && (
+                              <p>Manipulation Probability: {(forgeryResult.manipulationProbability * 100).toFixed(2)}%</p>
+                            )}
+                            {forgeryResult.detectionMethods && (
+                              <div>
+                                <p className="mt-2">Detection methods confirmed:</p>
+                                <ul className="list-disc ml-6">
+                                  {forgeryResult.detectionMethods.imageManipulation && <li>Image Manipulation</li>}
+                                  {forgeryResult.detectionMethods.ganGenerated && <li>GAN Generated</li>}
+                                  {forgeryResult.detectionMethods.faceManipulation && <li>Face Manipulation</li>}
+                                  {forgeryResult.detectionMethods.audioDeepfake && <li>Audio Deepfake</li>}
+                                </ul>
+                              </div>
+                            )}
+                          </AlertDescription>
                         </Alert>
                       </div>
                     ) : (
                       <p className="text-muted-foreground">Forgery analysis data is not available.</p>
                     )}
-
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -334,7 +304,7 @@ export default function Component() {
             </div>
           </motion.div>
         ) : <></>;
-      case VerificationStatus.ERROR:
+      case 'error':
         return (
           <Alert variant="destructive" className="animate-pulse shadow-lg">
             <AlertCircle className="h-6 w-6" />
@@ -370,10 +340,12 @@ export default function Component() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-3xl font-semibold">Verification Details</CardTitle>
-                  <Badge variant={status === VerificationStatus.COMPLETE ? "default"
-                    : status === VerificationStatus.ERROR ? "destructive" : "secondary"}
-                    className="animate-pulse text-sm py-1 px-3">
-                    {status === VerificationStatus.PENDING ? "IN PROGRESS" : status.toUpperCase()}
+                  <Badge
+                    variant={status === 'completed' ? "default"
+                      : status === 'error' ? "destructive" : "secondary"}
+                    className="animate-pulse text-sm py-1 px-3"
+                  >
+                    {status === 'pending' ? "IN PROGRESS" : status.toUpperCase()}
                   </Badge>
                 </div>
               </CardHeader>
