@@ -1,6 +1,5 @@
 "use client";
 import { AppwriteUser as UserType } from "@/lib/types";
-import { User } from "lucide-react";
 import { useState, useRef } from "react";
 import { updatePhoneNumber } from "@/lib/server/appwrite";
 import { toast } from "sonner";

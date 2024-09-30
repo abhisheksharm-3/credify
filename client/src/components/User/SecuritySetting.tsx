@@ -3,26 +3,7 @@ import React, { useEffect, useState } from "react";
 import { getLogDetails } from "@/lib/server/appwrite";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-
-// Define types for the log entry and component state
-interface LogEntry {
-  event: string;
-  user: string;
-  deviceName: string;
-  deviceBrand?: string;
-  deviceModel?: string;
-  osName: string;
-  osVersion: string;
-  timestamp: string;
-}
-
-interface LogResult {
-  success: boolean;
-  logs?: LogEntry[];
-  error?: string;
-}
+import { LogEntry, LogResult } from "@/lib/frontend-types";
 
 function SecuritySetting(): JSX.Element {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -37,7 +18,6 @@ function SecuritySetting(): JSX.Element {
         setError(result.error || "An unknown error occurred.");
       }
     };
-
     fetchLogs();
   }, []);
 

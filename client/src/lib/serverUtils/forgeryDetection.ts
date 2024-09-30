@@ -1,6 +1,3 @@
-// @/lib/forgeryDetection.ts
-
-import { downloadContent } from '@/lib/serverUtils/contentDownloader';
 import { detectForgery } from '@/lib/serverUtils/verificationService';
 import { ForgeryDetectionResult } from '@/lib/types';
 import logger from '@/lib/logger';

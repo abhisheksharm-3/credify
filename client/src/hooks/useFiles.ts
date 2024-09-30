@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileInfo } from '@/lib/types';
-
-interface MonthlyData {
-  month: string;
-  verifiedCount: number;
-  unverifiedCount: number;
-  tamperedCount: number;
-}
+import { MonthlyData } from '@/lib/frontend-types';
 
 export const useFiles = () => {
   const [files, setFiles] = useState<FileInfo[]>([]);

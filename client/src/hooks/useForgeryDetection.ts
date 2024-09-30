@@ -1,19 +1,6 @@
+import { ForgeryDetectionResult } from '@/lib/types';
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-
-interface ForgeryDetectionResult {
-  status: 'pending' | 'completed' | 'error';
-  contentType?: 'image' | 'video' | 'unknown';
-  isManipulated?: boolean;
-  manipulationProbability?: number;
-  detectionMethods?: {
-    imageManipulation?: boolean;
-    ganGenerated?: boolean;
-    faceManipulation?: boolean;
-    audioDeepfake?: boolean;
-  };
-  message?: string;
-}
 
 export function useForgeryDetection(contentId: string) {
   const [forgeryResult, setForgeryResult] = useState<ForgeryDetectionResult | null>(null);

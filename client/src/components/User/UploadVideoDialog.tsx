@@ -14,12 +14,7 @@ import {
 import { UploadDropzone } from '@/lib/uploadthing';
 import CustomPlayer from '../Utils/CustomPlayer';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-type UploadedFileType = {
-  key: string;
-  url: string;
-  name: string;
-};
+import { UploadedFileType } from '@/lib/frontend-types';
 
 export function UploadVideoDialog() {
   const router = useRouter();
