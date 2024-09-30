@@ -11,7 +11,7 @@ export async function processForgeryDetection(contentId: string): Promise<Forger
     logger.info(`Processing content for forgery detection: ${contentUrl}`);
     const filename = contentId;
     
-    return await detectForgery(filename, contentUrl);
+    return await detectForgery(filename, contentUrl, contentId);
   } catch (error) {
     logger.error('Error in forgery detection:', error);
     return {
