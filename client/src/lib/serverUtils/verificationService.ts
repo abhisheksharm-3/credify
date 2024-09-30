@@ -1,8 +1,10 @@
 import fetch from 'node-fetch';
-import { ForgeryDetectionResult } from '@/lib/types';
+import { AppwriteUser, ForgeryDetectionResult } from '@/lib/types';
 import { ExternalServiceError } from '@/lib/errors';
 import logger from '@/lib/logger';
 import path from 'path';
+import { createAdminClient, getLoggedInUser } from '../server/appwrite';
+import { Databases, ID, Query } from 'node-appwrite';
 
 const VERIFICATION_SERVICE_BASE_URL = process.env.VERIFICATION_SERVICE_BASE_URL;
 
@@ -41,10 +43,12 @@ const VIDEO_EXTENSIONS = new Set([
   '.m2ts' // Blu-ray BDAV
 ]);
 
-export async function detectForgery(filename: string, contentUrl: string): Promise<ForgeryDetectionResult> {
+export async function detectForgery(filename: string, contentUrl: string, contentId: string): Promise<ForgeryDetectionResult> {
   logger.info(`Detecting forgery for file: ${filename}`);
   const fileExtension = path.extname(filename).toLowerCase();
-  
+  const userData = await getLoggedInUser() as AppwriteUser
+  const userId = userData?.$id;
+
   const isImage = IMAGE_EXTENSIONS.has(fileExtension);
   const isVideo = VIDEO_EXTENSIONS.has(fileExtension);
 
@@ -72,7 +76,9 @@ export async function detectForgery(filename: string, contentUrl: string): Promi
     }
 
     const apiResponse = await response.json();
-    return isImage ? processImageForgeryResult(apiResponse) : processVideoForgeryResult(apiResponse);
+    const forgeryResult = isImage ? processImageForgeryResult(apiResponse) : processVideoForgeryResult(apiResponse);
+    await storeAnalyzedContent(forgeryResult, userId, contentId)
+    return forgeryResult
   } catch (error) {
     logger.error('Error in forgery detection:', error);
     return {
@@ -85,7 +91,49 @@ export async function detectForgery(filename: string, contentUrl: string): Promi
     };
   }
 }
+export async function storeAnalyzedContent(ForgeryDetectionResult: ForgeryDetectionResult, userId: string | undefined, contentId: string): Promise<void> {
+  if (!userId) {
+    return
+  }
+  console.log(`[storeAnalyzedContent] Storing analyzed content for userId: ${userId}, contentId: ${contentId}`);
+  try {
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
 
+    const { documents } = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+      [
+        Query.equal('userId', userId),
+        Query.equal('contentId', contentId)
+      ]
+    );
+
+    if (documents.length === 0) {
+      console.log(`[storeAnalyzedContent] No existing document found. Return.`);
+    } else {
+      console.log(`[storeAnalyzedContent] Existing document found. Updating document.`);
+      await databases.updateDocument(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+        documents[0].$id,
+        {
+          isManipulated: ForgeryDetectionResult.isManipulated,
+          manipulationProbability: ForgeryDetectionResult.manipulationProbability,
+          imageManipulation: ForgeryDetectionResult.detectionMethods?.imageManipulation,
+          ganGenerated: ForgeryDetectionResult.detectionMethods?.ganGenerated,
+          faceManipulation: ForgeryDetectionResult.detectionMethods?.faceManipulation,
+          audioDeepFake: ForgeryDetectionResult.detectionMethods?.audioDeepfake
+        }
+      );
+    }
+
+    console.log(`[storeAnalyzedContent] Analyzed content stored successfully`);
+  } catch (error) {
+    console.error(`[storeAnalyzedContent] Error storing analyzed content: ${error}`);
+    throw error;
+  }
+}
 function processImageForgeryResult(apiResponse: any): ForgeryDetectionResult {
   const imageManipulation = apiResponse.image_manipulation;
   const ganDetection = apiResponse.gan_detection;

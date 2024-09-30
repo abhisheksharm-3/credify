@@ -187,3 +187,50 @@ export interface AnalysisStatus {
   creatorsId?: string;
   message?: string;
 }
+
+export interface ContentInfo {
+  contentUrl: string;
+  contentType: string;
+  filename: string;
+  endpoint: string;
+}
+
+
+export interface VerificationStatus {
+  status: 'pending' | 'completed' | 'error';
+  result?: VerificationResultType;
+  geminiAnalysis?: string;
+  message?: string;
+  existing?: boolean;
+}
+
+// Database related types
+export interface VerifiedContent {
+  video_hash: string | null;
+  collective_audio_hash: string | null;
+  image_hash: string | null;
+  userId: string;
+  media_title: string;
+  media_type: string;
+  contentId: string;
+  verificationDate: string;
+  fact_check: string;
+}
+
+// Neo4j related types
+export interface Neo4jVerificationResult {
+  verificationResult: VerificationResultType | null;
+  userExists: boolean;
+}
+
+// Appwrite related types
+export interface AppwriteUser {
+  $id: string;
+  // Add other user properties as needed
+}
+
+// Error types
+export interface ApiError {
+  error: string;
+  details?: string;
+}
