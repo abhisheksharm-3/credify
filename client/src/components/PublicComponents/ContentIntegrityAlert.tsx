@@ -11,21 +11,21 @@ export default function ContentIntegrityAlert({ forgeryResult }: ContentIntegrit
     <Alert variant={forgeryResult?.isManipulated ? "destructive" : "default"} className="border-2 shadow-lg">
       {forgeryResult?.isManipulated ? (
         <>
-          <div className="flex flex-row items-center gap-2 border-2">
-            <div className="">           
-             <ShieldAlert className="h-8 w-8 mr-4" />
-            </div>
-            <p className="text-2xl font-semibold mb-1">Content Integrity Alert</p>
+         <div className="flex flex-row gap-2 items-center">
+         <ShieldAlert className="h-8 w-8" />
+          <AlertTitle className="text-2xl ml-1 font-semibold">Content Integrity Alert</AlertTitle>
           </div>
-
           <AlertDescription className="text-lg">
             Our advanced system has detected potential tampering with this content. We recommend further investigation and verification.
           </AlertDescription>
         </>
       ) : (
         <>
-          <ShieldCheck className="h-8 w-8" />
-          <AlertTitle className="text-2xl font-semibold mb-2">Content Authenticity Confirmed</AlertTitle>
+          <div className="flex flex-row gap-2 items-center">
+            <ShieldCheck className="h-8 w-8" />
+            <AlertTitle className="text-2xl font-semibold">Content Authenticity Confirmed</AlertTitle>
+          </div>
+
           <AlertDescription className="text-lg">
             Our rigorous verification process has confirmed the authenticity of this content. You can trust its integrity.
           </AlertDescription>
