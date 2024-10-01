@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, ShieldAlert } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ContentIntegrityAlertProps {
@@ -7,30 +7,31 @@ interface ContentIntegrityAlertProps {
 }
 
 export default function ContentIntegrityAlert({ forgeryResult }: ContentIntegrityAlertProps) {
-  return (
-    <Alert variant={forgeryResult?.isManipulated ? "destructive" : "default"} className="border-2 shadow-lg">
-      {forgeryResult?.isManipulated ? (
-        <>
-         <div className="flex flex-row gap-2 items-center">
-         <ShieldAlert className="h-8 w-8" />
-          <AlertTitle className="text-2xl ml-1 font-semibold">Content Integrity Alert</AlertTitle>
-          </div>
-          <AlertDescription className="text-lg">
-            Our advanced system has detected potential tampering with this content. We recommend further investigation and verification.
-          </AlertDescription>
-        </>
-      ) : (
-        <>
-          <div className="flex flex-row gap-2 items-center">
-            <ShieldCheck className="h-8 w-8" />
-            <AlertTitle className="text-2xl font-semibold">Content Authenticity Confirmed</AlertTitle>
-          </div>
 
+  const isManipulated = forgeryResult?.isManipulated;
+
+  return (
+    <Alert 
+      variant={isManipulated ? "destructive" : "default"} 
+      className={`border-2 shadow-lg ${isManipulated ? 'bg-red-50 dark:bg-red-900' : 'bg-green-50 dark:bg-green-900'}`}
+    >
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        {isManipulated ? (
+          <ShieldAlert className="h-12 w-12 text-red-500 dark:text-red-400" />
+        ) : (
+          <ShieldCheck className="h-12 w-12 text-green-500 dark:text-green-400" />
+        )}
+        <div className="flex-1">
+          <AlertTitle className="text-2xl font-semibold mb-2">
+            {isManipulated ? "Caution: Content May Be Altered" : "Good News: Content Looks Authentic"}
+          </AlertTitle>
           <AlertDescription className="text-lg">
-            Our rigorous verification process has confirmed the authenticity of this content. You can trust its integrity.
+            {isManipulated
+              ? "Our smart tools spotted signs that this content might have been changed. It's a good idea to double-check from other sources."
+              : "Our thorough check didn't find any signs of tampering. This content appears to be original and trustworthy."}
           </AlertDescription>
-        </>
-      )}
+        </div>
+      </div>
     </Alert>
   );
 }

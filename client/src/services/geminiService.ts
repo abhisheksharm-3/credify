@@ -5,7 +5,6 @@ import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import axios from 'axios';
 import { pipeline } from 'stream/promises';
 
-
 const IMAGE_MODEL_NAME = "gemini-1.5-flash";
 const VIDEO_MODEL_NAME = "gemini-1.5-pro";
 
@@ -14,10 +13,29 @@ const API_KEY = process.env.GEMINI_API_KEY!;
 const genAI = new GoogleGenerativeAI(API_KEY);
 const fileManager = new GoogleAIFileManager(API_KEY);
 
+const SPECIALIZED_PROMPT = `You are a highly specialized AI privacy and content analyst. Your task is to meticulously examine the provided media and report on potential privacy and security concerns. Avoid general observations or casual language. Provide a professional, detailed analysis focusing on:
+
+1. Personal Data Exposure: Identify any visible personally identifiable information (PII) such as faces, names, addresses, ID numbers, or biometric data.
+2. Security Vulnerabilities: Detect potential security risks like visible passwords, confidential documents, or sensitive location data.
+3. Content Authenticity: Analyze for signs of digital manipulation, AI-generated elements, or deepfake technology.
+4. Privacy Implications: Assess the overall privacy impact, considering data protection regulations like GDPR or CCPA.
+5. Intellectual Property: Identify any visible copyrighted or trademarked material that may pose legal risks.
+6. Sensitive Content: Flag any material that could be considered adult, violent, or otherwise inappropriate.
+
+Provide your findings in this structured format:
+1. PII Detected: [List specific items, if any]
+2. Security Risks: [Enumerate potential vulnerabilities]
+3. Authenticity Assessment: [Detailed analysis of potential manipulations]
+4. Privacy Impact: [Specific concerns related to data protection laws]
+5. IP Considerations: [Any copyright or trademark issues]
+6. Content Advisories: [Specific warnings about sensitive material]
+
+Conclusion: Summarize the key privacy and security implications in 2-3 sentences. This is your hard limit.
+
+Be precise and technical in your analysis. If you cannot determine something with high confidence, state "Unable to conclusively determine" for that specific point.`;
+
 export async function analyzeImageWithGemini(contentBuffer: Buffer, contentType: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: IMAGE_MODEL_NAME });
-
-  const prompt = "Analyze this media content for factual accuracy and identify any instances of misinformation. Provide a clear, concise summary of your findings.";
 
   const imagePart = {
     inlineData: {
@@ -27,10 +45,9 @@ export async function analyzeImageWithGemini(contentBuffer: Buffer, contentType:
   };
 
   try {
-    const result = await model.generateContent([prompt, imagePart]);
+    const result = await model.generateContent([SPECIALIZED_PROMPT, imagePart]);
     const response = await result.response;
-    const text = response.text();
-    return text;
+    return response.text();
   } catch (error) {
     console.error("Error in Gemini API image analysis:", error);
     throw new Error("Failed to analyze image content with Gemini API");
@@ -39,28 +56,22 @@ export async function analyzeImageWithGemini(contentBuffer: Buffer, contentType:
 
 export async function analyzeVideoWithGemini(videoUrl: string, contentType: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: VIDEO_MODEL_NAME });
-  const prompt = "Analyze this media content for factual accuracy and identify any instances of misinformation. Provide a clear, concise summary of your findings.";
 
   try {
-    // Create a temporary file to store the video
     const tempFilePath = path.join('/tmp', `temp_video_${Date.now()}.mp4`);
 
-    // Download the video as a stream and save it to the temporary file
     await pipeline(
       (await axios.get(videoUrl, { responseType: 'stream' })).data,
       fs.createWriteStream(tempFilePath)
     );
 
-    // Upload the video using the File API
     const uploadResponse = await fileManager.uploadFile(tempFilePath, {
       mimeType: contentType,
       displayName: "Uploaded Video",
     });
 
-    // Delete the temporary file
     await fs.promises.unlink(tempFilePath);
 
-    // Wait for video processing
     let file = await fileManager.getFile(uploadResponse.file.name);
     while (file.state === FileState.PROCESSING) {
       await new Promise((resolve) => setTimeout(resolve, 10000));
@@ -71,7 +82,6 @@ export async function analyzeVideoWithGemini(videoUrl: string, contentType: stri
       throw new Error("Video processing failed.");
     }
 
-    // Generate content using the processed video URI
     const result = await model.generateContent([
       {
         fileData: {
@@ -79,7 +89,7 @@ export async function analyzeVideoWithGemini(videoUrl: string, contentType: stri
           fileUri: file.uri
         }
       },
-      { text: prompt },
+      { text: SPECIALIZED_PROMPT },
     ]);
 
     const response = await result.response;
