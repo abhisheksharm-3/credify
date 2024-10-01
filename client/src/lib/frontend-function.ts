@@ -17,6 +17,11 @@ export const handleVerificationRedirect = (file: FileInfo): void => {
     window.location.href = redirectUrl;
 };
 
+export const handleNavigation = (id: string) => {
+    let redirectUrl: string;
+    redirectUrl = `/creator/${id}`;
+    window.location.href = redirectUrl;
+  };
 export const formatDate = (dateString: string): string => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -42,9 +47,3 @@ export const getStatusText = (file: FileInfo) => {
     }
     return file.verified ? 'Verified' : 'Unverified';
 }
-
-//
-
-/* const getContentTypeIcon = (type: FileInfo['fileType']) => {
-    return type === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />
-  } */
