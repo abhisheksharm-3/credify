@@ -45,6 +45,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.52.2",
+    "react-markdown": "^9.0.1",
     "react-password-strength-bar": "^0.4.1",
     "react-player": "^2.16.0",
     "react-spring": "^9.7.4",
