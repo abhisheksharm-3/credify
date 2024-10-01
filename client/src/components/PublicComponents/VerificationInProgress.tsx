@@ -18,7 +18,7 @@ export default function VerificationInProgress({ progress }: VerificationInProgr
       <RefreshCw className="w-20 h-20 text-primary animate-spin" />
       <h3 className="text-3xl font-semibold">Verification in Progress</h3>
       <p className="text-center text-muted-foreground max-w-md">
-        We're meticulously analyzing your content to ensure its authenticity. This process guarantees the highest level of accuracy and integrity.
+        We&apos;re meticulously analyzing your content to ensure its authenticity. This process guarantees the highest level of accuracy and integrity.
       </p>
       <Progress value={progress} className="w-full mt-4" />
       <p className="text-sm font-medium text-muted-foreground">{Math.round(progress)}% Complete</p>
