@@ -11,7 +11,7 @@ export const CallToAction: React.FC = () => (
         <CardContent className="p-8 md:p-12 text-center space-y-8">
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Elevate Your Content's <span className="text-primary">Credibility</span>
+              Elevate Your Content&apos;s <span className="text-primary">Credibility</span>
             </h2>
             <p className="text-xl text-muted-foreground mx-auto max-w-[700px]">
               Experience the power of Credify in safeguarding your digital assets and fostering audience trust.
