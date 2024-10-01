@@ -95,26 +95,7 @@ export interface VideoData {
     duration?: string
     dimensions?: string
     description: string
-  }
-
-/*   export interface FileInfo {
-    $collectionId: string;
-    $createdAt: string;
-    $databaseId: string;
-    $id: string;
-    $permissions: any[];
-    $updatedAt: string;
-    fileId: string;
-    fileName: string;
-    fileSize: number;
-    fileType: 'image' | 'video'; 
-    fileUrl: string;
-    userId: string;
-    verified: boolean;
-    tampered?: boolean; // Optional field
-    
-  } */
-  
+  }  
   export interface FileInfo {
     $collectionId?: string;
     $createdAt?: string;
