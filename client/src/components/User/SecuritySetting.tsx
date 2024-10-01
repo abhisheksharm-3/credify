@@ -51,7 +51,7 @@ function SecuritySetting(): JSX.Element {
   return (
     <Card className="border-2 rounded-xl">
       <CardHeader>
-        <CardTitle className="font-semibold">Security Overview</CardTitle>
+        <CardTitle className="">Security Overview</CardTitle>
         <CardDescription>Review your recent account activity and manage security settings.</CardDescription>
       </CardHeader>
       <CardContent>
