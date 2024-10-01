@@ -1,6 +1,4 @@
-
 'use client'
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '@/components/Layout/Layout';
@@ -11,8 +9,7 @@ import VerificationResultSection from '@/components/PublicComponents/Verificatio
 import { VerificationResultType, User } from '@/lib/types';
 import { toast } from 'sonner';
 
-const POLLING_INTERVAL = 5000; // 5 seconds
-
+const POLLING_INTERVAL = 5000; 
 export default function ContentVerificationPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [verificationComplete, setVerificationComplete] = useState(false);

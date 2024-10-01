@@ -34,7 +34,7 @@ export async function ensureNeo4jInitialized(): Promise<void> {
 }
 export async function initializeNeo4j(): Promise<void> {
   if (driver) {
-    return; // Connection already initialized
+    return; 
   }
 
   const uri = process.env.NEO4J_URI;
@@ -51,7 +51,6 @@ export async function initializeNeo4j(): Promise<void> {
       connectionAcquisitionTimeout: 30000,
     });
 
-    // Test the connection
     const session = driver.session();
     try {
       await session.run('RETURN 1');
@@ -87,15 +86,12 @@ export async function runQuery(cypher: string, params: Record<string, any>): Pro
 
 export async function storeContentVerificationAndUser(verificationResult: VerificationResultType, userId: string): Promise<void> {
   const contentHash = verificationResult.image_hash || verificationResult.video_hash;
-  
   if (!contentHash) {
     throw new ContentVerificationError('No image_hash or video_hash found in verificationResult');
   }
-
   if (!userId) {
     throw new ContentVerificationError('Invalid userId provided');
   }
-
   try {
     await runQuery(
       `
@@ -120,7 +116,6 @@ export async function getContentVerificationAndUser(contentHash: string, userId:
   if (!contentHash || !userId) {
     throw new ContentVerificationError('Invalid contentHash or userId provided');
   }
-
   try {
     const result = await runQuery(
       `
@@ -153,7 +148,6 @@ export async function getContentVerificationOnly(contentHash: string): Promise<{
     console.error('[getContentVerificationOnly] Invalid contentHash provided');
     throw new ContentVerificationError('Invalid contentHash provided');
   }
-
   try {
     console.log('[getContentVerificationOnly] Executing Neo4j query');
     const result = await runQuery(

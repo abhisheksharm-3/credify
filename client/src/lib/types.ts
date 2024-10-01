@@ -234,3 +234,19 @@ export interface ApiError {
   error: string;
   details?: string;
 }
+
+export  interface UseContentVerificationReturn {
+  isAnalyzing: boolean;
+  verificationComplete: boolean;
+  verificationResult: VerificationResultType | null;
+  uploaderHierarchy: User | null;
+  error: string | null;
+  handleUploadComplete: (res: { key: string; url: string; name: string }[]) => Promise<void>;
+  resetVerification: () => void;
+}
+export interface VerificationResultSectionProps {
+  verificationResult: VerificationResultType;
+  uploaderHierarchy: User | null;
+  onResetVerification: () => void;
+}
+

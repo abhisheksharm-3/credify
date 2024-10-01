@@ -6,21 +6,8 @@ import { ActionItems } from "@/components/User/ActionItems";
 import { AccountSettings } from "@/components/User/AccountSettings";
 import { AppwriteUser, CardData, ChartDataPoint, FileInfo } from "@/lib/types";
 import { Label, Pie, PieChart } from "recharts";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { Card,CardContent,CardFooter,CardHeader,CardTitle} from "@/components/ui/card";
+import {ChartConfig,ChartContainer,ChartTooltip,ChartTooltipContent,} from "@/components/ui/chart";
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { LoadingSkeleton } from "@/components/Layout/LoadingSkeleton";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
@@ -47,8 +34,7 @@ function processFilesForChart(files: FileInfo[]): ChartDataPoint[] {
   }));
 
   const monthOrder = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"
   ];
   return chartData.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
 }
@@ -74,14 +60,12 @@ export default function Dashboard() {
   }, []);
 
   const chartData = React.useMemo(() => processFilesForChart(files), [files]);
-
   const chartConfig = {
     desktop: {
       label: "Total Videos",
       color: "hsl(var(--chart-1))",
     },
   };
-
   const summaryCards: CardData[] = [
     {
       title: "Successful Verifications",
@@ -115,7 +99,6 @@ export default function Dashboard() {
       },
     ])
   );
-
   if (loading) {
     return (
       <LoggedInLayout>
@@ -123,7 +106,6 @@ export default function Dashboard() {
       </LoggedInLayout>
     );
   }
-
   return (
     <LoggedInLayout>
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -140,8 +122,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Card className="flex flex-col">
               <CardHeader className="items-center pb-0">
-                <CardTitle>Video Statistics</CardTitle>
-                <CardDescription>Overview of video verifications</CardDescription>
+                <CardTitle>Multimedia Statistics</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 pb-0">
                 <ChartContainer
@@ -182,7 +163,7 @@ export default function Dashboard() {
                                   y={(viewBox.cy || 0) + 24}
                                   className="fill-muted-foreground"
                                 >
-                                  Total Videos
+                                  Total Multimedia
                                 </tspan>
                               </text>
                             )
@@ -195,7 +176,7 @@ export default function Dashboard() {
               </CardContent>
               <CardFooter className="flex-col gap-2 text-sm">
                 <div className="leading-none text-muted-foreground">
-                  Showing total video statistics
+                  Multimedia Statistics Overview
                 </div>
               </CardFooter>
             </Card>

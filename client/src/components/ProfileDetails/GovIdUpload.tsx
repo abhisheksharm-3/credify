@@ -1,17 +1,7 @@
-// components/GovIdUpload.tsx
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle, X, ChevronUp, ChevronDown, CircleCheckIcon, CameraIcon, Upload, Loader } from 'lucide-react'; 
-
-interface GovIdUploadProps {
-  idVerified: 'yes' | 'no' | 'uploading' | string;
-  idImages: string[];
-  openStep: number | null;
-  toggleStep: (step: number) => void;
-  handleAction: (action: number) => void;
-  handleIdUpload: () => void;
-  setIdVerified: (status: 'yes' | 'no' | 'uploading') => void;
-}
+import { GovIdUploadProps } from '@/lib/frontend-types';
 
 const GovIdUpload: React.FC<GovIdUploadProps> = ({
   idVerified,

@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useState, useRef, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,12 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils";
-
-interface CustomPlayerProps {
-  url: string;
-}
+import { CustomPlayerProps } from '@/lib/frontend-types';
 
 const CustomPlayer: React.FC<CustomPlayerProps> = ({ url }) => {
+
   const [playing, setPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(0.8);
   const [muted, setMuted] = useState<boolean>(false);
@@ -31,10 +28,10 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({ url }) => {
   const playerRef = useRef<ReactPlayer>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   const handlePlayPause = () => setPlaying(!playing);
   const handleVolumeChange = (value: number[]) => setVolume(value[0]);
   const handleToggleMute = () => setMuted(!muted);
+  
   const handleToggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();

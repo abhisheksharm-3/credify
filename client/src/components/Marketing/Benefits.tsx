@@ -1,11 +1,6 @@
 import React from 'react'
 import { LockIcon, AnchorIcon, ShieldCheckIcon } from 'lucide-react'
-
-interface BenefitItemProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}
+import { BenefitItemProps } from '@/lib/frontend-types'
 
 const BenefitItem: React.FC<BenefitItemProps> = ({ icon, title, description }) => (
   <li className="flex items-start gap-4 p-4 rounded-lg bg-white dark:bg-gray-800 shadow-md transition-all duration-300 hover:shadow-xl hover:scale-105">

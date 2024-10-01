@@ -1,5 +1,3 @@
-// @/lib/cache.ts
-
 import NodeCache from 'node-cache';
 import { ForgeryDetectionResult } from '@/lib/types';
 

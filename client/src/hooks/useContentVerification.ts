@@ -1,15 +1,5 @@
 import { useState } from 'react';
-import { VerificationResultType, User } from '@/lib/types';
-
-interface UseContentVerificationReturn {
-    isAnalyzing: boolean;
-    verificationComplete: boolean;
-    verificationResult: VerificationResultType | null;
-    uploaderHierarchy: User | null;
-    error: string | null;
-    handleUploadComplete: (res: { key: string; url: string; name: string }[]) => Promise<void>;
-    resetVerification: () => void;
-}
+import { VerificationResultType, User, UseContentVerificationReturn } from '@/lib/types';
 
 export function useContentVerification(): UseContentVerificationReturn {
     const [isAnalyzing, setIsAnalyzing] = useState(false);

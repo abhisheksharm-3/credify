@@ -14,12 +14,7 @@ import {
 import { UploadDropzone } from '@/lib/uploadthing';
 import CustomPlayer from '../Utils/CustomPlayer';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
-type UploadedFileType = {
-  key: string;
-  url: string;
-  name: string;
-};
+import { UploadedFileType } from '@/lib/frontend-types';
 
 export function UploadVideoDialog() {
   const router = useRouter();
@@ -86,15 +81,24 @@ export function UploadVideoDialog() {
           <div className="flex flex-col items-center justify-center p-4">
             <CheckCircle className="h-8 w-8 text-green-500 mb-4" />
             <p className="mb-4 text-sm text-gray-500">Upload successful! Preview your content:</p>
-            <div className="w-full mb-4">
+            <div className="w-full mb-4 flex items-center justify-center">
               {uploadedFile.name.toLowerCase().match(/\.(mp4|webm|ogg)$/) ? (
-                <CustomPlayer url={`https://utfs.io/f/${uploadedFile.key}`} />
+                <div className="flex justify-center max-h-[300px] overflow-hidden">
+                  <CustomPlayer url={`https://utfs.io/f/${uploadedFile.key}`} />
+                </div>
               ) : uploadedFile.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
-                <img src={`https://utfs.io/f/${uploadedFile.key}`} alt="Uploaded content" className="max-w-full h-auto rounded-lg" />
+                <div className="flex justify-center max-h-[300px] overflow-hidden">
+                  <img
+                    src={`https://utfs.io/f/${uploadedFile.key}`}
+                    alt="Uploaded content"
+                    className="max-w-full h-auto rounded-lg max-h-full"
+                  />
+                </div>
               ) : (
                 <p>Unsupported file type</p>
               )}
             </div>
+
             <Button onClick={handleProceedToVerification} className="mt-4">
               Proceed to Verification
             </Button>

@@ -6,33 +6,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Edit, Eye, Image as ImageIcon, MoreVertical, Trash2, Video } from 'lucide-react'
 import { toast } from 'sonner'
 import {  FileInfo } from '@/lib/types'
-
-interface ContentTableProps {
-  files: FileInfo[]
-}
+import { formatDate, getStatusText, handleVerificationRedirect, truncateFileName } from '@/lib/frontend-function'
+import { ContentTableProps } from '@/lib/frontend-types'
 
 export default function ContentTable({ files }: ContentTableProps) {
-  function formatDate(dateString?: string): string {
-    if (!dateString) return 'N/A'; // Handle undefined case
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); 
-    const year = date.getFullYear();
-  
-    return `${day}-${month}-${year}`;
-  }
-
-  const handleVerificationRedirect = (file: FileInfo) => {
-    let redirectUrl;
-    if (!file.verified) {
-      redirectUrl = `/content/${file.fileId}`;
-    } else if (file.video_hash) {
-      redirectUrl = `/verify/${file.video_hash}`;
-    } else {
-      redirectUrl = `/verify/${file.image_hash}`;
-    }
-    window.open(redirectUrl, '_blank'); // Open in a new tab
-  };
 
   const getStatusColor = (file: FileInfo) => {
     if (file.tampered) {
@@ -40,14 +17,6 @@ export default function ContentTable({ files }: ContentTableProps) {
     }
     return file.verified ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'; 
   }
-
-  const getStatusText = (file: FileInfo) => {
-    if (file.tampered) {
-      return 'Tampered';
-    }
-    return file.verified ? 'Verified' : 'Unverified';
-  }
-
   const getContentTypeIcon = (type: FileInfo['fileType']) => {
     return type === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />
   }
@@ -57,7 +26,6 @@ export default function ContentTable({ files }: ContentTableProps) {
       description: `Are you sure you want to delete "${content.fileName}"?`,
       action: (
         <Button variant="destructive" size="sm" onClick={() => {
-          // Implement delete logic here
           toast("Content Deleted", {
             description: `"${content.fileName}" has been deleted.`,
           })
@@ -67,9 +35,7 @@ export default function ContentTable({ files }: ContentTableProps) {
       ),
     })
   }
-  const truncateFileName = (name: string) => {
-    return name.length > 20 ? name.slice(0, 20) + "..." : name;
-  };
+
   return (
     <Table>
       <TableHeader>
@@ -85,18 +51,17 @@ export default function ContentTable({ files }: ContentTableProps) {
         {files.map((item) => (
           <TableRow key={item.fileId} className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <TableCell className="font-medium">
-              {/* On clicking the file name, call the handleVerificationRedirect */}
               <Button variant="link" className="p-0" onClick={() => handleVerificationRedirect(item)}>
-               {truncateFileName(item.fileName || "")}
+               {truncateFileName(item.fileName || "",20)}
               </Button>
             </TableCell>
             <TableCell className="hidden md:table-cell">
               <div className="flex items-center space-x-1">
                 {getContentTypeIcon(item.fileType)}
-                <span className="capitalize">{item.fileType}</span>
+                <span className="capitalize">{item.fileType?.substring(0,5)}</span>
               </div>
             </TableCell>
-            <TableCell className="hidden md:table-cell">{formatDate(item.$createdAt)}</TableCell>
+            <TableCell className="hidden md:table-cell">{formatDate(item.$createdAt||"")}</TableCell>
             <TableCell  >
               <Badge variant="secondary" className={`${getStatusColor(item)} px-2 py-1 rounded-full text-xs w-[80px] text-center flex justify-center  font-semibold`}>
                 {getStatusText(item)}
@@ -112,7 +77,6 @@ export default function ContentTable({ files }: ContentTableProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  {/* Show "View" if verified, otherwise show "Verify" */}
                   {item.verified ? (
                     <DropdownMenuItem onClick={() => handleVerificationRedirect(item)}>
                       <Eye className="mr-2 h-4 w-4" />
@@ -124,7 +88,6 @@ export default function ContentTable({ files }: ContentTableProps) {
                       <span>Verify</span>
                     </DropdownMenuItem>
                   )}
-                  {/* Only show "Delete" if not verified */}
                   {!item.verified && (
                     <>
                       <DropdownMenuSeparator />

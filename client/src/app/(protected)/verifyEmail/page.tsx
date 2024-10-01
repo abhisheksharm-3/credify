@@ -9,7 +9,6 @@ const EmailVerificationPage = () => {
     const router = useRouter();
     const [verificationState, setVerificationState] = useState('verifying');
 
-
     useEffect(() => {
         const secret = searchParams.get('secret');
         const userId = searchParams.get('userId');

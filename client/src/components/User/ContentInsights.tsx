@@ -1,17 +1,9 @@
 import React from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react'
-import { FileInfo } from '@/lib/types'
+import { ContentInsightsProps } from '@/lib/frontend-types'
 
-interface ContentInsightsProps {
-  content: FileInfo[]
-}
-
-export default function ContentInsights({ content }: ContentInsightsProps) {
-  const tamperedCount = content.filter(item => item.tampered).length
-  const verifiedCount = content.filter(item => item.verified).length
-  const notVerifiedCount = content.filter(item => !item.verified && !item.tampered).length
-
+export default function ContentInsights({ verifiedCount,tamperedCount,unverifiedCount }: ContentInsightsProps) {
   return (
     <Card>
       <CardHeader>
@@ -30,7 +22,7 @@ export default function ContentInsights({ content }: ContentInsightsProps) {
           </div>
           <div className="flex items-center space-x-2 text-gray-500">
             <AlertCircle className="w-5 h-5" />
-            <span>{notVerifiedCount} not verified item{notVerifiedCount !== 1 ? 's' : ''}.</span>
+            <span>{unverifiedCount} not verified item{unverifiedCount !== 1 ? 's' : ''}.</span>
           </div>
         </div>
       </CardContent>

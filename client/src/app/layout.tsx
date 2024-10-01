@@ -32,9 +32,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="overflow-x-hidden scrollbar-hide">
-      <body className={GeistSans.className}> <NextSSRPlugin
-        routerConfig={extractRouterConfig(ourFileRouter)}
-      /><Providers>  <CameraProvider>{children}</CameraProvider></Providers>
+      <body className={GeistSans.className}>
+        <NextSSRPlugin
+          routerConfig={extractRouterConfig(ourFileRouter)}
+        />
+        <Providers>
+          <CameraProvider>{children}</CameraProvider>
+        </Providers>
         <Toaster /></body>
     </html>
   );

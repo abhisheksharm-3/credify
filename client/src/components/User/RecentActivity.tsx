@@ -5,38 +5,24 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RiLink, RiFileTextLine, RiDeleteBin6Line, RiCheckboxCircleLine } from "@remixicon/react";
-import { FileInfo, FileType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFiles } from "@/hooks/useFiles";
+import { RecentActivityProps } from "@/lib/frontend-types";
+import { formatDate, formatFileSize, handleVerificationRedirect, truncateFileName } from "@/lib/frontend-function";
 
-interface RecentActivityProps {
-  files: FileInfo[];
-}
-
-export function RecentActivity({files}: RecentActivityProps ) {
+export function RecentActivity({ files }: RecentActivityProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const {setFiles} = useFiles();
+  const { setFiles } = useFiles();
 
   useEffect(() => {
-    if(files.length>0 ){
+    if (files.length > 0) {
       setIsLoading(false);
-    }else{
+    } else {
       setIsLoading(false);
     }
   }, [files])
-  
-  const formatFileSize = (bytes: number) => {
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    if (bytes === 0) return '0 Byte';
-    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)).toString());
-    return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
 
   const handleDelete = async (fileId: string) => {
     try {
@@ -58,21 +44,6 @@ export function RecentActivity({files}: RecentActivityProps ) {
     }
   };
 
-
-  const handleVerificationRedirect = (file: FileInfo) => {
-    let redirectUrl;
-    if (!file.verified) {
-      redirectUrl = `/content/${file.fileId}`
-    } else if (file.video_hash) {
-      redirectUrl = `/verify/${file.video_hash}`;
-    } else {
-      redirectUrl = `/verify/${file.image_hash}`;
-    }
-    window.location.href = redirectUrl;
-  };
-  const truncateFileName = (name: string) => {
-    return name.length > 20 ? name.slice(0, 10) + "..." : name;
-  };
   return (
     <Card className="col-span-2 lg:col-span-1 shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="border-b pb-4">
@@ -103,7 +74,7 @@ export function RecentActivity({files}: RecentActivityProps ) {
               {files.slice(0, 3).map((file) => (
                 <TableRow key={file.$id} className="transition-colors duration-150">
                   <TableCell>
-                  <div className="font-medium">{truncateFileName(file.fileName || "")}</div>
+                    <div className="font-medium">{truncateFileName(file.fileName || "", 13)}</div>
                     <div className="text-sm text-gray-500">
                       {file.fileUrl ? (
                         <Link href={file.fileUrl} className="text-blue-600 hover:text-blue-800 hover:underline flex items-center" prefetch={false} target="_blank">
@@ -116,7 +87,7 @@ export function RecentActivity({files}: RecentActivityProps ) {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell" >
-                    <Badge variant="secondary" className="bg-gray-100 text-gray-700">{file.fileType?.toUpperCase()}</Badge>
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-700">{file.fileType?.toUpperCase().substring(0, 5)}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell" >{file.fileSize ? formatFileSize(file.fileSize) : "N/A"}</TableCell>
                   <TableCell className="hidden md:table-cell" >{file.$createdAt ? formatDate(file.$createdAt) : "Unknown"}</TableCell>
@@ -130,8 +101,6 @@ export function RecentActivity({files}: RecentActivityProps ) {
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Unverified</Badge>
                       )
                     }
-
-
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">

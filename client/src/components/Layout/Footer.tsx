@@ -1,11 +1,6 @@
 import React from 'react'
 import { RiTwitterXLine, RiGithubLine, RiLinkedinBoxLine, RiVideoLine, RiSearchEyeLine, RiShieldCheckLine, RiQuestionLine } from "@remixicon/react";
-
-interface NavigationItem {
-  name: string
-  href: string
-  icon: React.ReactNode
-}
+import { NavigationItem } from '@/lib/frontend-types';
 
 const navigation: {
   main: NavigationItem[]

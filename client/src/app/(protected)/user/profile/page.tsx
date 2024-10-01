@@ -9,7 +9,6 @@ import LoggedInLayout from "@/components/Layout/LoggedInLayout"
 
 export default async function Page() {
   const user = await getLoggedInUser();
-
   if (!user) redirect("/signup");
   return (
     <LoggedInLayout><div className="flex flex-col min-h-screen bg-muted dark:bg-inherit">

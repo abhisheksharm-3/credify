@@ -1,14 +1,6 @@
 import React from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-interface ContentFiltersProps {
-  filterStatus: string
-  setFilterStatus: (status: string) => void
-  filterType: string
-  setFilterType: (type: string) => void
-  sortBy: 'Date' | 'Status' | 'Title'
-  setSortBy: (sortBy: 'Date' | 'Status' | 'Title') => void
-}
+import { ContentFiltersProps } from '@/lib/frontend-types'
 
 export default function ContentFilters({
   filterStatus,

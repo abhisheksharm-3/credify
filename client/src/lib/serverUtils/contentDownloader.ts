@@ -1,5 +1,3 @@
-// @/lib/contentDownloader.ts
-
 import fetch from 'node-fetch';
 import { Buffer } from 'buffer';
 import { DownloadResult } from '@/lib/types';
