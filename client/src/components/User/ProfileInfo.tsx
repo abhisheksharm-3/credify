@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useRef } from "react";
 import { updatePhoneNumber } from "@/lib/server/appwrite";
 import { toast } from "sonner";
@@ -9,7 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { ProfileInfoProps } from "@/lib/frontend-types";
 
 const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
@@ -52,46 +58,29 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
       setPhone(user.phone || "No Number Provided");
     } finally {
       setLoading(false);
+      setPassword("");
     }
   };
 
   return (
-    <div className="border-2 rounded-xl p-6 bg-card backdrop-blur-lg bg-opacity-30  shadow-lg">
-      <div className="flex flex-col gap-0.5">
-        <div className="text-2xl font-semibold">Profile Information</div>
-        <div className="text-sm text-gray-500">
-          Update your personal details.
+    <Card className="backdrop-blur-lg bg-opacity-30 shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-2xl font-semibold">Profile Information</CardTitle>
+        <CardDescription>Update your personal details.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input id="name" defaultValue={user.name} readOnly />
         </div>
-      </div>
-      <div className="grid gap-6 mt-12">
-        <div className="grid gap-2">
-          <label className="font-semibold text-sm" htmlFor="name">
-            Name
-          </label>
-          <input
-            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none bg-opacity-30 "
-            id="name"
-            defaultValue={user.name}
-          />
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" defaultValue={user.email} readOnly />
         </div>
-        <div className="grid gap-2">
-          <label className="font-semibold text-sm" htmlFor="email">
-            Email
-          </label>
-          <input
-            className="border-[1px] text-sm bg-card rounded-md p-2 outline-none bg-opacity-30 "
-            id="email"
-            type="email"
-            defaultValue={user.email}
-          />
-        </div>
-        <div className="grid gap-2 items-center">
-          <label className="font-semibold text-sm" htmlFor="phone">
-            Phone Number
-          </label>
-          <div className="flex gap-2 items-center bg-card">
-            <input
-              className="border-[1px]  text-sm bg-card rounded-md p-2 outline-none   flex-1"
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <div className="flex gap-2 items-center">
+            <Input
               id="phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -100,51 +89,41 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
             />
             {isEditing ? (
               <Dialog>
-                <DialogTrigger>
-                  <button
-                    className="p-2 px-3 rounded-lg text-sm text-[#faf6f6] bg-green-700"
-                    disabled={loading}
-                  >
+                <DialogTrigger asChild>
+                  <Button variant="outline" disabled={loading}>
                     {loading ? "Updating..." : "Done"}
-                  </button>
+                  </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-opacity-90 bg-card ">
+                <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Enter your password</DialogTitle>
                     <DialogDescription>
                       To update your phone number, please enter your account password.
                     </DialogDescription>
                   </DialogHeader>
-                  <input
+                  <Input
                     type="password"
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="border-[1px] text-sm bg-card rounded-md p-2 outline-none bg-opacity-30  w-full mt-4"
                   />
-                  <div className="flex justify-end mt-6">
-                    <button
-                      className="p-2 px-3 rounded-lg text-sm text-white bg-green-600"
-                      onClick={handleDoneClick}
-                      disabled={loading}
-                    >
+                  <DialogFooter>
+                    <Button onClick={handleDoneClick} disabled={loading}>
                       {loading ? "Updating..." : "Confirm"}
-                    </button>
-                  </div>
+                    </Button>
+                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             ) : (
-              <button
-                className="p-2 px-3 rounded-lg text-sm text-[#faf6f6] bg-rose-700"
-                onClick={handleEditClick}
-              >
+              <Button variant="secondary" onClick={handleEditClick}>
                 Edit
-              </button>
+              </Button>
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
+
 export default ProfileInfo;

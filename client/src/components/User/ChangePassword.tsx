@@ -1,7 +1,12 @@
 "use client";
+
 import React, { useState } from "react";
 import { updatePassword } from "@/lib/server/appwrite";
 import { toast } from "sonner";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const ChangePassword: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -33,19 +38,16 @@ const ChangePassword: React.FC = () => {
   };
 
   return (
-    <div className="border-2 rounded-xl p-6 bg-card">
-      <div className="flex flex-col gap-0.5">
-        <div className="text-2xl font-semibold">Change Password</div>
-        <div className="text-sm text-gray-500">Update your account password.</div>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl font-semibold">Change Password</CardTitle>
+        <CardDescription>Update your account password to enhance security.</CardDescription>
+      </CardHeader>
       <form onSubmit={handlePasswordChange}>
-        <div className="grid gap-6 mt-12">
-          <div className="grid gap-2">
-            <label className="font-semibold text-sm" htmlFor="current-password">
-              Current Password
-            </label>
-            <input
-              className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="current-password">Current Password</Label>
+            <Input
               id="current-password"
               type="password"
               value={currentPassword}
@@ -53,12 +55,9 @@ const ChangePassword: React.FC = () => {
               required
             />
           </div>
-          <div className="grid gap-2">
-            <label className="font-semibold text-sm" htmlFor="new-password">
-              New Password
-            </label>
-            <input
-              className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New Password</Label>
+            <Input
               id="new-password"
               type="password"
               value={newPassword}
@@ -66,12 +65,9 @@ const ChangePassword: React.FC = () => {
               required
             />
           </div>
-          <div className="grid gap-2">
-            <label className="font-semibold text-sm" htmlFor="confirm-password">
-              Confirm Password
-            </label>
-            <input
-              className="border-[1px] text-sm bg-card rounded-md p-2 outline-none"
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Input
               id="confirm-password"
               type="password"
               value={confirmPassword}
@@ -79,15 +75,14 @@ const ChangePassword: React.FC = () => {
               required
             />
           </div>
-        </div>
-        <button
-          type="submit"
-          className="mt-6 m-3 p-2 px-3 rounded-lg text-sm text-[#faf6f6] bg-rose-700"
-        >
-          Update Password
-        </button>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full">
+            Update Password
+          </Button>
+        </CardFooter>
       </form>
-    </div>
+    </Card>
   );
 };
 

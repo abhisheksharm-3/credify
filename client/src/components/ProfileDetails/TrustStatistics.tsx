@@ -21,7 +21,7 @@ const TrustStatistics: FC<{ verifiedCount: number; unverifiedCount: number; tamp
             <Check className="w-6 h-6 text-card-foreground" />
           </div>
           <div className="flex flex-col">
-            <h3 className="text-lg font-semibold">Verified Videos1</h3>
+            <h3 className="text-lg font-semibold">Verified Videos</h3>
             <p className="text-2xl font-bold">{verifiedCount}</p>
           </div>
         </div>
