@@ -21,7 +21,7 @@ const TrustDashboard = () => {
   return (
     <LoggedInLayout>
       <div className="min-h-screen bg-background relative overflow-hidden">
-        <UserHeader verifiedCount={verifiedCount} user={user}  />
+        <UserHeader user={user}  />
         <main className="container mx-auto px-4 py-16 relative z-10">
           <TrustStatistics
             verifiedCount={verifiedCount}
