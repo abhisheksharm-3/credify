@@ -24,7 +24,7 @@ const BenefitItem: React.FC<BenefitItemProps> = ({ icon, title, description }) =
 )
 
 export const Benefits: React.FC = () => (
-  <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background via-background to-background/50 overflow-hidden">
+  <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 overflow-hidden">
     <div className="container px-4 md:px-6">
       <div className="grid gap-10 lg:grid-cols-[1fr,450px] items-center">
         <div className="space-y-8">

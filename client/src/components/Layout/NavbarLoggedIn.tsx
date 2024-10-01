@@ -24,6 +24,7 @@ import {
   RiUserLine,
   RiLogoutBoxLine,
 } from "@remixicon/react";
+import Image from "next/image";
 
 export default function NavbarLoggedIn() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,9 +57,8 @@ export default function NavbarLoggedIn() {
           className="sm:hidden"
         />
         <Link href="/">
-          <NavbarBrand className="">
-            <RiShieldCheckLine />
-            <p>Credify</p>
+        <NavbarBrand as="a" className="flex items-center gap-2">
+            <Image src="/images/logo.png" alt="Credify Logo" width={200} height={40} />
           </NavbarBrand>
         </Link>
       </NavbarContent>
