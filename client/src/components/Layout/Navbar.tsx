@@ -64,7 +64,7 @@ export default function NavbarComponent() {
       </NavbarContent>
 
       <NavbarMenu>
-        {menuItems.map((item, index) => (
+        <div className="mt-3">{menuItems.map((item, index) => (
           <NavbarMenuItem key={`${item.name}-${index}`}>
             <Link href={item.href}>
               <a className="flex items-center gap-2 w-full">
@@ -73,7 +73,7 @@ export default function NavbarComponent() {
               </a>
             </Link>
           </NavbarMenuItem>
-        ))}
+        ))}</div>
         <NavbarMenuItem>
           <Link href="/login">
             <a className="flex items-center gap-2 w-full">
