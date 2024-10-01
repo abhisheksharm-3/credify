@@ -10,7 +10,7 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { LoadingSkeleton } from "@/components/Layout/LoadingSkeleton";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
-import { UploadVideoDialog } from "@/components/User/UploadVideoDialog";
+import UploadVideoDialog from "@/components/User/UploadVideoDialog";
 import { useFiles } from "@/hooks/useFiles";
 import MonthlyFileHistogram from "@/components/User/MonthlyFileHistogram";
 import { Camera, FilePlus2, FileWarning, FileCheck2, ShieldCheck, ShieldAlert } from 'lucide-react';
