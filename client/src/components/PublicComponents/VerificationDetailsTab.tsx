@@ -32,7 +32,7 @@ export default function VerificationDetailsTab({ result }: VerificationDetailsTa
       </CardHeader>
       <CardContent>
         <p className="mb-4 text-gray-600 dark:text-gray-300">
-          These are unique identifiers that help us verify the authenticity of the content. They're like digital fingerprints for different parts of the media.
+          These are unique identifiers that help us verify the authenticity of the content. They&apos;re like digital fingerprints for different parts of the media.
         </p>
         <ul className="space-y-4">
           {details.map((detail, index) => (

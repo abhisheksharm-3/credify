@@ -70,7 +70,7 @@ export default function ForgeryAnalysisTab({ forgeryResult }: ForgeryAnalysisTab
           </div>
         ) : (
           <p className="text-muted-foreground">
-            We couldn't perform an authenticity check on this content. This might be due to technical issues or unsupported content type.
+            We couldn&apos;t perform an authenticity check on this content. This might be due to technical issues or unsupported content type.
           </p>
         )}
       </CardContent>
