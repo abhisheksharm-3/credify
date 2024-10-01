@@ -13,12 +13,12 @@ const GeminiIcon = () => (
 )
 
 export const Hero: React.FC = () => (
-  <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-background to-secondary/10">
+  <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-background">
     <div className="container px-4 md:px-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="flex flex-col justify-center space-y-8">
           <div className="space-y-2">
-            <Badge variant="outline" className="w-fit">
+            <Badge variant="outline" className="w-fit flex items-center gap-1">
             <svg fill="none" width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
               <path d="M16 8.016A8.522 8.522 0 008.016 16h-.032A8.521 8.521 0 000 8.016v-.032A8.521 8.521 0 007.984 0h.032A8.522 8.522 0 0016 7.984v.032z" fill="url(#prefix__paint0_radial_980_20147)" />
               <defs>
@@ -50,8 +50,9 @@ export const Hero: React.FC = () => (
             </Button>
           </div>
         </div>
-        <div className="relative mt-8 lg:mt-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl transform rotate-2"></div>
+        <div className="relative mt-8 lg:mt-0 group">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-2xl transform -rotate-6 group-hover:rotate-6 transition-transform duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-2xl transform rotate-2 group-hover:-rotate-2 transition-transform duration-300"></div>
           <div className="relative overflow-hidden rounded-2xl aspect-video shadow-2xl">
             <img
               src="/images/hero.png"
@@ -60,10 +61,10 @@ export const Hero: React.FC = () => (
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <Badge variant="secondary" className="text-sm backdrop-blur-sm bg-black/30">
+              <Badge variant="secondary" className="text-sm backdrop-blur-sm bg-card-foreground text-primary">
                 Verified Content
               </Badge>
-              <Badge variant="secondary" className="text-sm backdrop-blur-sm bg-black/30">
+              <Badge variant="secondary" className="text-sm backdrop-blur-sm bg-card-foreground text-primary flex items-center gap-1">
               <svg fill="none" width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
               <path d="M16 8.016A8.522 8.522 0 008.016 16h-.032A8.521 8.521 0 000 8.016v-.032A8.521 8.521 0 007.984 0h.032A8.522 8.522 0 0016 7.984v.032z" fill="url(#prefix__paint0_radial_980_20147)" />
               <defs>
