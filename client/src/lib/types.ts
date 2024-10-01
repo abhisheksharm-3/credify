@@ -13,6 +13,8 @@ export interface VideoData {
     title: string;
     description: string;
     value: number;
+    icon?: React.ReactNode;
+    color?: string;
   }
   export interface AppwriteUser {
     $id: string;
@@ -130,7 +132,10 @@ export interface VideoData {
     userId?: string;
     verified?: boolean;
     tampered?: boolean; // Optional field
-  
+    gan_generated?: boolean;
+    face_manipulation?: boolean,
+    audo_manipulation?: boolean,
+    image_manipulation?: boolean,
     video_hash?: string;
     collective_audio_hash?: string;
     image_hash?: string;
