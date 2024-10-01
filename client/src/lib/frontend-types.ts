@@ -201,3 +201,11 @@ export type UserData = {
   profilePicture: string;
   stats: UserStats;
 };
+
+export interface InsightItemProps {
+  count: number;
+  total: number;
+  label: string;
+  icon: React.ReactElement;
+  color: string;
+}

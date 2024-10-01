@@ -11,9 +11,9 @@ export default function ContentFilters({
   setSortBy
 }: ContentFiltersProps) {
   return (
-    <div className="flex space-x-4 flex-wrap">
+    <div className="flex flex-col sm:flex-row gap-4 w-full">
       <Select value={filterStatus} onValueChange={setFilterStatus}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter by Status" />
         </SelectTrigger>
         <SelectContent>
@@ -24,7 +24,7 @@ export default function ContentFilters({
         </SelectContent>
       </Select>
       <Select value={filterType} onValueChange={setFilterType}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter by Type" />
         </SelectTrigger>
         <SelectContent>
@@ -34,7 +34,7 @@ export default function ContentFilters({
         </SelectContent>
       </Select>
       <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'Date' | 'Status' | 'Title')}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
