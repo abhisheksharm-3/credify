@@ -165,7 +165,7 @@ export interface ProcessStepProps {
 export interface NavigationItem {
   name: string
   href: string
-  icon: React.ReactNode
+  icon?: React.ReactNode
 }
 export interface User {
   userId: string;
