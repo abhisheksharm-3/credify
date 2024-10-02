@@ -4,17 +4,18 @@ import TrustStatistics from '@/components/ProfileDetails/TrustStatistics';
 import TrustScoreTrend from '@/components/ProfileDetails/TrustScoreTrends';
 import VerifiedVideos from '@/components/ProfileDetails/UserVideos';
 import UserHeader from '@/components/ProfileDetails/UserHeader';
-import { useFiles } from '@/hooks/useFiles'; 
-import { useUser } from '@/hooks/useUser'; // Add this if you are using a custom user hook
+import { useUser } from '@/hooks/useUser';
+import { useFiles } from '@/hooks/useFiles';
+import { Loader2 } from 'lucide-react';
 
 const TrustDashboard = () => {
-  const { user, loading } = useUser();  // useUser is now imported
-  const { files ,verifiedCount, unverifiedCount, tamperedCount, monthlyData } = useFiles(); 
+  const { user, loading: userLoading } = useUser();
+  const { files, verifiedCount, unverifiedCount, tamperedCount, monthlyData } = useFiles();
 
-  if (loading) {
+  if (userLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="loader"></div>
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }

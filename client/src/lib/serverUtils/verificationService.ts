@@ -119,7 +119,7 @@ export async function storeAnalyzedContent(ForgeryDetectionResult: ForgeryDetect
         documents[0].$id,
         {
           isManipulated: ForgeryDetectionResult.isManipulated,
-          manipulationProbability: ForgeryDetectionResult.manipulationProbability,
+          manipulationProbability: ForgeryDetectionResult.manipulationProbability?.toString(),
           imageManipulation: ForgeryDetectionResult.detectionMethods?.imageManipulation,
           ganGenerated: ForgeryDetectionResult.detectionMethods?.ganGenerated,
           faceManipulation: ForgeryDetectionResult.detectionMethods?.faceManipulation,

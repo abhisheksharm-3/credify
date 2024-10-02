@@ -6,6 +6,7 @@ import { FileInfo } from '@/lib/types';
 import { MonthlyFileHistogramProps } from '@/lib/frontend-types';
 
 const processFileData = (files: FileInfo[]) => {
+  console.log(files);
   const monthlyData: { [key: string]: { verified: number, unverified: number, tampered: number } } = {};
 
   files.forEach(file => {
@@ -53,7 +54,7 @@ export default function MonthlyFileHistogram({ files }: MonthlyFileHistogramProp
   return (
     <Card className="col-span-2 lg:col-span-2">
       <CardHeader>
-        <CardTitle>Multimedia Verification Status Trends</CardTitle>
+        <CardTitle className='text-2xl font-bold'>Multimedia Verification Status Trends</CardTitle>
         <CardDescription>This chart displays the number of tampered, verified, and unverified multimedia over time.</CardDescription>
       </CardHeader>
       <CardContent>

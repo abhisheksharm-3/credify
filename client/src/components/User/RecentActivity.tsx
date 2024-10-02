@@ -47,7 +47,7 @@ export function RecentActivity({ files }: RecentActivityProps) {
   return (
     <Card className="col-span-2 lg:col-span-1 shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="border-b pb-4">
-        <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
+        <CardTitle className="text-2xl font-bold">Recent Activity</CardTitle>
         <CardDescription className="text-sm">A list of recently uploaded content and their details.</CardDescription>
       </CardHeader>
       <CardContent className="p-4">

@@ -6,6 +6,14 @@ from app.core.logging_config import configure_logging
 from app.core.firebase_config import initialize_firebase
 from app.api.forgery_routes import router as forgery_router
 import logging
+import os
+import tempfile
+os.environ['NUMBA_DISABLE_JIT'] = '1'
+# os.environ['NUMBA_DISABLE_FUNCTION_CACHING'] = '1'
+# os.environ['NUMBA_CACHE_DIR'] = "../temp"
+import numba
+
+numba.config.DISABLE_JIT = True
 
 app = FastAPI()
 

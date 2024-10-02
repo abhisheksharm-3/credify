@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FileInfo } from '@/lib/types';
 import { MonthlyData } from '@/lib/frontend-types';
 import { normalizeFile, processMonthlyData } from '@/lib/frontend-function';
 
 export const useFiles = () => {
   const [files, setFiles] = useState<FileInfo[]>([]);
-  const [verifiedCount, setVerifiedCount] = useState(0);
-  const [unverifiedCount, setUnverifiedCount] = useState(0);
-  const [tamperedCount, setTamperedCount] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
-  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFiles = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const response = await fetch('/api/content/get');
         if (!response.ok) {
@@ -36,11 +35,13 @@ export const useFiles = () => {
         setMonthlyData(monthlyData);
       } catch (error) {
         console.error('Error fetching files:', error);
+        setError('Failed to fetch files. Please try again later.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchFiles();
   }, []);
-
   return { files, verifiedCount, unverifiedCount, tamperedCount, totalCount, monthlyData };
 };

@@ -77,8 +77,8 @@ async def fingerprint_video(video_url):
         return {
             'frame_hashes': frame_hashes,
             'audio_hashes': audio_hashes,
-            'robust_audio_hash': str(collective_audio_hash) if collective_audio_hash else None,
-            'robust_video_hash': str(video_hash),
+            'audio_hash': str(collective_audio_hash) if collective_audio_hash else None,
+            'video_hash': str(video_hash),
         }
     finally:
         if firebase_filename:
@@ -88,8 +88,8 @@ async def compare_videos(video_url1, video_url2):
     fp1 = await fingerprint_video(video_url1)
     fp2 = await fingerprint_video(video_url2)
 
-    video_similarity = 1 - (imagehash.hex_to_hash(fp1['robust_video_hash']) - imagehash.hex_to_hash(fp2['robust_video_hash'])) / 64.0
-    audio_similarity = 1 - (imagehash.hex_to_hash(fp1['robust_audio_hash']) - imagehash.hex_to_hash(fp2['robust_audio_hash'])) / 64.0 if fp1['robust_audio_hash'] and fp2['robust_audio_hash'] else 0
+    video_similarity = 1 - (imagehash.hex_to_hash(fp1['video_hash']) - imagehash.hex_to_hash(fp2['video_hash'])) / 64.0
+    audio_similarity = 1 - (imagehash.hex_to_hash(fp1['audio_hash']) - imagehash.hex_to_hash(fp2['audio_hash'])) / 64.0 if fp1['audio_hash'] and fp2['audio_hash'] else 0
 
     overall_similarity = (video_similarity + audio_similarity) / 2
     is_same_content = overall_similarity > 0.9  # You can adjust this threshold
