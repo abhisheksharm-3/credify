@@ -1,6 +1,5 @@
 import React from "react";
-import { AlertCircle, Check } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, CheckCircle, Image, Cpu, User, Mic } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ForgeryAnalysisTabProps } from "@/lib/types";
 
@@ -76,9 +75,7 @@ export default function ForgeryAnalysisTab({ forgeryResult }: ForgeryAnalysisTab
                 </div>
               )}
             </div>
-          ) : (<p className="text-muted-foreground">
-            We couldn&apos;t perform an authenticity check on this content. This might be due to technical issues or unsupported content type.
-          </p>}
+          ) : null}
         </AlertDescription>
       </Alert>
     </div>
