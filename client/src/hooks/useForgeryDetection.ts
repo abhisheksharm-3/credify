@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 
 export function useForgeryDetection(contentId: string) {
   const [forgeryResult, setForgeryResult] = useState<ForgeryDetectionResult | null>(null);
-
   const fetchForgeryData = useCallback(async (): Promise<boolean> => {
     try {
       const response = await fetch(`/api/content/detect-forgery/${contentId}`, {

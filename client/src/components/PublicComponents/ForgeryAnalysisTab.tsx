@@ -1,79 +1,83 @@
 import React from "react";
-import { AlertCircle, Check } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, CheckCircle, Image, Cpu, User, Mic } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ForgeryDetectionResult } from "@/lib/types";
+import { ForgeryAnalysisTabProps } from "@/lib/types";
 
-interface ForgeryAnalysisTabProps {
-  forgeryResult: ForgeryDetectionResult;
-}
+// Define the keys for the detection methods
+type DetectionMethodKey = 'imageManipulation' | 'ganGenerated' | 'faceManipulation' | 'audioDeepfake';
 
 export default function ForgeryAnalysisTab({ forgeryResult }: ForgeryAnalysisTabProps) {
-  const getSimplifiedMethodName = (method: string) => {
-    switch (method) {
-      case "imageManipulation":
-        return "Changes to the image";
-      case "ganGenerated":
-        return "Computer-generated content";
-      case "faceManipulation":
-        return "Altered facial features";
-      case "audioDeepfake":
-        return "Artificial voice or audio";
-      default:
-        return method;
-    }
-  };
+  if (!forgeryResult) {
+    return (
+      <div className="p-4 bg-background rounded-lg shadow">
+        <h2 className="text-lg font-semibold mb-2">Forgery Analysis</h2>
+        <p className="text-muted-foreground">Forgery analysis data is not available.</p>
+      </div>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Content Authenticity Check</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {forgeryResult ? (
-          <div className="space-y-4">
-            <Alert variant={forgeryResult.isManipulated ? "destructive" : "default"}>
-              {forgeryResult.isManipulated ? (
-                <AlertCircle className="h-4 w-4" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-              <AlertTitle>
-                {forgeryResult.isManipulated
-                  ? "Possible alterations detected"
-                  : "No alterations detected"}
-              </AlertTitle>
-              <AlertDescription>
-                {forgeryResult.isManipulated
-                  ? "Our analysis suggests this content might have been modified. Here's what we found:"
-                  : "Our analysis didn't find any signs of tampering or artificial creation in this content."}
-              </AlertDescription>
-            </Alert>
-
-            {forgeryResult.isManipulated && forgeryResult.detectionMethods && (
-              <div className="mt-4">
-                <h4 className="font-semibold mb-2">Potential modifications:</h4>
-                <ul className="list-disc ml-6">
-                  {Object.entries(forgeryResult.detectionMethods).map(
-                    ([method, isDetected]) =>
-                      isDetected && (
-                        <li key={method}>{getSimplifiedMethodName(method)}</li>
-                      )
-                  )}
-                </ul>
-              </div>
-            )}
-
-            <p className="text-sm text-muted-foreground mt-4">
-              Please note: This analysis is based on automated checks and may not be 100% accurate. When in doubt, verify the content with trusted sources.
-            </p>
-          </div>
+    <div className="space-y-4">
+      <Alert variant={forgeryResult.isManipulated ? "destructive" : "default"}>
+        {forgeryResult.isManipulated ? (
+          <AlertTriangle className="h-5 w-5" />
         ) : (
-          <p className="text-muted-foreground">
-            We couldn&apos;t perform an authenticity check on this content. This might be due to technical issues or unsupported content type.
-          </p>
+          <CheckCircle className="h-5 w-5" />
         )}
-      </CardContent>
-    </Card>
+        <AlertTitle className="ml-2 text-lg">
+          {forgeryResult.isManipulated ? "Potential Tampering Detected" : "No Tampering Detected"}
+        </AlertTitle>
+        <AlertDescription>
+          {forgeryResult.isManipulated && forgeryResult.detectionMethods ? (
+            <div className="mt-4 space-y-3">
+              {forgeryResult.detectionMethods.imageManipulation && (
+                <div className="flex items-start p-3 bg-background/50 rounded-md">
+                  <div className="mr-3 mt-1"><Image className="w-5 h-5" /></div>
+                  <div>
+                    <h3 className="font-medium text-sm">Image Manipulation</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Detected edits such as object removal, cloning, or additions within the image.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {forgeryResult.detectionMethods.ganGenerated && (
+                <div className="flex items-start p-3 bg-background/50 rounded-md">
+                  <div className="mr-3 mt-1"><Cpu className="w-5 h-5" /></div>
+                  <div>
+                    <h3 className="font-medium text-sm">GAN Generated</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      This content was flagged as AI-generated, likely created by a generative adversarial network (GAN).
+                    </p>
+                  </div>
+                </div>
+              )}
+              {forgeryResult.detectionMethods.faceManipulation && (
+                <div className="flex items-start p-3 bg-background/50 rounded-md">
+                  <div className="mr-3 mt-1"><User className="w-5 h-5" /></div>
+                  <div>
+                    <h3 className="font-medium text-sm">Face Manipulation</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Alterations to facial features were identified, suggesting possible deepfake techniques.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {forgeryResult.detectionMethods.audioDeepfake && (
+                <div className="flex items-start p-3 bg-background/50 rounded-md">
+                  <div className="mr-3 mt-1"><Mic className="w-5 h-5" /></div>
+                  <div>
+                    <h3 className="font-medium text-sm">Audio Deepfake</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Synthetic or manipulated voice patterns were detected, mimicking a real person's speech.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </AlertDescription>
+      </Alert>
+    </div>
   );
 }
