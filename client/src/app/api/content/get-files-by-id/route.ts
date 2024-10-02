@@ -27,8 +27,7 @@ async function fetchFiles(databases: Databases, userId: string, collectionId: st
 
 export const GET = async (request: NextRequest) => {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userId = request.nextUrl.searchParams.get("userId");
     console.log(userId);
     if (!userId) {
       logger.warn("Missing userId in request");

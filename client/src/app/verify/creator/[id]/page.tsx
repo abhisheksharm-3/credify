@@ -26,7 +26,7 @@ const CreatorView: React.FC = () => {
   // Function to fetch user files
   const fetchUserFiles = async (userId: string) => {
     try {
-      const response = await fetch(`/api/content/getFilesById?userId=${userId}`);
+      const response = await fetch(`/api/content/get-files-by-id?userId=${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch user files');
       }
