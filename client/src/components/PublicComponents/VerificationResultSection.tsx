@@ -34,34 +34,61 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
       ))}
     </div>
   )
+  const isVerifiedAndNotForged = verificationResult.verified && forgeryResult && !forgeryResult.isManipulated
+  const StatusBadge = () => {
+    let badgeText = "";
 
-  const StatusBadge = () => (
-    <Badge
-      variant={verificationResult.verified ? "secondary" : "destructive"}
-      className="animate-pulse text-sm md:text-base py-1 px-2 md:px-3"
-    >
-      {verificationResult.verified ? "VERIFIED" : "NOT VERIFIED"}
-    </Badge>
-  )
+    if (verificationResult.verified && forgeryResult && !forgeryResult.isManipulated) {
+      badgeText = "VERIFIED";
+    } else if (verificationResult.verified && forgeryResult?.isManipulated) {
+      badgeText = "TAMPERED";
+    } else {
+      badgeText = "NOT VERIFIED";
+    }
+
+    return (
+      <Badge
+        variant={badgeText === "VERIFIED" ? "secondary" : "destructive"}
+        className="animate-pulse text-sm md:text-base py-1 px-2 md:px-3"
+      >
+        {badgeText}
+      </Badge>
+    );
+  };
+
 
   const StatusIcon = () => (
-    verificationResult.verified
+    isVerifiedAndNotForged
       ? <ShieldCheck className="w-8 h-8 md:w-12 md:h-12 text-green-500" />
       : <ShieldAlert className="w-8 h-8 md:w-12 md:h-12 text-destructive" />
   )
+  const StatusMessage = () => {
+    let title = "";
+    let message = "";
 
-  const StatusMessage = () => (
-    <div className="text-center md:text-left mb-8">
-      <h3 className="font-semibold text-base md:text-lg lg:text-xl mb-1">
-        {verificationResult.verified ? "Certified Original Content" : "Content Not Verified"}
-      </h3>
-      <p className="text-xs md:text-sm lg:text-base text-muted-foreground">
-        {verificationResult.verified
-          ? "This content has been verified as authentic and unaltered."
-          : "This content has not been uploaded by any verified creator."}
-      </p>
-    </div>
-  )
+    if (verificationResult.verified && forgeryResult && !forgeryResult.isManipulated) {
+      title = "Certified Original Content";
+      message = "This content has been verified as authentic and unaltered.";
+    } else if (verificationResult.verified && forgeryResult?.isManipulated) {
+      title = "Tampering Detected";
+      message = "This content has been verified, but potential tampering was detected.";
+    } else {
+      title = "Content Not Verified";
+      message = "This content has not been uploaded by any verified creator.";
+    }
+
+    return (
+      <div className="text-center md:text-left mb-8">
+        <h3 className="font-semibold text-base md:text-lg lg:text-xl mb-1">
+          {title}
+        </h3>
+        <p className="text-xs md:text-sm lg:text-base text-muted-foreground">
+          {message}
+        </p>
+      </div>
+    );
+  };
+
 
   const renderDetailsContent = () => {
     if (!verificationResult.status && !uploaderHierarchy?.name && !uploaderHierarchy?.dateOfUpload) {
@@ -128,7 +155,7 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
         </CardHeader>
         <CardContent className="">
           <motion.div
-            className={`flex flex-col md:flex-row items-center gap-3 md:gap-4 p-3 md:p-4 lg:p-6 mb-6 rounded-lg ${verificationResult.verified ? 'bg-green-500/30' : 'bg-destructive/30'}`}
+            className={`flex flex-col md:flex-row items-center gap-3 md:gap-4 p-3 md:p-4 lg:p-6 mb-6 rounded-lg ${isVerifiedAndNotForged ? 'bg-green-500/30' : 'bg-destructive/30'}`}
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}

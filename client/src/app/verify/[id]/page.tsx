@@ -48,6 +48,7 @@ const VerifyContent: React.FC = () => {
         }
         const data = await response.json();
         setVerificationData(data.verificationResult);
+        console.log("verification",data.verificationResult);
         const updatedHierarchy = await fetchUsernames(data.uploaderHierarchy);
         setUploaderHierarchy(updatedHierarchy);
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
@@ -138,15 +139,15 @@ const VerifyContent: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Verification Status</span>
-                  <Badge variant={verificationData.verified ? "destructive" : "secondary"} className="animate-pulse text-lg py-1 px-3" >
-                    VERIFIED
+                  <Badge variant={!verificationData.verified ? "destructive" : "secondary"} className="animate-pulse text-lg py-1 px-3" >
+                    TAMPERED
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   <motion.div
-                    className={`flex items-center gap-4 p-6 rounded-lg ${verificationData.verified ? 'bg-destructive/20' : 'bg-secondary/20'
+                    className={`flex items-center gap-4 p-6 rounded-lg ${!verificationData.verified ? 'bg-destructive/20' : 'bg-secondary/20'
                       }`}
                     initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.3 }}>
                     {verificationData.verified ? (
@@ -159,10 +160,10 @@ const VerifyContent: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <ShieldCheck className="w-12 h-12 text-green-500" />
+                        <ShieldCheck className="w-12 h-12 text-red-500" />
                         <div>
-                          <h3 className="font-semibold text-xl mb-1">Certified Original Content</h3>
-                          <p className="text-sm text-muted-foreground">This content has been verified as authentic and unaltered.</p>
+                          <h3 className="font-semibold text-xl mb-1">Integrity Compromised</h3>
+                          <p className="text-sm text-muted-foreground">This content has been found to be altered, and its original authenticity cannot be guaranteed.</p>
                         </div>
                       </>
                     )}
