@@ -14,8 +14,9 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { VerificationResultType } from "@/lib/types";
-import { User } from "@/lib/frontend-types";
+import { User, VerificationResultType } from "@/lib/types";
+
+import renderUserHierarchy from "@/components/PublicComponents/UserHierarchy";
 
 const VerifyContent: React.FC = () => {
   const params = useParams();
@@ -69,7 +70,7 @@ const VerifyContent: React.FC = () => {
     const updatedUser: User = {
       userId: hierarchy.userId,
       name: result.success ? result.user?.name ?? 'Unknown User' : 'Unknown User',
-      uploadTimestamp: hierarchy.uploadTimestamp,
+      dateOfUpload: hierarchy.dateOfUpload,
       children: [],
     };
     for (const child of hierarchy.children) {
@@ -78,40 +79,7 @@ const VerifyContent: React.FC = () => {
     return updatedUser;
   };
 
-  const renderUserHierarchy = (user: User) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center space-x-2 py-2"
-    >
-      <Avatar className="h-8 w-8 ring-2 ring-primary ring-offset-2 ring-offset-background">
-        <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.name}`} />
-        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-      </Avatar>
-      <div>
-        <p
-          className="cursor-pointer hover:text-primary transition-colors font-medium"
-          onClick={() => handleCreatorClick(user.userId)}
-        >
-          {user.name}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {new Date(user.uploadTimestamp).toLocaleString()}
-        </p>
-      </div>
-      {user.children.length > 0 && (
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-      )}
-      {user.children.length > 0 && (
-        <div className="ml-4">
-          {user.children.map((child, index) => (
-            <div key={index}>{renderUserHierarchy(child)}</div>
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
+
 
   if (isLoading) {
     return (

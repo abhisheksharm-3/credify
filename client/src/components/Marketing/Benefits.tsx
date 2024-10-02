@@ -1,7 +1,9 @@
+"use client"
 import React from 'react'
 import { LockIcon, AnchorIcon, ShieldCheckIcon, TrendingUpIcon } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { useTheme } from 'next-themes'
 
 interface BenefitItemProps {
   icon: React.ReactNode
@@ -23,7 +25,9 @@ const BenefitItem: React.FC<BenefitItemProps> = ({ icon, title, description }) =
   </Card>
 )
 
-export const Benefits: React.FC = () => (
+export const Benefits: React.FC = () => {
+  const { resolvedTheme } = useTheme()
+  return (
   <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 overflow-hidden">
     <div className="container px-4 md:px-6">
       <div className="grid gap-10 lg:grid-cols-[1fr,450px] items-center">
@@ -65,7 +69,7 @@ export const Benefits: React.FC = () => (
           <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-2xl transform rotate-2 group-hover:-rotate-2 transition-transform duration-300"></div>
           <div className="relative">
             <img
-              src="/images/benefits.png"
+              src={resolvedTheme === 'dark' ? '/images/benefits-dark.png' : '/images/benefits-light.png'}
               alt="Benefits of Credify"
               className="w-full h-auto object-cover rounded-2xl shadow-xl transition-transform duration-300 group-hover:scale-105"
             />
@@ -75,4 +79,4 @@ export const Benefits: React.FC = () => (
       </div>
     </div>
   </section>
-)
+)}
