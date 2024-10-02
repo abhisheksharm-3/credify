@@ -12,6 +12,7 @@ import { User, VerificationResultSectionProps } from '@/lib/types'
 import ForgeryAnalysisTab from './ForgeryAnalysisTab'
 import { formatDate, handleNavigation } from '@/lib/frontend-function'
 import { Skeleton } from "@/components/ui/skeleton"
+import renderUserHierarchy from './UserHierarchy'
 
 const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
   verificationResult,
@@ -19,41 +20,6 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
   onResetVerification,
   forgeryResult
 }) => {
-
-  const renderUserHierarchy = (user: User) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center space-x-2 py-2"
-    >
-      <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
-        <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.name}`} />
-        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-      </Avatar>
-      <div className="flex-grow min-w-0">
-        <p
-          onClick={() => handleNavigation(user.userId)}  
-          className="text-sm md:text-base font-medium truncate cursor-pointer hover:underline"
-        >
-          {user.name}
-        </p>
-        <p className="text-xs md:text-sm text-muted-foreground truncate">
-          {user.dateOfUpload ? formatDate(new Date(user.dateOfUpload).toLocaleString()) : "Unknown Date"}
-        </p>
-      </div>
-      {user.children.length > 0 && (
-        <>
-          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-          <div className="ml-2 md:ml-4 w-full">
-            {user.children.map((child, index) => (
-              <div key={index}>{renderUserHierarchy(child)}</div>
-            ))}
-          </div>
-        </>
-      )}
-    </motion.div>
-  )
 
   const renderHierarchySkeleton = () => (
     <div className="space-y-4">
@@ -85,7 +51,7 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
   )
 
   const StatusMessage = () => (
-    <div className="text-center md:text-left">
+    <div className="text-center md:text-left mb-8">
       <h3 className="font-semibold text-base md:text-lg lg:text-xl mb-1">
         {verificationResult.verified ? "Certified Original Content" : "Content Not Verified"}
       </h3>
@@ -99,17 +65,17 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
 
   const renderDetailsContent = () => {
     if (!verificationResult.status && !uploaderHierarchy?.name && !uploaderHierarchy?.dateOfUpload) {
-      return <p className="text-sm md:text-base">Incomplete data. All fields are required to display details.</p>
+      return <p className="text-sm md:text-base">Incomplete data.<br></br> All fields are required to display details.</p>
     }
 
     return (
       <ul className="space-y-2 md:space-y-3 lg:space-y-4">
-        <li className="flex items-start gap-2">
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
           <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
           <div className="flex-grow">
             <span className="font-medium text-xs md:text-sm lg:text-base">Status:</span>
             {verificationResult.status ? (
-              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block capitalize">
                 {verificationResult.status}
               </span>
             ) : (
@@ -117,7 +83,7 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
             )}
           </div>
         </li>
-        <li className="flex items-start gap-2">
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
           <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
           <div className="flex-grow">
             <span className="font-medium text-xs md:text-sm lg:text-base">Uploader:</span>
@@ -130,10 +96,10 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
             )}
           </div>
         </li>
-        <li className="flex items-start gap-2">
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
           <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
           <div className="flex-grow">
-            <span className="font-medium text-xs md:text-sm lg:text-base">Timestamp:</span>
+            <span className="font-medium text-xs md:text-sm lg:text-base">Date:</span>
             {uploaderHierarchy?.dateOfUpload ? (
               <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
                 {formatDate(new Date(uploaderHierarchy.dateOfUpload).toLocaleString())}
@@ -156,13 +122,13 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
       className="w-full max-w-[95%] sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-2 sm:px-4 lg:px-6"
     >
       <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
-        <CardHeader className="space-y-2 md:space-y-0 md:flex md:justify-between md:items-center">
-          <CardTitle className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-center md:text-left">Verification Status</CardTitle>
+        <CardHeader className="justify-between items-center flex flex-row ">
+          <CardTitle className="text-lg sm:text-xl lg:text-2xl text-center md:text-left mt-[3px]">Verification Status</CardTitle>
           <StatusBadge />
         </CardHeader>
-        <CardContent className="space-y-4 md:space-y-6">
+        <CardContent className="">
           <motion.div
-            className={`flex flex-col md:flex-row items-center gap-3 md:gap-4 p-3 md:p-4 lg:p-6 rounded-lg ${verificationResult.verified ? 'bg-secondary/20' : 'bg-destructive/20'}`}
+            className={`flex flex-col md:flex-row items-center gap-3 md:gap-4 p-3 md:p-4 lg:p-6 mb-6 rounded-lg ${verificationResult.verified ? 'bg-green-500/30' : 'bg-destructive/30'}`}
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -172,9 +138,15 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
           </motion.div>
 
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsList className="grid w-full grid-cols-3 rounded-lg bg-background p-1 my-2">
               {['details', 'hierarchy', 'forgery'].map((tab) => (
-                <TabsTrigger key={tab} value={tab} className="text-xs sm:text-sm lg:text-base py-1 px-1 md:py-2 md:px-2">
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  className="rounded-md px-3 py-2 text-sm font-medium transition-all
+                       data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+                       data-[state=active]:shadow-sm"
+                >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </TabsTrigger>
               ))}
@@ -186,7 +158,7 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
             </TabsContent>
 
             <TabsContent value="hierarchy">
-              <ScrollArea className="h-[180px] sm:h-[220px] lg:h-[260px] xl:h-[300px] rounded-md border p-3 md:p-4 bg-background/50">
+              <ScrollArea className="h-[180px] sm:h-[220px] lg:h-[260px] xl:h-[300px] rounded-md border p-3 md:p-4 bg-background/50 flex flex-col">
                 {uploaderHierarchy ? renderUserHierarchy(uploaderHierarchy) : renderHierarchySkeleton()}
               </ScrollArea>
             </TabsContent>
@@ -197,7 +169,7 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
             </TabsContent>
           </Tabs>
 
-          <div className="text-center">
+          <div className="text-center mt-4">
             <Button onClick={onResetVerification} variant="outline">
               <Upload className="w-4 h-4 mr-2" />
               Upload Again

@@ -10,7 +10,6 @@ import VerificationResultSection from '@/components/PublicComponents/Verificatio
 import { VerificationResultType, User } from '@/lib/types'
 import { useForgeryDetection } from '@/hooks/useForgeryDetection'
 import { toast } from 'sonner'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const POLLING_INTERVAL = 5000
 
@@ -54,9 +53,9 @@ export default function ContentVerificationPage() {
               message: data.message,
               timestamp: data.timestamp,
               uploader: data.uploader,
-              
+
             }
-            
+
 
             setVerificationResult(result)
             setVerificationComplete(true)
@@ -98,7 +97,7 @@ export default function ContentVerificationPage() {
       const lineageResponse = await fetch(`/api/content/get-lineage/${contentHash}`)
       if (lineageResponse.ok) {
         const lineageData = await lineageResponse.json()
-        console.log("lineage data",lineageData);
+        console.log("lineage data", lineageData);
         setUploaderHierarchy(lineageData.uploaderHierarchy)
       }
     } catch (error) {
@@ -137,7 +136,7 @@ export default function ContentVerificationPage() {
           Verify Your Content
         </motion.h1>
 
-        {!verificationComplete && (
+        {!isAnalyzing && !verificationComplete && (
           <UploadSection
             onUploadComplete={handleUploadComplete}
             onUploadError={(error) => setError("Oops, it looks like there was an issue uploading your file. Please try again.")}
@@ -156,19 +155,12 @@ export default function ContentVerificationPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
             >
-              <Tabs defaultValue="verification" className="w-full">
-                <TabsList className="grid w-full grid-cols-1">
-                  <TabsTrigger value="verification">Verification</TabsTrigger>
-                </TabsList>
-                <TabsContent value="verification">
-                  <VerificationResultSection
-                    verificationResult={verificationResult}
-                    uploaderHierarchy={uploaderHierarchy}
-                    onResetVerification={resetVerification}
-                    forgeryResult={forgeryResult}
-                  />
-                </TabsContent>
-              </Tabs>
+              <VerificationResultSection
+                verificationResult={verificationResult}
+                uploaderHierarchy={uploaderHierarchy}
+                onResetVerification={resetVerification}
+                forgeryResult={forgeryResult}
+              />
             </motion.div>
           )}
         </AnimatePresence>
