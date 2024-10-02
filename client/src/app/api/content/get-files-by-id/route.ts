@@ -7,7 +7,7 @@ interface FileDocument extends Models.Document {
   userId: string;
   verified: boolean;
 }
-
+export const dynamic = 'force-dynamic';
 async function fetchFiles(databases: Databases, userId: string, collectionId: string, verified: boolean): Promise<FileDocument[]> {
   try {
     const response = await databases.listDocuments<FileDocument>(
