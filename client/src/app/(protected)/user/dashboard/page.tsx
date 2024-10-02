@@ -102,6 +102,7 @@ const Dashboard: React.FC = () => {
   const pieChartData = [
     { category: "Unverified", value: unverifiedCount, fill: "hsl(var(--chart-1))" },
     { category: "Tampered", value: tamperedCount, fill: "hsl(var(--chart-2))" },
+    { category: "Authentic", value: verifiedCount-tamperedCount, fill: "hsl(var(--chart-3))" },
   ];
 
   const pieChartConfig: ChartConfig = Object.fromEntries(

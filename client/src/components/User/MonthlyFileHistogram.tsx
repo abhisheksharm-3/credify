@@ -6,7 +6,6 @@ import { FileInfo } from '@/lib/types';
 import { MonthlyFileHistogramProps } from '@/lib/frontend-types';
 
 const processFileData = (files: FileInfo[]) => {
-  console.log(files);
   const monthlyData: { [key: string]: { verified: number, unverified: number, tampered: number } } = {};
 
   files.forEach(file => {
@@ -16,23 +15,24 @@ const processFileData = (files: FileInfo[]) => {
     if (!monthlyData[monthKey]) {
       monthlyData[monthKey] = { verified: 0, unverified: 0, tampered: 0 };
     }
-
-    if (file.verified) {
-      monthlyData[monthKey].verified++;
-    } else if (file.tampered) {
-      monthlyData[monthKey].tampered++;
+    if (file.tampered) {
+      monthlyData[monthKey].tampered++; // Tampered videos (which are also verified)
+      monthlyData[monthKey].verified++; // Verified videos
+    } else if (file.verified) {
+      monthlyData[monthKey].verified++; // Verified videos
     } else {
-      monthlyData[monthKey].unverified++;
+      monthlyData[monthKey].unverified++; // Unverified videos
     }
   });
 
   return Object.entries(monthlyData)
-    .map(([month, counts]) => ({ 
+    .map(([month, counts]) => ({
       month: month,
       ...counts
     }))
     .sort((a, b) => a.month.localeCompare(b.month));
 };
+
 
 const chartConfig: ChartConfig = {
   verified: {

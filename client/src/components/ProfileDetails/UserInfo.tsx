@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, UserIcon, Video } from 'lucide-react';
+import { CalendarDays, ImageIcon, UserIcon } from 'lucide-react';
 import verifiedIcon from '../../../public/images/verified.png'
 import Image from 'next/image';
 import { useFiles } from '@/hooks/useFiles';
@@ -67,8 +67,8 @@ const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) 
               <span>Joined on: {formatDate(user?.registration||" ")}</span>
             </div>
             <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg text-white mt-2">
-              <Video className="text-white" size={20} />
-              <span>Total Videos: {totalCount}</span>
+              <ImageIcon className="text-white" size={20} />
+              <span>Overall Content: {totalCount}</span>
             </div>
           </motion.div>
         </div>
