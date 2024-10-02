@@ -35,22 +35,33 @@ class FaceManipulationService:
         logging.info("Image processor initialized")
 
     def predict_image(self, firebase_filename):
-        logging.info(f"Predicting image manipulation for: {firebase_filename}")
-        image_content = get_file_content(firebase_filename)
-        logging.info("Image content retrieved successfully")
-        image = Image.open(io.BytesIO(image_content))
-        logging.info(f"Image opened. Size: {image.size}, Mode: {image.mode}")
-        inputs = self.processor(images=image, return_tensors="pt").to(self.device)
-        logging.info("Image processed and inputs prepared")
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-        logging.info("Model inference completed")
-        probs = outputs.logits.softmax(1)
-        pred_class = probs.argmax().item()
-        confidence = probs[0][pred_class].item()
-        predicted_label = self.id2label[pred_class]
-        logging.info(f"Prediction: Class {pred_class}, Label: {predicted_label}, Confidence: {confidence}")
-        return predicted_label, confidence
+        try:
+            logging.info(f"Predicting image manipulation for: {firebase_filename}")
+            image_content = get_file_content(firebase_filename)
+            logging.info("Image content retrieved successfully")
+            
+            image = Image.open(io.BytesIO(image_content)).convert('RGB')
+            logging.info(f"Image opened and converted to RGB. Size: {image.size}, Mode: {image.mode}")
+            
+            inputs = self.processor(images=image, return_tensors="pt").to(self.device)
+            logging.info("Image processed and inputs prepared")
+            
+            with torch.no_grad():
+                outputs = self.model(**inputs)
+            logging.info("Model inference completed")
+            
+            probs = outputs.logits.softmax(1)
+            pred_class = probs.argmax().item()
+            confidence = probs[0][pred_class].item()
+            predicted_label = self.id2label[pred_class]
+            logging.info(f"Prediction: Class {pred_class}, Label: {predicted_label}, Confidence: {confidence}")
+            
+            return predicted_label, confidence
+        
+        except Exception as e:
+            logging.error(f"Error in predict_image: {str(e)}")
+            logging.error(f"Image details - Size: {image.size if 'image' in locals() else 'N/A'}, Mode: {image.mode if 'image' in locals() else 'N/A'}")
+            raise
 
     def detect_manipulation(self, firebase_filename):
         logging.info(f"Detecting face manipulation for: {firebase_filename}")
