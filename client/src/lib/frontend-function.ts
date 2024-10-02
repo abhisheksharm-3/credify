@@ -5,7 +5,7 @@ export const truncateFileName = (name: string, maxLength: number): string => {
     if (name.length <= maxLength) return name;
     return name.slice(0, maxLength - 3) + '...';
 };
-
+//
 export const handleVerificationRedirect = (file: FileInfo): void => {
     let redirectUrl: string;
     if (!file.verified) {
