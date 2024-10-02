@@ -58,8 +58,6 @@ async def verify_video_only(request: ContentRequest):
 
 @router.post("/verify_liveness")
 async def verify_liveness(request: ContentRequest):
-    if not is_supported_image_format(request.url):
-        raise HTTPException(status_code=400, detail="Image format not supported")
     try:
         result = await antispoof_service.verify_liveness(request.url)
         return {"message": "Liveness verification completed", "result": result}
