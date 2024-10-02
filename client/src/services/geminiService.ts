@@ -5,7 +5,7 @@ import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import axios from 'axios';
 import { pipeline } from 'stream/promises';
 
-const IMAGE_MODEL_NAME = "gemini-1.5-flash";
+const IMAGE_MODEL_NAME = "gemini-1.5-pro";
 const VIDEO_MODEL_NAME = "gemini-1.5-pro";
 
 const API_KEY = process.env.GEMINI_API_KEY!;
@@ -13,26 +13,32 @@ const API_KEY = process.env.GEMINI_API_KEY!;
 const genAI = new GoogleGenerativeAI(API_KEY);
 const fileManager = new GoogleAIFileManager(API_KEY);
 
-const SPECIALIZED_PROMPT = `You are a highly specialized AI privacy and content analyst. Your task is to meticulously examine the provided media and report on potential privacy and security concerns. Avoid general observations or casual language. Provide a professional, detailed analysis focusing on:
+const SPECIALIZED_PROMPT = `As an AI media analyst, your task is to provide a clear, actionable analysis of the given image or video. Focus on delivering concrete insights that a user can immediately understand and act upon. Structure your response as follows:
 
-1. Personal Data Exposure: Identify any visible personally identifiable information (PII) such as faces, names, addresses, ID numbers, or biometric data.
-2. Security Vulnerabilities: Detect potential security risks like visible passwords, confidential documents, or sensitive location data.
-3. Content Authenticity: Analyze for signs of digital manipulation, AI-generated elements, or deepfake technology.
-4. Privacy Implications: Assess the overall privacy impact, considering data protection regulations like GDPR or CCPA.
-5. Intellectual Property: Identify any visible copyrighted or trademarked material that may pose legal risks.
-6. Sensitive Content: Flag any material that could be considered adult, violent, or otherwise inappropriate.
+1. Content Summary (2-3 sentences):
+   Briefly describe what you see in the media.
 
-Provide your findings in this structured format:
-1. PII Detected: [List specific items, if any]
-2. Security Risks: [Enumerate potential vulnerabilities]
-3. Authenticity Assessment: [Detailed analysis of potential manipulations]
-4. Privacy Impact: [Specific concerns related to data protection laws]
-5. IP Considerations: [Any copyright or trademark issues]
-6. Content Advisories: [Specific warnings about sensitive material]
+2. Key Entities (bullet points):
+   - List main people, objects, or brands visible
+   - For each, note their relevance or significance
 
-Conclusion: Summarize the key privacy and security implications in 2-3 sentences. This is your hard limit.
+3. Context Analysis (2-3 sentences):
+   Explain the situation or event depicted, if apparent. Also tell is this event factually correct or spreads misinformation.
 
-Be precise and technical in your analysis. If you cannot determine something with high confidence, state "Unable to conclusively determine" for that specific point.`;
+4. Potential Concerns (choose relevant, explain briefly):
+   - Privacy: Any visible personal information?
+   - Security: Any potential security risks shown?
+   - Authenticity: Signs of manipulation or AI generation?
+   - Sensitivity: Content that might be disturbing or controversial?
+   - Copyright: Visible trademarks or copyrighted material?
+
+5. Main Takeaway (1 sentence):
+   What's the most important thing a viewer should understand from this media?
+
+6. Suggested Actions (2-3 bullet points):
+   Based on your analysis, what should the user consider doing next?
+
+Be specific and confident in your observations. If you can't determine something with high confidence, clearly state that it's uncertain. Aim to provide information that helps the user make informed decisions about using or sharing the media.`;
 
 export async function analyzeImageWithGemini(contentBuffer: Buffer, contentType: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: IMAGE_MODEL_NAME });

@@ -15,7 +15,7 @@ export async function verifyContent({ contentUrl, endpoint }: ContentInfo, gemin
   console.log(`[verifyContent] Verifying content at URL: ${contentUrl}`);
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 1000000);
 
     const response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/${endpoint}`, {
       method: 'POST',
