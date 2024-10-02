@@ -63,17 +63,19 @@ export function normalizeFile(file: any): FileInfo {
     fileType: file.fileType || file.media_type,
     fileUrl: file.fileUrl,
     userId: file.userId,
-    verified: file.verified,
-    tampered: file.is_tampered || file.tampered,
+    verified: Boolean(file.verified),
+    tampered: Boolean(file.is_tampered || file.tampered || file.isManipulated),
     video_hash: file.video_hash,
     collective_audio_hash: file.collective_audio_hash,
     image_hash: file.image_hash,
-    is_tampered: file.is_tampered,
-    is_deepfake: file.is_deepfake,
     media_title: file.media_title,
     media_type: file.media_type,
     verificationDate: file.verificationDate,
     fact_check: file.fact_check,
+    gan_generated: file.ganGenerated,
+    face_manipulation: file.faceManipulation,
+    audio_manipulation: file.audioDeepFake,
+    image_manipulation: file.imageDeepFake
   };
 }
 

@@ -7,7 +7,7 @@ interface FileDocument extends Models.Document {
   userId: string;
   verified: boolean;
 }
-export const dynamic = 'force-dynamic';
+
 async function fetchFiles(databases: Databases, userId: string, collectionId: string, verified: boolean): Promise<FileDocument[]> {
   try {
     const response = await databases.listDocuments<FileDocument>(
@@ -27,7 +27,7 @@ async function fetchFiles(databases: Databases, userId: string, collectionId: st
 
 export const GET = async (request: NextRequest) => {
   try {
-    const userId = await request.json();
+    const userId = request.nextUrl.searchParams.get("userId");
     console.log(userId);
     if (!userId) {
       logger.warn("Missing userId in request");

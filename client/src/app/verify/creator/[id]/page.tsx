@@ -7,11 +7,10 @@ import Layout from '@/components/Layout/Layout';
 import { AppwriteUser, FileInfo } from '@/lib/types';
 import CreatorHeader from '@/components/PublicComponents/CreatorHeader';
 import UserNotFound from '@/components/PublicComponents/UserNotFound';
-import { processMonthlyData } from '@/lib/frontend-function';
+import { normalizeFile, processMonthlyData } from '@/lib/frontend-function';
 import { MonthlyData } from '@/lib/frontend-types';
 import TrustStatistics from '@/components/ProfileDetails/TrustStatistics';
 import TrustScoreTrend from '@/components/ProfileDetails/TrustScoreTrends';
-
 
 const CreatorView: React.FC = () => {
   const params = useParams();
@@ -38,8 +37,8 @@ const CreatorView: React.FC = () => {
     }
   };
 
+
   useEffect(() => {
-    // Fetch user and their files
     async function fetchUserData() {
       try {
         const userId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -51,19 +50,20 @@ const CreatorView: React.FC = () => {
 
           // Fetch user files
           const userFiles = await fetchUserFiles(userId);
-          setFiles(userFiles);
+          const normalizedFiles = userFiles.map(normalizeFile);
+          setFiles(normalizedFiles);
 
           // Compute counts
-          const verified = userFiles.filter((file: { verified: any; }) => file.verified).length;
-          const tampered = userFiles.filter((file: { tampered: any; }) => file.tampered).length;
-          const unverified = userFiles.filter((file: { verified: any; tampered: any; }) => !file.verified && !file.tampered).length;
+          const verified = normalizedFiles.filter((file: { verified: any; }) => file.verified).length;
+          const tampered = normalizedFiles.filter((file: { tampered: any; }) => file.tampered).length;
+          const unverified = normalizedFiles.filter((file: { verified: any; tampered: any; }) => !file.verified && !file.tampered).length;
 
           setVerifiedCount(verified);
           setTamperedCount(tampered);
           setUnverifiedCount(unverified);
 
           // Generate monthly data
-          const processedMonthlyData = processMonthlyData(userFiles);
+          const processedMonthlyData = processMonthlyData(normalizedFiles);
           setMonthlyData(processedMonthlyData);
 
         } else {
