@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Credify Client
 
-## Getting Started
+<div align="center">
 
-First, run the development server:
+![Credify Logo](https://socialify.git.ci/abhisheksharm-3/credify/image?font=Source%20Code%20Pro&language=1&name=1&owner=1&pattern=Circuit%20Board&pulls=1&stargazers=1&theme=Dark)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=for-the-badge&logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
+
+</div>
+
+## 📖 About
+
+This is the client-side application for Credify, built with Next.js. It provides a robust and user-friendly interface for content creators and users to interact with the Credify platform.
+
+## 🚀 Features
+
+- Responsive design using Tailwind CSS
+- Reusable UI components with shadcn/ui
+- Server-side rendering and static site generation with Next.js
+- TypeScript for type safety and improved developer experience
+
+## 🛠️ Prerequisites
+
+- Node.js (v20 or later)
+- npm or bun
+
+## 🏁 Getting Started
+
+1. **Navigate to the client directory**
+   ```bash
+   cd client
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
+
+3. **Set up environment variables**
+   - Copy `.env.example` to `.env.local`
+   - Fill in the necessary environment variables
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   # or
+   bun dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 📁 Project Structure
+
+```
+src/
+├── app/                # Next.js app directory
+├── components/         # Reusable UI components
+├── hooks/              # Custom React hooks
+├── lib/                # Types, util and other functions
+├── services/           # API services
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🧰 Available Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm run dev`: Starts the development server
+- `npm run build`: Builds the app for production
+- `npm start`: Runs the built app in production mode
+- `npm run lint`: Lints the codebase
+- `npm run test`: Runs the test suite
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## 🤝 Contributing
 
-## Learn More
+Please refer to the main project README for contribution guidelines.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+<div align="center">
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+For more information about the Credify project, please refer to the [main README](../README.md).
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+</div>
