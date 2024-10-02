@@ -15,13 +15,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Credify - Ensuring Video Authenticity in the Digital Age",
     description: "Protect yourself from manipulated media. Credify offers state-of-the-art video tampering detection and source attribution services.",
-    // images: [{ url: "/og-image.jpg" }],
+    images: [{ url: "/images/og-image.png" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Credify | Video Authentication & Attribution",
     description: "Detect tampered videos and trace their origins with Credify's advanced technology.",
-    // images: ["/twitter-image.jpg"],
+    images: ["/images/og-image.png"],
   },
 };
 

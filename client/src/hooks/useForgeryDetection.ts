@@ -20,10 +20,6 @@ export function useForgeryDetection(contentId: string) {
       console.log("Forgery detection data:", data);
       setForgeryResult(data);
 
-      if (data.status === 'error') {
-        toast.error(data.message || "Error in forgery detection");
-      }
-
       return data.status === 'completed';
     } catch (error) {
       console.error('Error fetching forgery data:', error);

@@ -134,7 +134,7 @@ export interface VideoData {
     tampered?: boolean; // Optional field
     gan_generated?: boolean;
     face_manipulation?: boolean,
-    audo_manipulation?: boolean,
+    audio_manipulation?: boolean,
     image_manipulation?: boolean,
     video_hash?: string;
     collective_audio_hash?: string;
