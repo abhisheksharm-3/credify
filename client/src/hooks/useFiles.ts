@@ -102,7 +102,7 @@ export const useFiles = () => {
     const verified = files.filter(file => file.verified).length;
     const tampered = files.filter(file => file.tampered).length;
     const unverified = files.filter(file => !file.verified && !file.tampered).length;
-    const total = verified + tampered + unverified;
+    const total = verified + unverified;
     const monthly = processMonthlyData(files);
 
     return {

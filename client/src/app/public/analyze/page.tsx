@@ -1,93 +1,109 @@
 'use client'
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Layout from '@/components/Layout/Layout';
-import UploadSection from '@/components/PublicComponents/PublicAnalyzeUpload';
-import AnalyzingSection from '@/components/PublicComponents/AnalyzingLoader';
-import ErrorSection from '@/components/PublicComponents/Error';
-import VerificationResultSection from '@/components/PublicComponents/VerificationResultSection';
-import { VerificationResultType, User } from '@/lib/types';
-import { toast } from 'sonner';
 
-const POLLING_INTERVAL = 5000; 
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Layout from '@/components/Layout/Layout'
+import UploadSection from '@/components/PublicComponents/PublicAnalyzeUpload'
+import AnalyzingSection from '@/components/PublicComponents/AnalyzingLoader'
+import ErrorSection from '@/components/PublicComponents/Error'
+import VerificationResultSection from '@/components/PublicComponents/VerificationResultSection'
+import { VerificationResultType, User } from '@/lib/types'
+import { useForgeryDetection } from '@/hooks/useForgeryDetection'
+import { toast } from 'sonner'
+
+const POLLING_INTERVAL = 5000
+
 export default function ContentVerificationPage() {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [verificationComplete, setVerificationComplete] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<VerificationResultType | null>(null);
-  const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [contentId, setContentId] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [verificationComplete, setVerificationComplete] = useState(false)
+  const [verificationResult, setVerificationResult] = useState<VerificationResultType | null>(null)
+  const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [contentId, setContentId] = useState<string>("")
+  const { forgeryResult, fetchForgeryData } = useForgeryDetection(
+    contentId ? contentId : ""
+  )
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: NodeJS.Timeout
+    const maxAttempts = 120
+    let attempts = 0
 
     const pollAnalysis = async () => {
       if (contentId && isAnalyzing) {
         try {
-          const response = await fetch(`/api/content/analyze/${contentId}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch data');
-          }
-          const data = await response.json();
+          const response = await fetch(`/api/content/analyze/${contentId}`)
+          if (!response.ok) throw new Error('Failed to fetch data')
+          const data = await response.json()
 
           if (data.status !== 'pending') {
-            clearInterval(intervalId);
-            setIsAnalyzing(false);
+            const forgeryComplete = await fetchForgeryData()
+
+            if (!forgeryComplete && attempts < maxAttempts) {
+              attempts++
+              return // Continue polling
+            }
+
+            clearInterval(intervalId)
+            setIsAnalyzing(false)
 
             const result: VerificationResultType = {
               verified: data.status === 'found',
               status: data.status,
               message: data.message,
-              uploader: data.verificationResult?.uploader,
-              timestamp: data.verificationResult?.timestamp,
-            };
+              timestamp: data.timestamp,
+              uploader: data.uploader,
 
-            setVerificationResult(result);
-            setVerificationComplete(true);
-
-            if (result.verified) {
-              await fetchUploaderHierarchy(data.contentHash);
             }
 
-            await deleteVerifiedContent(contentId);
+
+            setVerificationResult(result)
+            setVerificationComplete(true)
+
+            if (result.verified) {
+              await fetchUploaderHierarchy(data.contentHash)
+            }
+
+            await deleteVerifiedContent(contentId)
           }
         } catch (error) {
-          clearInterval(intervalId);
-          setIsAnalyzing(false);
-          toast.error('Error during verification');
-          setError("Oops, it looks like there was an issue verifying your content. Please try again later.");
+          clearInterval(intervalId)
+          setIsAnalyzing(false)
+          toast.error('Error during verification')
+          setError("Oops, it looks like there was an issue verifying your content. Please try again later.")
         }
       }
-    };
+    }
 
     if (contentId && isAnalyzing) {
-      intervalId = setInterval(pollAnalysis, POLLING_INTERVAL);
+      intervalId = setInterval(pollAnalysis, POLLING_INTERVAL)
     }
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [contentId, isAnalyzing]);
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [contentId, isAnalyzing, fetchForgeryData])
 
   const handleUploadComplete = async (res: { key: string; url: string; name: string }[]) => {
     if (res && res.length > 0) {
-      setIsAnalyzing(true);
-      setError(null);
-      setContentId(res[0].key);
+      setIsAnalyzing(true)
+      setError(null)
+      setContentId(res[0].key)
     }
-  };
+  }
 
   const fetchUploaderHierarchy = async (contentHash: string) => {
     try {
-      const lineageResponse = await fetch(`/api/content/get-lineage/${contentHash}`);
+      const lineageResponse = await fetch(`/api/content/get-lineage/${contentHash}`)
       if (lineageResponse.ok) {
-        const lineageData = await lineageResponse.json();
-        setUploaderHierarchy(lineageData.uploaderHierarchy);
+        const lineageData = await lineageResponse.json()
+        console.log("lineage data", lineageData);
+        setUploaderHierarchy(lineageData.uploaderHierarchy)
       }
     } catch (error) {
-      console.error('Error fetching uploader hierarchy:', error);
+      console.error('Error fetching uploader hierarchy:', error)
     }
-  };
+  }
 
   const deleteVerifiedContent = async (id: string): Promise<void> => {
     try {
@@ -95,21 +111,18 @@ export default function ContentVerificationPage() {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
-      });
+      })
 
-      if (!response.ok) throw new Error('Failed to delete verified content');
-
-      toast.info('Content deleted successfully');
+      if (!response.ok) throw new Error('Failed to delete verified content')
     } catch (error) {
-      toast.error('Error deleting verified content');
     }
-  };
+  }
 
   const resetVerification = () => {
-    setVerificationComplete(false);
-    setVerificationResult(null);
-    setContentId(null);
-  };
+    setVerificationComplete(false)
+    setVerificationResult(null)
+    setContentId("")
+  }
 
   return (
     <Layout className="min-h-screen flex justify-start flex-col">
@@ -123,7 +136,7 @@ export default function ContentVerificationPage() {
           Verify Your Content
         </motion.h1>
 
-        {!verificationComplete && (
+        {!isAnalyzing && !verificationComplete && (
           <UploadSection
             onUploadComplete={handleUploadComplete}
             onUploadError={(error) => setError("Oops, it looks like there was an issue uploading your file. Please try again.")}
@@ -136,14 +149,22 @@ export default function ContentVerificationPage() {
 
         <AnimatePresence>
           {verificationComplete && verificationResult && (
-            <VerificationResultSection
-              verificationResult={verificationResult}
-              uploaderHierarchy={uploaderHierarchy}
-              onResetVerification={resetVerification}
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <VerificationResultSection
+                verificationResult={verificationResult}
+                uploaderHierarchy={uploaderHierarchy}
+                onResetVerification={resetVerification}
+                forgeryResult={forgeryResult}
+              />
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
     </Layout>
-  );
+  )
 }

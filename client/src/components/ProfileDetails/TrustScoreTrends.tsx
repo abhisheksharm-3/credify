@@ -28,7 +28,7 @@ const TrustScoreTrend: React.FC<TrustScoreTrendProps> = ({ monthlyData }) => {
       transition={{ delay: 0.4, duration: 0.6 }}
       className="mb-16 shadow-custom rounded-xl pt-4"
     >
-      <h2 className="text-3xl font-bold mb-6 text-center">Video Status Trend</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center">Multimedia Status Trend</h2>
       <Card className="bg-card backdrop-blur-lg border-none transition-all duration-300">
         <CardContent className="p-8">
           <div className="h-[300px]">

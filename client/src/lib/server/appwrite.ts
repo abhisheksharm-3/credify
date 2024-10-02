@@ -152,7 +152,7 @@ export async function getUserById(userId: string) {
 export async function sendVerificationEmail() {
   try {
     const { account } = await createSessionClient();
-    await account.createVerification(`${process.env.DEPLOYMENT_ADDRESS!}/verify-email`);
+    await account.createVerification(`${process.env.DEPLOYMENT_ADDRESS!}/verifyEmail`);
     return { success: true, message: "Verification email sent." };
   } catch (error) {
     console.error("Failed to send verification email:", error);
