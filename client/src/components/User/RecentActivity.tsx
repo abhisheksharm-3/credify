@@ -64,7 +64,6 @@ export function RecentActivity({ files }: RecentActivityProps) {
               <TableRow className="">
                 <TableHead className="font-semibold">File Name</TableHead>
                 <TableHead className="hidden md:table-cell font-semibold">Type</TableHead>
-                <TableHead className=" hidden md:table-cell font-semibold">Size</TableHead>
                 <TableHead className=" hidden md:table-cell font-semibold">Uploaded</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Actions</TableHead>
@@ -89,7 +88,6 @@ export function RecentActivity({ files }: RecentActivityProps) {
                   <TableCell className="hidden md:table-cell" >
                     <Badge variant="secondary" className="bg-gray-100 text-gray-700">{file.fileType?.toUpperCase().substring(0, 5)}</Badge>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell" >{file.fileSize ? formatFileSize(file.fileSize) : "N/A"}</TableCell>
                   <TableCell className="hidden md:table-cell" >{file.$createdAt ? formatDate(file.$createdAt) : "Unknown"}</TableCell>
                   <TableCell>
                     {

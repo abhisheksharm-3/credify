@@ -83,7 +83,7 @@ export interface VideoData {
   export interface User {
     userId: string;
     name: string;
-    uploadTimestamp: number;
+    dateOfUpload: string;
     children: User[];
   }
 
@@ -97,26 +97,7 @@ export interface VideoData {
     duration?: string
     dimensions?: string
     description: string
-  }
-
-/*   export interface FileInfo {
-    $collectionId: string;
-    $createdAt: string;
-    $databaseId: string;
-    $id: string;
-    $permissions: any[];
-    $updatedAt: string;
-    fileId: string;
-    fileName: string;
-    fileSize: number;
-    fileType: 'image' | 'video'; 
-    fileUrl: string;
-    userId: string;
-    verified: boolean;
-    tampered?: boolean; // Optional field
-    
-  } */
-  
+  }  
   export interface FileInfo {
     $collectionId?: string;
     $createdAt?: string;
@@ -152,19 +133,7 @@ export interface VideoData {
     contentType: string;
   }
   
-  export interface ForgeryDetectionResult {
-    status: 'pending' | 'completed' | 'error';
-    contentType?: 'image' | 'video' | 'unknown';
-    isManipulated?: boolean;
-    manipulationProbability?: number;
-    detectionMethods?: {
-      imageManipulation?: boolean;
-      ganGenerated?: boolean;
-      faceManipulation?: boolean;
-      audioDeepfake?: boolean;
-    };
-    message?: string;
-  }
+
   export interface VerifyLivenessResponseType {
     result?: any;
     error?: string;
@@ -249,9 +218,28 @@ export  interface UseContentVerificationReturn {
   handleUploadComplete: (res: { key: string; url: string; name: string }[]) => Promise<void>;
   resetVerification: () => void;
 }
+
 export interface VerificationResultSectionProps {
   verificationResult: VerificationResultType;
   uploaderHierarchy: User | null;
   onResetVerification: () => void;
+  forgeryResult: ForgeryDetectionResult | null; // Updated this line
 }
 
+export interface ForgeryDetectionResult {
+  status?: 'pending' | 'completed' | 'error';
+  contentType?: 'image' | 'video' | 'unknown';
+  isManipulated?: boolean;
+  manipulationProbability?: number;
+  detectionMethods?: {
+    imageManipulation?: boolean;
+    ganGenerated?: boolean;
+    faceManipulation?: boolean;
+    audioDeepfake?: boolean;
+  };
+  message?: string;
+}
+
+export interface ForgeryAnalysisTabProps {
+  forgeryResult: ForgeryDetectionResult | null;
+}

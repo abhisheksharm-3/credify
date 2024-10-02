@@ -115,7 +115,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const verifyProfileImage = async (url: string) => {
     try {
       setProfileVerified("verifying");
-      const response = await fetch(`/api/auth/verifyLiveliness?url=${encodeURIComponent(url)}`, {
+      const response = await fetch(`/api/auth/verify-liveliness?url=${encodeURIComponent(url)}`, {
         method: 'GET',
       });
       if (!response.ok) {

@@ -99,11 +99,10 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const pieChartData = summaryCards.slice(0, 3).map((card, index) => ({
-    category: card.title,
-    value: card.value,
-    fill: `hsl(var(--chart-${index + 1}))`,
-  }));
+  const pieChartData = [
+    { category: "Unverified", value: unverifiedCount, fill: "hsl(var(--chart-1))" },
+    { category: "Tampered", value: tamperedCount, fill: "hsl(var(--chart-2))" },
+  ];
 
   const pieChartConfig: ChartConfig = Object.fromEntries(
     summaryCards.slice(0, 3).map((card, index) => [
