@@ -57,10 +57,11 @@ export const useFiles = () => {
         const monthName = fileDate.toLocaleString('default', { month: 'short' });
         const monthData = monthlyDataMap.get(monthName);
         if (monthData) {
-          if (file.verified) {
-            monthData.verifiedCount++;
-          } else if (file.tampered) {
+          if (file.tampered) {
             monthData.tamperedCount++;
+            monthData.verifiedCount++;
+          } else if (file.verified) {
+            monthData.verifiedCount++;
           } else {
             monthData.unverifiedCount++;
           }

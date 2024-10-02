@@ -100,10 +100,11 @@ export function processMonthlyData(files: FileInfo[]): MonthlyData[] {
     const fileDate = new Date(file.$createdAt || '');
     if (fileDate.getFullYear() === currentYear) {
       const monthName = fileDate.toLocaleString('default', { month: 'short' });
-      if (file.verified) {
+      if (file.tampered) {
         monthlyDataMap[monthName].verifiedCount++;
-      } else if (file.tampered) {
         monthlyDataMap[monthName].tamperedCount++;
+      } else if (file.verified) {
+        monthlyDataMap[monthName].verifiedCount++;
       } else {
         monthlyDataMap[monthName].unverifiedCount++;
       }
