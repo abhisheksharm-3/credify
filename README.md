@@ -33,9 +33,7 @@ To restore trust in digital media by providing robust tools for content verifica
 
 <div align="center">
 
-[![Credify Demo](https://img.youtube.com/vi/xvFZjo5PgG0/0.jpg)](https://www.youtube.com/watch?v=xvFZjo5PgG0 "Credify Demo")
-
-[View Full Demo](https://www.youtube.com/watch?v=xvFZjo5PgG0)
+[![Credify Demo](https://raw.githubusercontent.com/abhisheksharm-3/credify/refs/heads/main/client/public/images/hero-light.png)](https://drive.google.com/file/d/1Cq7UUnhb1z_bJZfP_7533cSCdEkP07t6/view?usp=sharing "Credify Demo")
 
 </div>
 
