@@ -69,7 +69,7 @@ export default function ForgeryAnalysisTab({ forgeryResult }: ForgeryAnalysisTab
                   <div>
                     <h3 className="font-medium text-sm">Audio Deepfake</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Synthetic or manipulated voice patterns were detected, mimicking a real person's speech.
+                      Synthetic or manipulated voice patterns were detected, mimicking a real person&apos;s speech.
                     </p>
                   </div>
                 </div>

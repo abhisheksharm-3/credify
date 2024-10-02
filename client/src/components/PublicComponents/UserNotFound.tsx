@@ -9,7 +9,7 @@ export default function UserNotFound() {
         <UserX className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" aria-hidden="true" />
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">User Not Found</h1>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          We couldn't find the user you're looking for. They may have been removed or you might have mistyped the address.
+          We couldn&apos;t find the user you&apos;re looking for. They may have been removed or you might have mistyped the address.
         </p>
         <Link href="/" passHref>
           <Button className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
