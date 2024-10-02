@@ -57,8 +57,8 @@ export default function NavbarLoggedIn() {
           className="sm:hidden"
         />
         <Link href="/">
-        <NavbarBrand as="a" className="flex items-center gap-2">
-            <Image src="/images/logo.png" alt="Credify Logo" width={200} height={40} />
+        <NavbarBrand className="flex items-center gap-2">
+            <Image src="/images/logo.png" alt="Credify Logo" width={170} height={40} />
           </NavbarBrand>
         </Link>
       </NavbarContent>

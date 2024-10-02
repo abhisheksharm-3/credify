@@ -27,7 +27,7 @@ export default function UploadContentDialog() {
 
   const handleProceedToVerification = () => {
     if (uploadedFile) {
-      router.push(`/verify/${uploadedFile.key}`);
+      router.push(`/content/${uploadedFile.key}`);
     }
   };
 

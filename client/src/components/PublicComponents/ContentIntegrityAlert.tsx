@@ -22,10 +22,10 @@ export default function ContentIntegrityAlert({ forgeryResult }: ContentIntegrit
           <ShieldCheck className="h-12 w-12 text-green-500 dark:text-green-400" />
         )}
         <div className="flex-1">
-          <AlertTitle className="text-2xl font-semibold mb-2">
+          <AlertTitle className="text-2xl font-semibold mb-2 dark:text-white">
             {isManipulated ? "Caution: Content May Be Altered" : "Good News: Content Looks Authentic"}
           </AlertTitle>
-          <AlertDescription className="text-lg">
+          <AlertDescription className="text-lg dark:text-white">
             {isManipulated
               ? "Our smart tools spotted signs that this content might have been changed. It's a good idea to double-check from other sources."
               : "Our thorough check didn't find any signs of tampering. This content appears to be original and trustworthy."}
