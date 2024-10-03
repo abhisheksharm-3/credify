@@ -23,6 +23,10 @@ export default function ContentVerification() {
   const [geminiAnalysis, setGeminiAnalysis] = useState<string>("");
   const [isExisting, setIsExisting] = useState<boolean>(false);
   const { forgeryResult, fetchForgeryData } = useForgeryDetection(contentId);
+  const [verificationComplete, setVerificationComplete] = useState<boolean>(false);
+  const [forgeryComplete, setForgeryComplete] = useState<boolean>(false);
+
+  const MAX_POLL_ATTEMPTS = 120; // 10 minutes (120 * 5 seconds)
 
   const fetchVerificationData = useCallback(async (): Promise<boolean> => {
     try {
@@ -36,22 +40,18 @@ export default function ContentVerification() {
       setGeminiAnalysis(data.geminiAnalysis || "");
       setIsExisting(data.existing || false);
       if (data.status === 'completed') {
-        setStatus('completed');
         setResult(data.result);
         const contentHash = data.result?.image_hash || data.result?.video_hash;
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
         return true;
       } else if (data.status === 'error') {
-        setStatus('error');
         toast.error(data.message || "Verification failed");
-        return true; 
-      } else {
-        return false;
+        return false; 
       }
+      return false;
     } catch (error) {
       console.error('Error fetching verification data:', error);
-      setStatus('error');
-      return true; 
+      return false; 
     }
   }, [contentId]);
 
@@ -71,46 +71,63 @@ export default function ContentVerification() {
 
   useEffect(() => {
     const pollInterval = 5000;
-    const maxAttempts = 120;
     let attempts = 0;
+    let timeoutId: NodeJS.Timeout;
+
     const poll = async () => {
-      const verificationComplete = await fetchVerificationData();
       if (!verificationComplete) {
-        attempts++;
-        setProgress(Math.min((attempts / maxAttempts) * 100, 95));
-        setTimeout(poll, pollInterval);
-        return;
+        const verificationDone = await fetchVerificationData();
+        if (verificationDone) setVerificationComplete(true);
       }
-      const forgeryComplete = await fetchForgeryData();
+      
       if (!forgeryComplete) {
-        attempts++;
-        setProgress(Math.min((attempts / maxAttempts) * 100, 95));
-        setTimeout(poll, pollInterval);
-        return;
+        const forgeryDone = await fetchForgeryData();
+        if (forgeryDone) setForgeryComplete(true);
       }
-      await deleteVerifiedContent(contentId);
-      setProgress(100);
+
+      if (verificationComplete && forgeryComplete) {
+        await deleteVerifiedContent(contentId);
+        setProgress(100);
+        setStatus('completed');
+        return; // Stop polling here
+      }
+
+      attempts++;
+      setProgress(Math.min((attempts / MAX_POLL_ATTEMPTS) * 100, 95));
+      if (attempts < MAX_POLL_ATTEMPTS) {
+        timeoutId = setTimeout(poll, pollInterval);
+      } else {
+        setStatus('error');
+        toast.error("Verification timed out");
+      }
     };
-    poll();
-  }, [contentId, fetchVerificationData, fetchForgeryData]);
+
+    if (status === 'pending') {
+      poll();
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [contentId, fetchVerificationData, fetchForgeryData, verificationComplete, forgeryComplete, status]);
 
   const renderContent = (): JSX.Element => {
-    switch (status) {
-      case 'pending':
-        return <VerificationInProgress progress={progress} />;
-      case 'completed':
-        return result ? (
-          <VerificationCompleted 
-            result={result}
-            forgeryResult={forgeryResult}
-            isExisting={isExisting}
-            geminiAnalysis={geminiAnalysis}
-            shareableLink={shareableLink}
-          />
-        ) : <></>;
-      case 'error':
-        return <VerificationError />;
+    if (status === 'pending') {
+      return <VerificationInProgress progress={progress} />;
+    } else if (status === 'completed' && result) {
+      return (
+        <VerificationCompleted 
+          result={result}
+          forgeryResult={forgeryResult}
+          isExisting={isExisting}
+          geminiAnalysis={geminiAnalysis}
+          shareableLink={shareableLink}
+        />
+      );
+    } else if (status === 'error') {
+      return <VerificationError />;
     }
+    return <></>;
   };
 
   return (
