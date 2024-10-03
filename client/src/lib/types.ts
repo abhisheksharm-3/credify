@@ -78,6 +78,7 @@ export interface VideoData {
     image_hash?: string;
     audio_hash?: string;
     frame_hash?: string;
+    verificationDate?: string;
   }
   
   export interface User {

@@ -1,6 +1,15 @@
 import React from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ContentFiltersProps } from '@/lib/frontend-types'
+
+// First, let's properly type the props
+interface ContentFiltersProps {
+  filterStatus: string;
+  setFilterStatus: (value: string) => void;
+  filterType: string;
+  setFilterType: (value: string) => void;
+  sortBy: 'Date' | 'Status' | 'Title';
+  setSortBy: (value: 'Date' | 'Status' | 'Title') => void;
+}
 
 export default function ContentFilters({
   filterStatus,
@@ -10,9 +19,19 @@ export default function ContentFilters({
   sortBy,
   setSortBy
 }: ContentFiltersProps) {
+  // Handle sort change with proper type checking
+  const handleSortChange = (value: string) => {
+    if (value === 'Date' || value === 'Status' || value === 'Title') {
+      setSortBy(value);
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 w-full">
-      <Select value={filterStatus} onValueChange={setFilterStatus}>
+      <Select 
+        value={filterStatus} 
+        onValueChange={setFilterStatus}
+      >
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter by Status" />
         </SelectTrigger>
@@ -23,7 +42,11 @@ export default function ContentFilters({
           <SelectItem value="Tampered">Tampered</SelectItem>
         </SelectContent>
       </Select>
-      <Select value={filterType} onValueChange={setFilterType}>
+
+      <Select 
+        value={filterType} 
+        onValueChange={setFilterType}
+      >
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter by Type" />
         </SelectTrigger>
@@ -33,7 +56,11 @@ export default function ContentFilters({
           <SelectItem value="image">Images</SelectItem>
         </SelectContent>
       </Select>
-      <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'Date' | 'Status' | 'Title')}>
+
+      <Select 
+        value={sortBy} 
+        onValueChange={handleSortChange}
+      >
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>

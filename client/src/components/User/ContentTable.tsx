@@ -38,7 +38,7 @@ export default function ContentTable({ files }: ContentTableProps) {
 
   return (
     <Table>
-      <TableHeader>
+      <TableHeader >
         <TableRow>
           <TableHead>Content</TableHead>
           <TableHead className="hidden md:table-cell">Type</TableHead>

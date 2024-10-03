@@ -22,16 +22,23 @@ export default function ContentManagement() {
   const { files, verifiedCount, tamperedCount, unverifiedCount } = useFiles();
 
   const filteredFiles = useMemo(() => {
-    return files.filter(file =>
-      (file.fileName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) &&
-      (filterStatus === 'All' ||
+    return files.filter(file => {
+      // Search filter
+      const matchesSearch = (file.fileName?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+      
+      // Status filter
+      const matchesStatus = filterStatus === 'All' ||
         (filterStatus === 'Verified' && file.verified && !file.tampered) ||
         (filterStatus === 'Not Verified' && !file.verified && !file.tampered) ||
-        (filterStatus === 'Tampered' && file.tampered)
-      ) &&
-      (filterType === 'All' || file.fileType === filterType)
-    )
-  }, [searchTerm, filterStatus, filterType, files])
+        (filterStatus === 'Tampered' && file.tampered);
+      
+      // Type filter - convert both to lowercase for case-insensitive comparison
+      const matchesType = filterType === 'All' || 
+        file.fileType?.toLowerCase() === filterType.toLowerCase();
+
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [searchTerm, filterStatus, filterType, files]);
 
   const sortedFiles = useMemo(() => {
     return [...filteredFiles].sort((a, b) => {
@@ -41,7 +48,7 @@ export default function ContentManagement() {
       }
       if (sortBy === 'Status') {
         if (a.verified && !a.tampered) return -1;
-        if (!a.verified && !a.tampered) return 1;
+        if (b.verified && !b.tampered) return 1;
         if (a.tampered) return 1;
         if (b.tampered) return -1;
         return 0;
@@ -54,9 +61,14 @@ export default function ContentManagement() {
   }, [filteredFiles, sortBy]);
 
   const paginatedFiles = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    return sortedFiles.slice(startIndex, startIndex + itemsPerPage)
-  }, [sortedFiles, currentPage])
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedFiles.slice(startIndex, startIndex + itemsPerPage);
+  }, [sortedFiles, currentPage]);
+
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, filterType]);
 
   return (
     <LoggedInLayout className='min-h-screen flex flex-col justify-start bg-gray-50 dark:bg-gray-900'>
@@ -65,6 +77,7 @@ export default function ContentManagement() {
           <CardHeader className="flex flex-col space-y-4">
             <CardTitle className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Content Management</CardTitle>
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <UploadVideoDialog />
               <Input
                 type="text"
                 placeholder="Search content..."
@@ -88,9 +101,8 @@ export default function ContentManagement() {
                 sortBy={sortBy}
                 setSortBy={setSortBy}
               />
-              <UploadVideoDialog />
             </div>
-            <Card className="overflow-x-auto bg-white dark:bg-gray-800 shadow-sm">
+            <Card className="overflow-x-auto bg-white border-border dark:border-white/20 border-[1px] dark:bg-gray-800 shadow-sm">
               <ContentTable files={paginatedFiles} />
             </Card>
             <div className="mt-6">
@@ -112,14 +124,14 @@ export default function ContentManagement() {
             <CardDescription>Overview of your content status</CardDescription>
           </CardHeader>
           <CardContent>
-            <ContentInsights 
-              verifiedCount={verifiedCount} 
-              tamperedCount={tamperedCount} 
-              unverifiedCount={unverifiedCount} 
+            <ContentInsights
+              verifiedCount={verifiedCount}
+              tamperedCount={tamperedCount}
+              unverifiedCount={unverifiedCount}
             />
           </CardContent>
         </Card>
       </div>
     </LoggedInLayout>
-  )
+  );
 }
