@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {transpilePackages: ["geist"],serverRuntimeConfig: {
-    // This will be available on both server and client sides
+const nextConfig = {
+  transpilePackages: ["geist"],
+  serverRuntimeConfig: {
     functionMaxDuration: 60 // in seconds
   },
-compiler:{
-  removeConsole:{
-    exclude:["error"]
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ["error"]
+    } : false
   }
-}};
+};
+
 export default nextConfig;

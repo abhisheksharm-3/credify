@@ -6,11 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ShieldAlert, ShieldCheck, CheckCircle, Upload, ChevronRight } from "lucide-react"
-import { User, VerificationResultSectionProps } from '@/lib/types'
+import { ShieldAlert, ShieldCheck, CheckCircle, Upload } from "lucide-react"
+import {VerificationResultSectionProps } from '@/lib/types'
 import ForgeryAnalysisTab from './ForgeryAnalysisTab'
-import { formatDate, handleNavigation } from '@/lib/frontend-function'
+import { formatDate } from '@/lib/frontend-function'
 import { Skeleton } from "@/components/ui/skeleton"
 import renderUserHierarchy from './UserHierarchy'
 

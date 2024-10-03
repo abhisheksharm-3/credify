@@ -1,6 +1,10 @@
 import { AppwriteUser, FileInfo } from "./types";
 import { AppwriteUser as UserType } from "@/lib/types";
-
+export interface HashQueryResult {
+  success: boolean;
+  documents?: any[];
+  error?: string;
+}
 export interface MonthlyData {
   month: string;
   verifiedCount: number;
@@ -170,7 +174,7 @@ export interface NavigationItem {
 export interface User {
   userId: string;
   name: string;
-  uploadTimestamp: number;
+  dateOfUpload: number;
   children: User[];
 }
 export type VerificationStatus = 'pending' | 'completed' | 'error';

@@ -102,7 +102,7 @@ const Dashboard: React.FC = () => {
   const pieChartData = [
     { category: "Unverified", value: unverifiedCount, fill: "hsl(var(--chart-1))" },
     { category: "Tampered", value: tamperedCount, fill: "hsl(var(--chart-2))" },
-    { category: "Authentic", value: verifiedCount-tamperedCount, fill: "hsl(var(--chart-3))" },
+    { category: "Authentic", value: verifiedCount - tamperedCount, fill: "hsl(var(--chart-3))" },
   ];
 
   const pieChartConfig: ChartConfig = Object.fromEntries(
@@ -127,11 +127,17 @@ const Dashboard: React.FC = () => {
     <LoggedInLayout>
       <div className="flex min-h-screen w-full flex-col bg-muted/40 dark:bg-gray-900">
         <main className="flex flex-col gap-8 p-4 sm:px-6 sm:py-8 md:gap-12 lg:px-8 xl:px-12">
-        {user && (
+          {user && (
             <div className="mb-4 flex flex-col md:flex-row w-full justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div className="mb-4 md:mb-0 flex items-center">
                 <div className="mr-4">
-                  <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Welcome, {user.name}!</h1>
+                  <div className="flex flex-col md:flex-row text-3xl font-bold text-gray-800 dark:text-white text-3xl font-bold text-gray-800 dark:text-white">
+                    <div className="">Welcome,
+                    </div>
+                    <div className="">
+                      {user.name}!</div>
+                  </div>
+
                   <div className={`mt-2 flex items-center ${isVerified ? 'text-green-500' : 'text-yellow-500'}`}>
                     {isVerified ? (
                       <>
@@ -150,7 +156,7 @@ const Dashboard: React.FC = () => {
               <UploadVideoDialog />
             </div>
           )}
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {summaryCards.map((card, index) => (
               <Card key={index} className={`${card.color} transition-all hover:shadow-lg`}>

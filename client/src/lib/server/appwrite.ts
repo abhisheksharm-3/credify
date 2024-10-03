@@ -1,6 +1,7 @@
 "use server";
 import { Client, Account, ID, Users, Databases, Query } from "node-appwrite";
 import { cookies } from "next/headers";
+import { HashQueryResult } from "../frontend-types";
 
 export async function createSessionClient() {
   const client = new Client()
@@ -248,5 +249,36 @@ export async function getFileUploadDateByHash(hash: string, userId: string): Pro
     }
   } catch (error) {
     throw error;
+  }
+}
+
+
+export async function getDocumentsByHash(hash: string): Promise<HashQueryResult> {
+  try {
+    console.log("called hash function with hash",hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+    console.log("called hash function with hash",hash);
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+      [
+        Query.or([
+          Query.equal('image_hash', hash),
+          Query.equal('video_hash', hash)
+        ])
+      ]
+    );
+
+    return {
+      success: true,
+      documents: response.documents
+    };
+  } catch (error) {
+    console.error("Failed to fetch documents by hash:", error);
+    return {
+      success: false,
+      error: "Failed to fetch documents. Please try again."
+    };
   }
 }
