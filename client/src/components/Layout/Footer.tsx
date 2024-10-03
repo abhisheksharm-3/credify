@@ -8,10 +8,10 @@ const navigation: {
   developers: NavigationItem[]
 } = {
   main: [
-    { name: 'Video Detection', href: '#video-detection', icon: <RiVideoLine /> },
-    { name: 'Source Tracing', href: '#source-tracing', icon: <RiSearchEyeLine /> },
-    { name: 'Our Technology', href: '#our-technology', icon: <RiShieldCheckLine /> },
-    { name: 'Support', href: '#support', icon: <RiQuestionLine /> },
+    { name: 'Analyze Video', href: '/public/analyze', icon: <RiVideoLine /> },
+    { name: 'Source Tracing', href: '/public/analyze', icon: <RiSearchEyeLine /> },
+    { name: 'Our Technology', href: '/', icon: <RiShieldCheckLine /> },
+    { name: 'Support', href: 'https://github.com/abhisheksharm-3/credify', icon: <RiQuestionLine /> },
   ],
   social: [
     {

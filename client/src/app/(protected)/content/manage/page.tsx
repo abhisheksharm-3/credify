@@ -34,7 +34,9 @@ export default function ContentManagement() {
       
       // Type filter - convert both to lowercase for case-insensitive comparison
       const matchesType = filterType === 'All' || 
-        file.fileType?.toLowerCase() === filterType.toLowerCase();
+    (filterType.toLowerCase() === 'image' && file.fileType?.toLowerCase().startsWith('image/')) ||
+    (filterType.toLowerCase() === 'video' && file.fileType?.toLowerCase().startsWith('video/')) ||
+    file.fileType?.toLowerCase() === filterType.toLowerCase();
 
       return matchesSearch && matchesStatus && matchesType;
     });

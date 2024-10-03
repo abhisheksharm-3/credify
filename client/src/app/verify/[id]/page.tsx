@@ -20,6 +20,7 @@ import { ImageIcon, VideoIcon, CalendarIcon } from "lucide-react";
 import renderUserHierarchy from "@/components/PublicComponents/UserHierarchy";
 import GeminiAnalysisTab from "@/components/PublicComponents/GeminiAnalysisTab";
 import VerificationTabVerify from "@/components/PublicComponents/VerificationTabVerify";
+import Footer from "@/components/Layout/Footer";
 
 const VerifyContent: React.FC = () => {
   const params = useParams();
@@ -285,6 +286,7 @@ const VerifyContent: React.FC = () => {
           </motion.div>
         </AnimatePresence>
       </div>
+      <Footer />
     </LoggedInLayout>
   );
 };
