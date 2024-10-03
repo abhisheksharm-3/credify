@@ -5,10 +5,10 @@ import { UserIcon, LockIcon, CreditCardIcon, PuzzleIcon } from "lucide-react";
 
 export function AccountSettings() {
   const settingsLinks = [
-    { icon: UserIcon, text: "Profile", href: "/profile" },
-    { icon: LockIcon, text: "Security", href: "/security" },
-    { icon: CreditCardIcon, text: "Billing", href: "/billing" },
-    { icon: PuzzleIcon, text: "Integrations", href: "/integrations" },
+    { icon: UserIcon, text: "Profile", href: "/user/profile" },
+    { icon: LockIcon, text: "Security", href: "/user/profile" },
+    { icon: CreditCardIcon, text: "Billing", href: "/user/profile" },
+    { icon: PuzzleIcon, text: "Integrations", href: "/user/profile" },
   ];
 
   return (
