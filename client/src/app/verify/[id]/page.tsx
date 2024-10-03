@@ -19,6 +19,7 @@ import { formatDate } from "@/lib/frontend-function";
 import { ImageIcon, VideoIcon, CalendarIcon } from "lucide-react";
 import renderUserHierarchy from "@/components/PublicComponents/UserHierarchy";
 import GeminiAnalysisTab from "@/components/PublicComponents/GeminiAnalysisTab";
+import VerificationTabVerify from "@/components/PublicComponents/VerificationTabVerify";
 
 const VerifyContent: React.FC = () => {
   const params = useParams();
@@ -177,11 +178,21 @@ const VerifyContent: React.FC = () => {
   return (
     <LoggedInLayout className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <div className="container max-w-3xl mx-auto p-6">
-        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-4xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+        <motion.h1 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }} 
+          className="text-4xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
+        >
           Content Verification
         </motion.h1>
         <AnimatePresence>
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5 }}   >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            exit={{ opacity: 0, scale: 0.9 }} 
+            transition={{ duration: 0.5 }}
+          >
             <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -190,7 +201,7 @@ const VerifyContent: React.FC = () => {
                     className={`animate-pulse text-lg py-1 px-3 ${isTampered
                       ? 'bg-destructive text-white'
                       : 'bg-green-500 text-white'
-                      }`}
+                    }`}
                   >
                     {isTampered ? "TAMPERED" : "VERIFIED"}
                   </Badge>
@@ -199,9 +210,11 @@ const VerifyContent: React.FC = () => {
               <CardContent>
                 <div className="space-y-6">
                   <motion.div
-                    className={`flex items-center gap-4 p-6 rounded-lg ${isTampered ? 'bg-destructive/20' : 'bg-green-500/10'
-                      }`}
-                    initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.3 }}>
+                    className={`flex items-center gap-4 p-6 rounded-lg ${isTampered ? 'bg-destructive/20' : 'bg-green-500/10'}`}
+                    initial={{ x: -20, opacity: 0 }} 
+                    animate={{ x: 0, opacity: 1 }} 
+                    transition={{ duration: 0.3 }}
+                  >
                     {isTampered ? (
                       <>
                         <ShieldAlert className="w-12 h-12 text-destructive" />
@@ -227,8 +240,8 @@ const VerifyContent: React.FC = () => {
                           key={tab}
                           value={tab}
                           className="rounded-md px-3 py-2 text-sm font-medium transition-all
-                       data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
-                       data-[state=active]:shadow-sm"
+                            data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+                            data-[state=active]:shadow-sm"
                         >
                           {tab.charAt(0).toUpperCase() + tab.slice(1)}
                         </TabsTrigger>
@@ -236,27 +249,8 @@ const VerifyContent: React.FC = () => {
                     </TabsList>
                     <TabsContent value="Details">
                       <ScrollArea className="h-[250px] rounded-md border p-4 bg-background/50">
-                        {verificationData.image_hash && (
-                          <p>
-                            <ImageIcon className="w-4 h-4 text-primary inline-block mr-1" />
-                            Image Hash: <span className="break-all">{verificationData.image_hash}</span>
-                          </p>
-                        )}
-                        {verificationData.video_hash && (
-                          <p>
-                            <VideoIcon className="w-4 h-4 text-primary inline-block mr-1" />
-                            Video Hash: <span className="break-all">{verificationData.video_hash}</span>
-                          </p>
-                        )}
-                        {verificationData.verificationDate && (
-                          <p>
-                            <CalendarIcon className="w-4 h-4 text-primary inline-block mr-1" />
-                            Verification Date: <span className="break-all">{formatDate(verificationData.verificationDate)}</span>
-                          </p>
-                        )}
-
+                        <VerificationTabVerify result={verificationData} />
                       </ScrollArea>
-
                     </TabsContent>
                     <TabsContent value="Hierarchy">
                       <ScrollArea className="h-[250px] rounded-md border p-4 bg-background/50">
@@ -294,4 +288,5 @@ const VerifyContent: React.FC = () => {
     </LoggedInLayout>
   );
 };
+
 export default VerifyContent;
