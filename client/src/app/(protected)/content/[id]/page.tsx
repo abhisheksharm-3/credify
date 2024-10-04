@@ -1,4 +1,3 @@
-"use client"
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -86,9 +85,11 @@ export default function ContentVerification() {
       }
 
       if (verificationComplete && forgeryComplete) {
-        await deleteVerifiedContent(contentId);
         setProgress(100);
         setStatus('completed');
+        setTimeout(async () => {
+          await deleteVerifiedContent(contentId);
+        }, 5000);
         return; // Stop polling here
       }
 
