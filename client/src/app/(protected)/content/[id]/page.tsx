@@ -23,10 +23,9 @@ export default function ContentVerification() {
   const [geminiAnalysis, setGeminiAnalysis] = useState<string>("");
   const [isExisting, setIsExisting] = useState<boolean>(false);
   const { forgeryResult, fetchForgeryData } = useForgeryDetection(contentId);
-  const [verificationComplete, setVerificationComplete] = useState<boolean>(false);
-  const [forgeryComplete, setForgeryComplete] = useState<boolean>(false);
 
   const MAX_POLL_ATTEMPTS = 120; // 10 minutes (120 * 5 seconds)
+  const POLL_INTERVAL = 5000; // 5 seconds
 
   const fetchVerificationData = useCallback(async (): Promise<boolean> => {
     try {
@@ -46,12 +45,12 @@ export default function ContentVerification() {
         return true;
       } else if (data.status === 'error') {
         toast.error(data.message || "Verification failed");
-        return false; 
+        return false;
       }
       return false;
     } catch (error) {
       console.error('Error fetching verification data:', error);
-      return false; 
+      return false;
     }
   }, [contentId]);
 
@@ -70,34 +69,34 @@ export default function ContentVerification() {
   };
 
   useEffect(() => {
-    const pollInterval = 5000;
     let attempts = 0;
     let timeoutId: NodeJS.Timeout;
 
     const poll = async () => {
-      if (!verificationComplete) {
-        const verificationDone = await fetchVerificationData();
-        if (verificationDone) setVerificationComplete(true);
-      }
-      
-      if (!forgeryComplete) {
-        const forgeryDone = await fetchForgeryData();
-        if (forgeryDone) setForgeryComplete(true);
-      }
-
-      if (verificationComplete && forgeryComplete) {
-        setProgress(100);
-        setStatus('completed');
-        setTimeout(async () => {
-          await deleteVerifiedContent(contentId);
-        }, 5000);
-        return; // Stop polling here
+      const verificationDone = await fetchVerificationData();
+      if (verificationDone) {
+        // Start forgery detection loop
+        const checkForgeryDetection = async () => {
+          const forgeryDone = await fetchForgeryData();
+          if (forgeryDone) {
+            setProgress(100);
+            setStatus('completed');
+            setTimeout(async () => {
+              await deleteVerifiedContent(contentId);
+            }, 5000);
+          } else {
+            // Continue checking forgery detection
+            timeoutId = setTimeout(checkForgeryDetection, POLL_INTERVAL);
+          }
+        };
+        checkForgeryDetection();
+        return;
       }
 
       attempts++;
       setProgress(Math.min((attempts / MAX_POLL_ATTEMPTS) * 100, 95));
       if (attempts < MAX_POLL_ATTEMPTS) {
-        timeoutId = setTimeout(poll, pollInterval);
+        timeoutId = setTimeout(poll, POLL_INTERVAL);
       } else {
         setStatus('error');
         toast.error("Verification timed out");
@@ -111,7 +110,7 @@ export default function ContentVerification() {
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [contentId, fetchVerificationData, fetchForgeryData, verificationComplete, forgeryComplete, status]);
+  }, [contentId, fetchVerificationData, fetchForgeryData, status]);
 
   const renderContent = (): JSX.Element => {
     if (status === 'pending') {

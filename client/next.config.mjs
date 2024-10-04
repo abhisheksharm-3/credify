@@ -4,11 +4,11 @@ const nextConfig = {
   serverRuntimeConfig: {
     functionMaxDuration: 60 // in seconds
   },
-  // compiler: {
-  //   removeConsole: process.env.NODE_ENV === 'production' ? {
-  //     exclude: ["error"]
-  //   } : false
-  // }
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ["error"]
+    } : false
+  }
 };
 
 export default nextConfig;
