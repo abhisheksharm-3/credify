@@ -6,8 +6,8 @@ import logger from "@/lib/logger";
 
 const f = createUploadthing();
 
-const MAX_VIDEO_SIZE = "128MB";
-const MAX_IMAGE_SIZE = "16MB";
+const MAX_VIDEO_SIZE = "1024MB";
+const MAX_IMAGE_SIZE = "128MB";
 
 interface User {
   id: string;
