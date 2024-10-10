@@ -91,8 +91,8 @@ const Dashboard: React.FC = () => {
       color: "bg-yellow-100 dark:bg-yellow-900",
     },
     {
-      title: "Total Videos",
-      description: "Total number of videos",
+      title: "Total Media",
+      description: "Total number of Media",
       value: totalCount,
       icon: <Camera className="h-6 w-6 text-blue-500" />,
       color: "bg-blue-100 dark:bg-blue-900",

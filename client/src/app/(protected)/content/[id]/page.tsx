@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,19 +23,10 @@ export default function ContentVerification() {
   const [geminiAnalysis, setGeminiAnalysis] = useState<string>("");
   const [isExisting, setIsExisting] = useState<boolean>(false);
   const { forgeryResult, fetchForgeryData } = useForgeryDetection(contentId);
-  
-  // Use refs to track polling state
-  const pollingRef = useRef<{
-    isPolling: boolean;
-    attempts: number;
-    timeoutId?: NodeJS.Timeout;
-  }>({
-    isPolling: false,
-    attempts: 0
-  });
+  const [verificationComplete, setVerificationComplete] = useState<boolean>(false);
+  const [forgeryComplete, setForgeryComplete] = useState<boolean>(false);
 
   const MAX_POLL_ATTEMPTS = 120; // 10 minutes (120 * 5 seconds)
-  const POLL_INTERVAL = 5000; // 5 seconds
 
   const fetchVerificationData = useCallback(async (): Promise<boolean> => {
     try {
@@ -44,13 +35,10 @@ export default function ContentVerification() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contentId }),
       });
-      
       if (!response.ok) throw new Error('Failed to fetch verification data');
-      
       const data = await response.json();
       setGeminiAnalysis(data.geminiAnalysis || "");
       setIsExisting(data.existing || false);
-      
       if (data.status === 'completed') {
         setResult(data.result);
         const contentHash = data.result?.image_hash || data.result?.video_hash;
@@ -58,12 +46,12 @@ export default function ContentVerification() {
         return true;
       } else if (data.status === 'error') {
         toast.error(data.message || "Verification failed");
-        return false;
+        return false; 
       }
       return false;
     } catch (error) {
       console.error('Error fetching verification data:', error);
-      return false;
+      return false; 
     }
   }, [contentId]);
 
@@ -81,63 +69,47 @@ export default function ContentVerification() {
     }
   };
 
-  const stopPolling = useCallback(() => {
-    if (pollingRef.current.timeoutId) {
-      clearTimeout(pollingRef.current.timeoutId);
-    }
-    pollingRef.current.isPolling = false;
-  }, []);
-
-  const startPolling = useCallback(() => {
-    if (pollingRef.current.isPolling) return;
-
-    pollingRef.current.isPolling = true;
-    pollingRef.current.attempts = 0;
+  useEffect(() => {
+    const pollInterval = 5000;
+    let attempts = 0;
+    let timeoutId: NodeJS.Timeout;
 
     const poll = async () => {
-      if (!pollingRef.current.isPolling) return;
-
-      const verificationDone = await fetchVerificationData();
-
-      if (verificationDone) {
-        // Verification (tagging) is complete, now start forgery detection
+      if (!verificationComplete) {
+        const verificationDone = await fetchVerificationData();
+        if (verificationDone) setVerificationComplete(true);
+      }
+      
+      if (!forgeryComplete) {
         const forgeryDone = await fetchForgeryData();
-        if (forgeryDone) {
-          await deleteVerifiedContent(contentId);
-          setProgress(100);
-          setStatus('completed');
-          stopPolling();
-          return;
-        }
+        if (forgeryDone) setForgeryComplete(true);
       }
 
-      pollingRef.current.attempts++;
-      setProgress(Math.min((pollingRef.current.attempts / MAX_POLL_ATTEMPTS) * 100, 95));
+      if (verificationComplete && forgeryComplete) {
+        await deleteVerifiedContent(contentId);
+        setProgress(100);
+        setStatus('completed');
+        return; // Stop polling here
+      }
 
-      if (pollingRef.current.attempts >= MAX_POLL_ATTEMPTS) {
+      attempts++;
+      setProgress(Math.min((attempts / MAX_POLL_ATTEMPTS) * 100, 95));
+      if (attempts < MAX_POLL_ATTEMPTS) {
+        timeoutId = setTimeout(poll, pollInterval);
+      } else {
         setStatus('error');
         toast.error("Verification timed out");
-        stopPolling();
-        return;
-      }
-
-      if (pollingRef.current.isPolling) {
-        pollingRef.current.timeoutId = setTimeout(poll, POLL_INTERVAL);
       }
     };
 
-    poll();
-  }, [contentId, fetchVerificationData, fetchForgeryData, stopPolling]);
-
-  useEffect(() => {
     if (status === 'pending') {
-      startPolling();
+      poll();
     }
 
     return () => {
-      stopPolling();
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [status, startPolling, stopPolling]);
+  }, [contentId, fetchVerificationData, fetchForgeryData, verificationComplete, forgeryComplete, status]);
 
   const renderContent = (): JSX.Element => {
     if (status === 'pending') {

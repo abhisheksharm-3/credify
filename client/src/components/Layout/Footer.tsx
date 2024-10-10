@@ -31,7 +31,7 @@ const navigation: {
     },
   ],
   developers: [
-    { name: 'Abhishek Sharma', href: 'https://abhisheksharma.tech' },
+    { name: 'Abhishek Sharma', href: 'https://www.abhisheksharma.tech/' },
     { name: 'Arnav Arora', href: 'https://github.com/arnav-03' },
     { name: 'Garvit Nag', href: 'https://github.com/Garvit-Nag' },
   ],
