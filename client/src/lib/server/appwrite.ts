@@ -255,10 +255,10 @@ export async function getFileUploadDateByHash(hash: string, userId: string): Pro
 
 export async function getDocumentsByHash(hash: string): Promise<HashQueryResult> {
   try {
-    console.log("called hash function with hash",hash);
+    console.log("called hash function with hash", hash);
     const { account } = await createAdminClient();
     const databases = new Databases(account.client);
-    console.log("called hash function with hash",hash);
+    console.log("called hash function with hash", hash);
     const response = await databases.listDocuments(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
@@ -282,3 +282,75 @@ export async function getDocumentsByHash(hash: string): Promise<HashQueryResult>
     };
   }
 }
+export async function getMediaByHashAndUser(hash: string, userId: string) {
+  try {
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    console.log(hash, userId);
+
+    // Perform a query to find documents where either image_hash or video_hash matches the hash
+    // AND userId matches the provided userId
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+      [
+        Query.equal('userId', userId),
+        Query.or([
+          Query.equal('image_hash', hash),
+          Query.equal('video_hash', hash)
+        ])
+      ]
+    );
+
+    // Check if any documents are returned
+    if (response.documents.length > 0) {
+      return {
+        success: true,
+        mediaId: response.documents[0].$id, // Return the first matching document's ID
+      };
+    }
+
+    // Return null if no matching document is found
+    return {
+      success: true,
+      document: null,
+      mediaType: null
+    };
+
+  } catch (error) {
+    console.error("Failed to fetch media by hash and user:", error);
+    return {
+      success: false,
+      error: "Failed to fetch media information. Please try again."
+    };
+  }
+}
+
+
+export async function createCopyrightDocument(userId: string, mediaId: string) {
+  try {
+    console.log("called hash function with hash", userId, mediaId)
+    const client = new Client()
+      .setEndpoint(process.env.APPWRITE_ENDPOINT!)
+      .setProject(process.env.APPWRITE_PROJECT_ID!);
+
+    const databases = new Databases(client);
+
+    const response = await databases.createDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      ID.unique(),
+      {
+        copyrightOwnerId: userId,
+        mediaId: mediaId,
+      }
+    );
+
+    return { success: true, document: response };
+
+  } catch (error) {
+    console.error("Error issuing certificate:", error);
+    return { success: false, error: "Error issuing certificate" };
+  }
+} 
