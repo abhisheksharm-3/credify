@@ -55,7 +55,6 @@ const Copyright = ({ mediaHash }: CopyrightProps) => {
                 
                 <div className="mt-4 space-y-2">
                     <p>{copyrightText}</p>
-                    <p>Protected by international copyright laws</p>
                     
                     {isLoading ? (
                         <Skeleton className="h-4 w-3/4" />
