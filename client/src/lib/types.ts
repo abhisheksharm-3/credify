@@ -225,6 +225,7 @@ export interface VerificationResultSectionProps {
   uploaderHierarchy: User | null;
   onResetVerification: () => void;
   forgeryResult: ForgeryDetectionResult | null; // Updated this line
+  hash:string
 }
 
 export interface ForgeryDetectionResult {

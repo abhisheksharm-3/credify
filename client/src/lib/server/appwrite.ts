@@ -255,10 +255,10 @@ export async function getFileUploadDateByHash(hash: string, userId: string): Pro
 
 export async function getDocumentsByHash(hash: string): Promise<HashQueryResult> {
   try {
-    console.log("called hash function with hash",hash);
+    console.log("called hash function with hash", hash);
     const { account } = await createAdminClient();
     const databases = new Databases(account.client);
-    console.log("called hash function with hash",hash);
+    console.log("called hash function with hash", hash);
     const response = await databases.listDocuments(
       process.env.APPWRITE_DATABASE_ID!,
       process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
@@ -282,3 +282,98 @@ export async function getDocumentsByHash(hash: string): Promise<HashQueryResult>
     };
   }
 }
+
+export async function createCopyrightDocument(userId: string, mediaHash: string) {
+  try {
+    console.log("called hash function with hash", userId, mediaHash);
+    
+    // Use the client and admin properties from createAdminClient
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);  // Use the client from account
+
+    const response = await databases.createDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      ID.unique(),
+      {
+        copyrightOwnerId: userId,
+        mediaHash: mediaHash,
+      }
+    );
+
+    return { success: true, document: response };
+
+  } catch (error) {
+    console.error("Error issuing certificate:", error);
+    return { success: false, error: "Error issuing certificate" };
+  }
+}
+export async function updateIsDisputeByHash(hash: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log("Checking for document with mediaHash:", hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    // Step 1: Find the document by mediaHash
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      [
+        Query.equal('mediaHash', hash),  // Directly comparing with mediaHash
+      ]
+    );
+
+    if (response.documents.length === 0) {
+      return { success: false, error: "No document found with the specified mediaHash." };
+    }
+
+    // Step 2: Update the first document's isDispute property to true
+    const documentId = response.documents[0].$id; // Get the ID of the first document found
+
+    await databases.updateDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      documentId,
+      {
+        isDisputed: true, // Set isDispute to true
+      }
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update isDispute:", error);
+    return { success: false, error: "Failed to update isDispute. Please try again." };
+  }
+}
+
+export async function fetchUserInfoByHash(hash: string): Promise<{ success: boolean; userId?: string; user?: any; error?: string }> {
+  try {
+    console.log("Checking for document with mediaHash:", hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    // Step 1: Find the document by mediaHash
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      [
+        Query.equal('mediaHash', hash), // Directly comparing with mediaHash
+      ]
+    );
+
+    if (response.documents.length === 0) {
+      return { success: false, error: "No document found with the specified mediaHash." };
+    }
+
+    // Step 2: Extract userId and userName from the found document
+    const document = response.documents[0]; // Get the first document found
+    const userId = document.copyrightOwnerId; // Assuming userId is a field in the document
+    const user = await getUserById(userId); // Await the getUserById call
+
+    return { success: true, userId, user }; // Return user instead of userName
+  } catch (error) {
+    console.error("Failed to fetch user info:", error);
+    return { success: false, error: "Failed to fetch user info. Please try again." };
+  }
+}
+

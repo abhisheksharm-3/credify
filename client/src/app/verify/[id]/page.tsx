@@ -256,7 +256,10 @@ const VerifyContent: React.FC = () => {
                     <TabsContent value="Hierarchy">
                       <ScrollArea className="h-[250px] rounded-md border p-4 bg-background/50">
                         {uploaderHierarchy ? (
-                          renderUserHierarchy(uploaderHierarchy)
+                          renderUserHierarchy({
+                            user: uploaderHierarchy,
+                            copyrightUserId: "hello"
+                          })
                         ) : (
                           <p>No uploader hierarchy available.</p>
                         )}

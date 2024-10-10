@@ -16,7 +16,6 @@ export function useForgeryDetection(contentId: string) {
       }
 
       const data: ForgeryDetectionResult = await response.json();
-      console.log("Forgery detection data:", data);
       setForgeryResult(data);
 
       return data.status === 'completed';

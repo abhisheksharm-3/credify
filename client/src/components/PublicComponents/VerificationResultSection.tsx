@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -7,18 +7,46 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ShieldAlert, ShieldCheck, CheckCircle, Upload } from "lucide-react"
-import {VerificationResultSectionProps } from '@/lib/types'
+import { AppwriteUser, VerificationResultSectionProps } from '@/lib/types'
 import ForgeryAnalysisTab from './ForgeryAnalysisTab'
 import { formatDate } from '@/lib/frontend-function'
 import { Skeleton } from "@/components/ui/skeleton"
 import renderUserHierarchy from './UserHierarchy'
+import { fetchUserInfoByHash } from '@/lib/server/appwrite'
 
 const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
   verificationResult,
   uploaderHierarchy,
   onResetVerification,
-  forgeryResult
+  forgeryResult,
+  hash
 }) => {
+  const [user, setUser] = useState<AppwriteUser | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setIsLoadingUser(true);
+      try {
+        const userInfoResponse = await fetchUserInfoByHash(hash);
+        if (userInfoResponse.success) {
+          setUser(userInfoResponse.user.user);
+        } else {
+          console.log(userInfoResponse.error || 'Failed to fetch user info.');
+        }
+      } catch (error) {
+        console.log('An error occurred while fetching user info.');
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+
+    if (hash) {
+      fetchUser();
+    } else {
+      setIsLoadingUser(false);
+    }
+  }, [hash]);
 
   const renderHierarchySkeleton = () => (
     <div className="space-y-4">
@@ -135,6 +163,23 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
             )}
           </div>
         </li>
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
+          <div className="flex-grow">
+            <span className="font-medium text-xs md:text-sm lg:text-base">Copyright:</span>
+            {isLoadingUser ? (
+              <Skeleton className="h-4 w-1/2 mt-1" />
+            ) : user ? (
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
+                {user.name}
+              </span>
+            ) : (
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
+                No copyright claimed
+              </span>
+            )}
+          </div>
+        </li>
       </ul>
     )
   }
@@ -185,7 +230,10 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
 
             <TabsContent value="hierarchy">
               <ScrollArea className="h-[180px] sm:h-[220px] lg:h-[260px] xl:h-[300px] rounded-md border p-3 md:p-4 bg-background/50 flex flex-col">
-                {uploaderHierarchy ? renderUserHierarchy(uploaderHierarchy) : renderHierarchySkeleton()}
+                {uploaderHierarchy ? renderUserHierarchy({
+                  user: uploaderHierarchy,
+                  copyrightUserId: user?.$id
+                }) : renderHierarchySkeleton()}
               </ScrollArea>
             </TabsContent>
             <TabsContent value="forgery">

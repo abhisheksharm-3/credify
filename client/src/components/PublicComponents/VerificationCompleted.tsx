@@ -12,6 +12,7 @@ import VerificationDetailsTab from "./VerificationDetailsTab"
 import GeminiAnalysisTab from "./GeminiAnalysisTab"
 import ForgeryAnalysisTab from "./ForgeryAnalysisTab"
 import ShareableLink from "./ShareableLink"
+import CopyrightApply from "./CopyrightApply"
 
 interface VerificationCompletedProps {
   result: VerificationResult
@@ -42,7 +43,7 @@ export default function VerificationCompleted({
         <CardContent>
           <ContentIntegrityAlert forgeryResult={forgeryResult} />
           <div className="space-y-4 my-4"></div> 
-          {isExisting && <ExistingContentAlert />}
+          {isExisting ? <ExistingContentAlert result={result} /> : <CopyrightApply result={result} />}
         </CardContent>
       </Card>
 

@@ -21,6 +21,8 @@ export default function ContentVerificationPage() {
   const [uploaderHierarchy, setUploaderHierarchy] = useState<User | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [contentId, setContentId] = useState<string>("")
+  const [hash, setHash ] = useState<string>("")
+
   const { forgeryResult, fetchForgeryData } = useForgeryDetection(
     contentId ? contentId : ""
   )
@@ -48,6 +50,8 @@ export default function ContentVerificationPage() {
       if (lineageResponse.ok) {
         const lineageData = await lineageResponse.json()
         console.log("lineage data", lineageData);
+        setHash(lineageData.verificationResult.image_hash||lineageData.verificationResult.video_hash)
+        console.log(lineageData.verificationResult.image_hash||lineageData.verificationResult.video_hash)
         setUploaderHierarchy(lineageData.uploaderHierarchy)
       }
     } catch (error) {
@@ -196,6 +200,7 @@ export default function ContentVerificationPage() {
                 uploaderHierarchy={uploaderHierarchy}
                 onResetVerification={resetVerification}
                 forgeryResult={forgeryResult}
+                hash={hash}
               />
             </motion.div>
           )}
