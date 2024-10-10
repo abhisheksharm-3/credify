@@ -40,7 +40,7 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
         setIsLoadingUser(false);
       }
     };
-    
+
     if (hash) {
       fetchUser();
     } else {
@@ -230,7 +230,10 @@ const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
 
             <TabsContent value="hierarchy">
               <ScrollArea className="h-[180px] sm:h-[220px] lg:h-[260px] xl:h-[300px] rounded-md border p-3 md:p-4 bg-background/50 flex flex-col">
-                {uploaderHierarchy ? renderUserHierarchy(uploaderHierarchy) : renderHierarchySkeleton()}
+                {uploaderHierarchy ? renderUserHierarchy({
+                  user: uploaderHierarchy,
+                  copyrightUserId: user?.$id
+                }) : renderHierarchySkeleton()}
               </ScrollArea>
             </TabsContent>
             <TabsContent value="forgery">
