@@ -18,7 +18,7 @@ const renderUserHierarchy = ({ user, isRoot = true, copyrightUserId }: RenderUse
     transition={{ duration: 0.3 }}
     className={`flex flex-col py-2 w-full ${isRoot ? 'items-center' : 'items-start'}`}
   >
-    <div className={`flex ${isRoot ? 'flex-col items-center' : 'flex-row items-center'} mb-2 border-green-500`}>
+    <div className={`flex ${isRoot ? 'flex-col items-center' : 'flex-row items-center'} mb-2 `}>
       <Avatar className="h-8 w-8 md:h-10 md:w-10 mb-1 mr-2 ">
         <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.name}`} />
         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
