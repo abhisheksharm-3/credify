@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { fetchUserInfoByHash, updateIsDisputeByHash } from '@/lib/server/appwrite';
 import { AppwriteUser } from '@/lib/types';
 
-
 interface CopyrightProps {
     mediaHash: string;
 }
@@ -16,6 +15,7 @@ const Copyright = ({ mediaHash }: CopyrightProps) => {
     const currentYear = new Date().getFullYear();
     const [user, setUser] = useState<AppwriteUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDisputeFiled, setIsDisputeFiled] = useState(false); // State to track dispute status
     
     const copyrightText = `© ${currentYear}. All rights reserved.`;
     
@@ -23,7 +23,6 @@ const Copyright = ({ mediaHash }: CopyrightProps) => {
         const fetchUser = async () => {
             setIsLoading(true);
             const userInfoResponse = await fetchUserInfoByHash(mediaHash);
-            console.log(userInfoResponse.user.user);
             if (userInfoResponse.success) {
                 setUser(userInfoResponse.user.user);
             } else {
@@ -40,6 +39,7 @@ const Copyright = ({ mediaHash }: CopyrightProps) => {
         
         if (result.success) {
             toast.success('Dispute filed successfully.');
+            setIsDisputeFiled(true); // Set dispute as filed
         } else {
             toast.error(result.error || 'Failed to file the dispute.');
         }
@@ -64,11 +64,12 @@ const Copyright = ({ mediaHash }: CopyrightProps) => {
                     
                     <Button 
                         variant="outline"
-                        className="w-full mt-4"
+                        className={`w-full mt-4 ${isDisputeFiled ? 'bg-red-500 text-white' : ''}`} // Change button background and text color
                         onClick={handleCopyrightDispute}
+                        disabled={isDisputeFiled} // Disable button after dispute is filed
                     >
                         <Gavel className="h-4 w-4 mr-2" />
-                        File Dispute
+                        {isDisputeFiled ? 'Dispute Filed' : 'File Dispute'} {/* Change text when dispute is filed */}
                     </Button>
                 </div>
             </CardContent>
