@@ -1,44 +1,75 @@
-import React from 'react';
-import { Shield, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Shield, Gavel } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from 'sonner';
+import { fetchUserInfoByHash, updateIsDisputeByHash } from '@/lib/server/appwrite';
+import { AppwriteUser } from '@/lib/types';
 
 
-const Copyright = () => {
+interface CopyrightProps {
+    mediaHash: string;
+}
+
+const Copyright = ({ mediaHash }: CopyrightProps) => {
     const currentYear = new Date().getFullYear();
-
+    const [user, setUser] = useState<AppwriteUser | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    
     const copyrightText = `© ${currentYear}. All rights reserved.`;
-
+    
+    useEffect(() => {
+        const fetchUser = async () => {
+            setIsLoading(true);
+            const userInfoResponse = await fetchUserInfoByHash(mediaHash);
+            console.log(userInfoResponse.user.user);
+            if (userInfoResponse.success) {
+                setUser(userInfoResponse.user.user);
+            } else {
+                toast.error(userInfoResponse.error || 'Failed to fetch user info.');
+            }
+            setIsLoading(false);
+        };
+        
+        fetchUser();
+    }, [mediaHash]);
+    
+    const handleCopyrightDispute = async () => {
+        const result = await updateIsDisputeByHash(mediaHash);
+        
+        if (result.success) {
+            toast.success('Dispute filed successfully.');
+        } else {
+            toast.error(result.error || 'Failed to file the dispute.');
+        }
+    };
+    
     return (
-        <Card className={`w-full transform transition-all duration-300 `}>
-            <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
-                    <HoverCard>
-                        <HoverCardTrigger>
-                            <div className="bg-primary/10 p-2 rounded-full">
-                                <Shield className="h-5 w-5 text-primary" />
-                            </div>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-80">
-                            <div className="space-y-1">
-                                <h4 className="text-sm font-semibold">Legal Protection Notice</h4>
-                            </div>
-                        </HoverCardContent>
-                    </HoverCard>
-
-                    <div className="flex-1 text-center md:text-left">
-                        <p className="text-sm font-medium leading-none">
-                            {copyrightText}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Protected by international copyright laws
-                        </p>
-                    </div>
-
-                    <Button variant="outline" className="space-x-2">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>File Dispute</span>
+        <Card>
+            <CardContent className="pt-6">
+                <div className="flex items-center space-x-2">
+                    <Shield className="h-5 w-5" />
+                    <h2 className="text-xl font-semibold">Legal Protection Notice</h2>
+                </div>
+                
+                <div className="mt-4 space-y-2">
+                    <p>{copyrightText}</p>
+                    <p>Protected by international copyright laws</p>
+                    
+                    {isLoading ? (
+                        <Skeleton className="h-4 w-3/4" />
+                    ) : user && (
+                        <p>Owner: {user.name || 'Unknown'}</p>
+                    )}
+                    
+                    <Button 
+                        variant="outline"
+                        className="w-full mt-4"
+                        onClick={handleCopyrightDispute}
+                    >
+                        <Gavel className="h-4 w-4 mr-2" />
+                        File Dispute
                     </Button>
                 </div>
             </CardContent>

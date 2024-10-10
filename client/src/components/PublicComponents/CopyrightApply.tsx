@@ -1,11 +1,12 @@
-import React, { useEffect } from 'react';
-import { ShieldAlert, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ShieldAlert, ShieldCheck, Check } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from '@/hooks/useUser';
-import { createCopyrightDocument, getMediaByHashAndUser } from "@/lib/server/appwrite";
+import { createCopyrightDocument } from "@/lib/server/appwrite";
 import { VerificationResult } from '@/lib/frontend-types';
+import { toast } from 'sonner';
 
 interface ExistingContentAlertProps {
     result: VerificationResult;
@@ -13,44 +14,70 @@ interface ExistingContentAlertProps {
 
 const CopyrightPrompt = ({ result }: ExistingContentAlertProps) => {
     const { user } = useUser();
+    const [isLoading, setIsLoading] = useState(false);
+    const [copyrightClaimed, setCopyrightClaimed] = useState(false);
 
-    const getMediaId = async (hash: string, userId: string): Promise<string | null> => {
-        try {
-            const res = await getMediaByHashAndUser(hash, userId);
-            if (res && res.mediaId) {
-                console.log(res);
-                return res.mediaId;
-            } else {
-                return null;
-            }
-        } catch (error) {
-            console.error("Error fetching media:", error);
-            return null;
-        }
-    };
-
-    useEffect(() => {
-        const hash = result.image_hash || result.video_hash;
-        if (hash && user?.$id) {
-            getMediaId(hash, user.$id);
-        }
-    }, [result, user?.$id]);
 
     const handleClaimCopyright = async () => {
+        setIsLoading(true);
         const hash = result.image_hash || result.video_hash;
-        if (user) {
-            const mediaId = await getMediaId(hash || "", user?.$id);
-            if (mediaId) {
-                const result = await createCopyrightDocument(user?.$id, mediaId);
-                console.log("result",result);
-            } else {
-                console.log("No media ID found or media does not exist.");
+        if (user && hash) {
+            try {
+                const response = await createCopyrightDocument(user.$id, hash);
+                if (response.success) {
+                    setCopyrightClaimed(true);
+                    toast.success("Copyright claimed successfully");
+                } else {
+                    toast.error("Error claiming copyright");
+                }
+            } catch (error) {
+                console.error("Error claiming copyright:", error);
+                toast.error("Error claiming copyright");
             }
         }
+        setIsLoading(false);
     };
 
+    if (isLoading) {
+        return (
+            <Card className="w-full border-dashed">
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between space-x-4">
+                        <Skeleton className="h-10 w-1/2" />
+                        <Skeleton className="h-9 w-32" />
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    if (copyrightClaimed) {
+        return (
+            <Card className="w-full border-solid border-green-200 bg-green-50">
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between space-x-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="bg-green-100 p-2 rounded-full">
+                                <ShieldCheck className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-medium text-green-800">Copyright Claimed Successfully</h3>
+                                <p className="text-sm text-green-600">
+                                    This content is now protected under your copyright
+                                </p>
+                            </div>
+                        </div>
+                        <div className="bg-green-100 p-2 rounded-full">
+                            <Check className="h-5 w-5 text-green-600" />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return (
-        <Card className={`w-full border-dashed `}>
+        <Card className="w-full border-dashed">
             <CardContent className="p-4">
                 <div className="flex items-center justify-between space-x-4">
                     <div className="flex items-center space-x-3">
@@ -63,7 +90,6 @@ const CopyrightPrompt = ({ result }: ExistingContentAlertProps) => {
                             </p>
                         </div>
                     </div>
-
                     <div className="flex items-center space-x-3">
                         <Button
                             size="sm"

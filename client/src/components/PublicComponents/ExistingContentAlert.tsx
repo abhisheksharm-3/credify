@@ -10,9 +10,8 @@ interface ExistingContentAlertProps {
 export default function ExistingContentAlert({ result }: ExistingContentAlertProps) {
   return (
     <div className="space-y-4">
-       <CopyrightDispute
-/*         copyrightHolder={result.copyright_holder}
- */      />
+       <CopyrightDispute mediaHash={result.image_hash || result.video_hash || ""}
+      />
     </div>
   );
 }

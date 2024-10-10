@@ -282,60 +282,14 @@ export async function getDocumentsByHash(hash: string): Promise<HashQueryResult>
     };
   }
 }
-export async function getMediaByHashAndUser(hash: string, userId: string) {
+
+export async function createCopyrightDocument(userId: string, mediaHash: string) {
   try {
+    console.log("called hash function with hash", userId, mediaHash);
+    
+    // Use the client and admin properties from createAdminClient
     const { account } = await createAdminClient();
-    const databases = new Databases(account.client);
-
-    console.log(hash, userId);
-
-    // Perform a query to find documents where either image_hash or video_hash matches the hash
-    // AND userId matches the provided userId
-    const response = await databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
-      [
-        Query.equal('userId', userId),
-        Query.or([
-          Query.equal('image_hash', hash),
-          Query.equal('video_hash', hash)
-        ])
-      ]
-    );
-
-    // Check if any documents are returned
-    if (response.documents.length > 0) {
-      return {
-        success: true,
-        mediaId: response.documents[0].$id, // Return the first matching document's ID
-      };
-    }
-
-    // Return null if no matching document is found
-    return {
-      success: true,
-      document: null,
-      mediaType: null
-    };
-
-  } catch (error) {
-    console.error("Failed to fetch media by hash and user:", error);
-    return {
-      success: false,
-      error: "Failed to fetch media information. Please try again."
-    };
-  }
-}
-
-
-export async function createCopyrightDocument(userId: string, mediaId: string) {
-  try {
-    console.log("called hash function with hash", userId, mediaId)
-    const client = new Client()
-      .setEndpoint(process.env.APPWRITE_ENDPOINT!)
-      .setProject(process.env.APPWRITE_PROJECT_ID!);
-
-    const databases = new Databases(client);
+    const databases = new Databases(account.client);  // Use the client from account
 
     const response = await databases.createDocument(
       process.env.APPWRITE_DATABASE_ID!,
@@ -343,7 +297,7 @@ export async function createCopyrightDocument(userId: string, mediaId: string) {
       ID.unique(),
       {
         copyrightOwnerId: userId,
-        mediaId: mediaId,
+        mediaHash: mediaHash,
       }
     );
 
@@ -353,4 +307,73 @@ export async function createCopyrightDocument(userId: string, mediaId: string) {
     console.error("Error issuing certificate:", error);
     return { success: false, error: "Error issuing certificate" };
   }
-} 
+}
+export async function updateIsDisputeByHash(hash: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log("Checking for document with mediaHash:", hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    // Step 1: Find the document by mediaHash
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      [
+        Query.equal('mediaHash', hash),  // Directly comparing with mediaHash
+      ]
+    );
+
+    if (response.documents.length === 0) {
+      return { success: false, error: "No document found with the specified mediaHash." };
+    }
+
+    // Step 2: Update the first document's isDispute property to true
+    const documentId = response.documents[0].$id; // Get the ID of the first document found
+
+    await databases.updateDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      documentId,
+      {
+        isDisputed: true, // Set isDispute to true
+      }
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update isDispute:", error);
+    return { success: false, error: "Failed to update isDispute. Please try again." };
+  }
+}
+
+export async function fetchUserInfoByHash(hash: string): Promise<{ success: boolean; userId?: string; user?: any; error?: string }> {
+  try {
+    console.log("Checking for document with mediaHash:", hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    // Step 1: Find the document by mediaHash
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      [
+        Query.equal('mediaHash', hash), // Directly comparing with mediaHash
+      ]
+    );
+
+    if (response.documents.length === 0) {
+      return { success: false, error: "No document found with the specified mediaHash." };
+    }
+
+    // Step 2: Extract userId and userName from the found document
+    const document = response.documents[0]; // Get the first document found
+    const userId = document.copyrightOwnerId; // Assuming userId is a field in the document
+    const user = await getUserById(userId); // Await the getUserById call
+
+    return { success: true, userId, user }; // Return user instead of userName
+  } catch (error) {
+    console.error("Failed to fetch user info:", error);
+    return { success: false, error: "Failed to fetch user info. Please try again." };
+  }
+}
+
