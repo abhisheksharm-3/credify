@@ -97,17 +97,18 @@ export default function ContentVerification() {
     const poll = async () => {
       if (!pollingRef.current.isPolling) return;
 
-      const [verificationDone, forgeryDone] = await Promise.all([
-        fetchVerificationData(),
-        fetchForgeryData()
-      ]);
+      const verificationDone = await fetchVerificationData();
 
-      if (verificationDone && forgeryDone) {
-        await deleteVerifiedContent(contentId);
-        setProgress(100);
-        setStatus('completed');
-        stopPolling();
-        return;
+      if (verificationDone) {
+        // Verification (tagging) is complete, now start forgery detection
+        const forgeryDone = await fetchForgeryData();
+        if (forgeryDone) {
+          await deleteVerifiedContent(contentId);
+          setProgress(100);
+          setStatus('completed');
+          stopPolling();
+          return;
+        }
       }
 
       pollingRef.current.attempts++;

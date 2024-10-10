@@ -1,41 +1,78 @@
-import React from 'react'
-import { FingerprintIcon, MonitorCheckIcon, CopyrightIcon } from 'lucide-react'
-import { FeatureCardProps } from '@/lib/frontend-types'
+import React from 'react';
+import { FingerprintIcon, MonitorCheckIcon, CopyrightIcon, ShieldCheckIcon } from 'lucide-react';
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description }) => (
-  <div className="flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
-    <div className="p-3 bg-primary/10 rounded-full mb-4">
-      {icon}
-    </div>
-    <h3 className="text-xl font-bold mb-2">{title}</h3>
-    <p className="text-muted-foreground text-center">{description}</p>
-  </div>
-)
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  comingSoon?: boolean;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, comingSoon }) => (
+  <Card className="group relative overflow-hidden border bg-background transition-all hover:shadow-xl">
+    <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+    <CardHeader className="space-y-4 pb-4">
+      <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center">
+        {React.cloneElement(icon as React.ReactElement, {
+          className: "w-6 h-6 text-primary"
+        })}
+      </div>
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold tracking-tight text-xl">{title}</h3>
+          {/* {comingSoon && (
+            <Badge variant="secondary" className="text-xs font-normal bg-primary/20 text-primary hover:bg-primary/30">
+              Coming soon
+            </Badge>
+          )} */}
+        </div>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        {description}
+      </p>
+    </CardContent>
+  </Card>
+);
 
 export const Features: React.FC = () => (
-  <section className="w-full py-16 md:py-24 lg:py-32 bg-gradient-to-b from-background to-gray-50 dark:to-gray-950">
-    <div className="container px-4 md:px-6 mx-auto">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Our Key Features</h2>
-        <p className="mt-4 text-lg text-muted-foreground">Discover how Credify protects your digital content</p>
+  <section className="w-full py-16 md:py-24 lg:py-32">
+    <div className="container px-4 md:px-6">
+      <div className="text-center space-y-4 mb-12">
+        <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
+          Safeguard Your Digital Content
+        </h2>
+        <p className="mx-auto max-w-[700px] text-muted-foreground text-lg">
+          Explore how Credify empowers you to protect and authenticate your digital creations with our comprehensive toolkit
+        </p>
       </div>
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <FeatureCard
-          icon={<FingerprintIcon className="h-10 w-10 text-primary" />}
+          icon={<FingerprintIcon />}
           title="Video Fingerprinting"
-          description="Create unique digital signatures to detect any tampering or manipulation of your content."
+          description="Generate unique digital signatures for your content, creating a verifiable link back to you as the original creator."
         />
         <FeatureCard
-          icon={<MonitorCheckIcon className="h-10 w-10 text-primary" />}
+          icon={<MonitorCheckIcon />}
           title="Tampering Detection"
-          description="Utilize advanced algorithms to identify and alert you of any unauthorized changes to your video content."
+          description="Utilize advanced algorithms to identify potential alterations in your content, helping you maintain its integrity."
         />
         <FeatureCard
-          icon={<CopyrightIcon className="h-10 w-10 text-primary" />}
+          icon={<CopyrightIcon />}
           title="Creator Authentication"
-          description="Verify and protect the identity of content creators to ensure source authenticity and build trust."
+          description="Enhance your credibility with our robust three-step verification system, designed to protect your identity as a content creator."
+        />
+        <FeatureCard
+          icon={<ShieldCheckIcon />}
+          title="Copyright Management"
+          description="Access powerful tools to manage and enforce your intellectual property rights across various media platforms."
+          comingSoon={true}
         />
       </div>
     </div>
   </section>
-)
+);
