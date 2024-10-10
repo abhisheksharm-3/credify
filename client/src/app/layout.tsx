@@ -39,7 +39,7 @@ export default function RootLayout({
         <Providers>
           <CameraProvider>{children}</CameraProvider>
         </Providers>
-        <Toaster /></body>
+        <Toaster richColors /></body>
     </html>
   );
 }
