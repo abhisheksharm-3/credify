@@ -18,17 +18,15 @@ const renderUserHierarchy = ({ user, isRoot = true, copyrightUserId }: RenderUse
     transition={{ duration: 0.3 }}
     className={`flex flex-col py-2 w-full ${isRoot ? 'items-center' : 'items-start'}`}
   >
-    <div className={`flex ${isRoot ? 'flex-col items-center' : 'flex-row items-center'} mb-2 `}>
-      <Avatar className="h-8 w-8 md:h-10 md:w-10 mb-1 mr-2 ">
+    <div className={`flex ${isRoot ? 'flex-col items-center' : 'flex-row items-center'} mb-2`}>
+      <Avatar className={`h-8 w-8 md:h-10 md:w-10 mb-1 mr-2 ${copyrightUserId === user.userId ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-background' : ''}`}>
         <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.name}`} />
         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
       </Avatar>
       <div>
         <p
           onClick={() => handleNavigation(user.userId)}
-          className={`text-sm md:text-base font-medium cursor-pointer hover:underline 
-            ${isRoot ? 'text-center' : 'text-left'}
-            ${copyrightUserId === user.userId ? 'text-primary' : ''}`}
+          className={`text-sm md:text-base font-medium cursor-pointer hover:underline ${isRoot ? 'text-center' : 'text-left'}`}
         >
           {user.name}
           {copyrightUserId === user.userId && ' (Copyright Owner)'}
