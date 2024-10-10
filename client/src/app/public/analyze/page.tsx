@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Layout from '@/components/Layout/Layout'
 import UploadSection from '@/components/PublicComponents/PublicAnalyzeUpload'
@@ -12,6 +12,7 @@ import { useForgeryDetection } from '@/hooks/useForgeryDetection'
 import { toast } from 'sonner'
 
 const POLLING_INTERVAL = 5000
+const MAX_POLL_ATTEMPTS = 120 // 10 minutes (120 * 5 seconds)
 
 export default function ContentVerificationPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -24,73 +25,22 @@ export default function ContentVerificationPage() {
     contentId ? contentId : ""
   )
 
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout
-    const maxAttempts = 120
-    let attempts = 0
+  // Use ref to track polling state
+  const pollingRef = useRef<{
+    isPolling: boolean;
+    attempts: number;
+    timeoutId?: NodeJS.Timeout;
+  }>({
+    isPolling: false,
+    attempts: 0
+  });
 
-    const pollAnalysis = async () => {
-      if (contentId && isAnalyzing) {
-        try {
-          const response = await fetch(`/api/content/analyze/${contentId}`)
-          if (!response.ok) throw new Error('Failed to fetch data')
-          const data = await response.json()
-
-          if (data.status !== 'pending') {
-            const forgeryComplete = await fetchForgeryData()
-
-            if (!forgeryComplete && attempts < maxAttempts) {
-              attempts++
-              return // Continue polling
-            }
-
-            clearInterval(intervalId)
-            setIsAnalyzing(false)
-
-            const result: VerificationResultType = {
-              verified: data.status === 'found',
-              status: data.status,
-              message: data.message,
-              timestamp: data.timestamp,
-              uploader: data.uploader,
-
-            }
-
-
-            setVerificationResult(result)
-            setVerificationComplete(true)
-
-            if (result.verified) {
-              await fetchUploaderHierarchy(data.contentHash)
-            }
-
-            await deleteVerifiedContent(contentId)
-          }
-        } catch (error) {
-          clearInterval(intervalId)
-          setIsAnalyzing(false)
-          toast.error('Error during verification')
-          setError("Oops, it looks like there was an issue verifying your content. Please try again later.")
-        }
-      }
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current.timeoutId) {
+      clearTimeout(pollingRef.current.timeoutId);
     }
-
-    if (contentId && isAnalyzing) {
-      intervalId = setInterval(pollAnalysis, POLLING_INTERVAL)
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [contentId, isAnalyzing, fetchForgeryData])
-
-  const handleUploadComplete = async (res: { key: string; url: string; name: string }[]) => {
-    if (res && res.length > 0) {
-      setIsAnalyzing(true)
-      setError(null)
-      setContentId(res[0].key)
-    }
-  }
+    pollingRef.current.isPolling = false;
+  }, []);
 
   const fetchUploaderHierarchy = async (contentHash: string) => {
     try {
@@ -112,9 +62,95 @@ export default function ContentVerificationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       })
-
       if (!response.ok) throw new Error('Failed to delete verified content')
     } catch (error) {
+      console.error('Error deleting verified content:', error)
+    }
+  }
+
+  const startPolling = useCallback(async () => {
+    if (pollingRef.current.isPolling) return;
+
+    pollingRef.current.isPolling = true;
+    pollingRef.current.attempts = 0;
+
+    const poll = async () => {
+      if (!pollingRef.current.isPolling || !contentId) return;
+
+      try {
+        const response = await fetch(`/api/content/analyze/${contentId}`)
+        if (!response.ok) throw new Error('Failed to fetch data')
+        const data = await response.json()
+
+        if (data.status !== 'pending') {
+          const forgeryComplete = await fetchForgeryData()
+
+          if (!forgeryComplete && pollingRef.current.attempts < MAX_POLL_ATTEMPTS) {
+            pollingRef.current.attempts++;
+            pollingRef.current.timeoutId = setTimeout(poll, POLLING_INTERVAL);
+            return;
+          }
+
+          stopPolling();
+          setIsAnalyzing(false);
+
+          const result: VerificationResultType = {
+            verified: data.status === 'found',
+            status: data.status,
+            message: data.message,
+            timestamp: data.timestamp,
+            uploader: data.uploader,
+          }
+
+          setVerificationResult(result)
+          setVerificationComplete(true)
+
+          if (result.verified) {
+            await fetchUploaderHierarchy(data.contentHash)
+          }
+
+          await deleteVerifiedContent(contentId)
+          return;
+        }
+
+        pollingRef.current.attempts++;
+        if (pollingRef.current.attempts >= MAX_POLL_ATTEMPTS) {
+          stopPolling();
+          setIsAnalyzing(false);
+          toast.error('Verification timed out');
+          setError("The verification process took too long. Please try again later.");
+          return;
+        }
+
+        if (pollingRef.current.isPolling) {
+          pollingRef.current.timeoutId = setTimeout(poll, POLLING_INTERVAL);
+        }
+      } catch (error) {
+        stopPolling();
+        setIsAnalyzing(false);
+        toast.error('Error during verification');
+        setError("Oops, it looks like there was an issue verifying your content. Please try again later.");
+      }
+    };
+
+    poll();
+  }, [contentId, fetchForgeryData, stopPolling]);
+
+  useEffect(() => {
+    if (contentId && isAnalyzing) {
+      startPolling();
+    }
+
+    return () => {
+      stopPolling();
+    };
+  }, [contentId, isAnalyzing, startPolling, stopPolling]);
+
+  const handleUploadComplete = async (res: { key: string; url: string; name: string }[]) => {
+    if (res && res.length > 0) {
+      setIsAnalyzing(true)
+      setError(null)
+      setContentId(res[0].key)
     }
   }
 
