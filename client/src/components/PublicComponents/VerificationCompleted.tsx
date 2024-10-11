@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -13,6 +13,7 @@ import GeminiAnalysisTab from "./GeminiAnalysisTab"
 import ForgeryAnalysisTab from "./ForgeryAnalysisTab"
 import ShareableLink from "./ShareableLink"
 import CopyrightApply from "./CopyrightApply"
+import { fetchUserInfoByHash } from "@/lib/server/appwrite"
 
 interface VerificationCompletedProps {
   result: VerificationResult
@@ -29,6 +30,19 @@ export default function VerificationCompleted({
   geminiAnalysis,
   shareableLink
 }: VerificationCompletedProps) {
+  
+  const [copyright, setCopyright] = useState(false);
+    useEffect(() => {
+    const fetchUser = async () => {
+        const userInfoResponse = await fetchUserInfoByHash(result.image_hash||result.video_hash || "");
+        if (userInfoResponse.success) {
+            setCopyright(true);
+        } else {
+        }
+    };
+    
+    fetchUser();
+}, [result]);
   return (
     <motion.div
       className="space-y-4 p-4"
@@ -43,7 +57,7 @@ export default function VerificationCompleted({
         <CardContent>
           <ContentIntegrityAlert forgeryResult={forgeryResult} />
           <div className="space-y-4 my-4"></div> 
-          {isExisting ? <ExistingContentAlert result={result} /> : <CopyrightApply result={result} />}
+          {isExisting && copyright ? <ExistingContentAlert result={result} /> : <CopyrightApply result={result} />}
         </CardContent>
       </Card>
 
