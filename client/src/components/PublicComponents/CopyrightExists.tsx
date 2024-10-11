@@ -26,7 +26,7 @@ const Copyright = ({ mediaHash }: CopyrightProps) => {
             if (userInfoResponse.success) {
                 setUser(userInfoResponse.user.user);
             } else {
-                toast.error(userInfoResponse.error || 'Failed to fetch user info.');
+                console.log(userInfoResponse.error || 'Failed to fetch user info.');
             }
             setIsLoading(false);
         };
