@@ -55,7 +55,7 @@ const CopyrightPrompt = ({ result }: ExistingContentAlertProps) => {
         return (
             <Card className="w-full border-solid border-green-200 bg-green-50">
                 <CardContent className="p-4">
-                    <div className="flex items-center justify-between space-x-4">
+                    <div className="flex items-center justify-between flex-col md:flex-row space-x-4">
                         <div className="flex items-center space-x-3">
                             <div className="bg-green-100 p-2 rounded-full">
                                 <ShieldCheck className="h-5 w-5 text-green-600" />
@@ -79,7 +79,7 @@ const CopyrightPrompt = ({ result }: ExistingContentAlertProps) => {
     return (
         <Card className="w-full border-dashed">
             <CardContent className="p-4">
-                <div className="flex items-center justify-between space-x-4">
+                <div className="flex items-center justify-between flex-col md:flex-row space-x-4 gap-4">
                     <div className="flex items-center space-x-3">
                         <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded-full">
                             <ShieldAlert className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
@@ -90,6 +90,7 @@ const CopyrightPrompt = ({ result }: ExistingContentAlertProps) => {
                             </p>
                         </div>
                     </div>
+
                     <div className="flex items-center space-x-3">
                         <Button
                             size="sm"

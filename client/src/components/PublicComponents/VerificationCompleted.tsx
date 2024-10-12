@@ -45,7 +45,7 @@ export default function VerificationCompleted({
 }, [result]);
   return (
     <motion.div
-      className="space-y-4 p-4"
+      className="space-y-4 p-4 px-2 md:px-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -65,9 +65,9 @@ export default function VerificationCompleted({
         <CardContent className="p-0">
           <Tabs defaultValue="verification" className="w-full">
             <TabsList className="grid w-full grid-cols-3 ">
-              <TabsTrigger value="verification" className="text-xs sm:text-sm">Basic Check</TabsTrigger>
+              <TabsTrigger value="verification" className="text-xs sm:text-sm">Details</TabsTrigger>
               <TabsTrigger value="gemini" className="text-xs sm:text-sm">Gemini Insights</TabsTrigger>
-              <TabsTrigger value="forgery" className="text-xs sm:text-sm">Authenticity Check</TabsTrigger>
+              <TabsTrigger value="forgery" className="text-xs sm:text-sm">Authenticity</TabsTrigger>
             </TabsList>
             <div className="p-4">
               <TabsContent value="verification">
