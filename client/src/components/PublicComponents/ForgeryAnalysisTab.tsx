@@ -34,10 +34,7 @@ export default function ForgeryAnalysisTab({ forgeryResult }: ForgeryAnalysisTab
                 <div className="flex items-start p-3 pl-0 bg-background/50 rounded-md">
                   <div className="mr-3 mt-1"><Image className="w-5 h-5" /></div>
                   <div>
-                    <h3 className="font-medium text-sm flex items-center">Image Manipulation
-                      <div className="text-xs flex items-center "><Info className="h-4 w-4" />Experimental</div>
-                    </h3>
-
+                    <h3 className="font-medium text-sm">Image Manipulation</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Detected edits such as object removal, cloning, or additions within the image.
                     </p>
