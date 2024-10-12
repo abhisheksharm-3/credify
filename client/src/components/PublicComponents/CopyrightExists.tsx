@@ -49,8 +49,8 @@ const Copyright = ({ mediaHash }: CopyrightProps) => {
         <Card>
             <CardContent className="pt-6">
                 <div className="flex items-center space-x-2">
-                    <Shield className="h-5 w-5" />
-                    <h2 className="text-xl font-semibold">Legal Protection Notice</h2>
+                    <Shield className="h-6 w-6" />
+                    <h2 className="text-lg md:text-xl font-semibold">Legal Protection Notice</h2>
                 </div>
                 
                 <div className="mt-4 space-y-2">
