@@ -6,8 +6,9 @@ from app.services.gan_detection_service import GANDetectionService
 from app.utils.file_utils import download_file, remove_temp_file, get_file_content
 from app.utils.forgery_image_utils import detect_face
 from app.utils.forgery_video_utils import extract_audio, extract_frames, compress_and_process_video, detect_speech # Adjust the import path if necessary
-
+from app.services.deepfake_video_detection import DeepfakeVideoDetectionService
 import os
+import numpy as np
 import logging
 import traceback
 from pydantic import BaseModel
@@ -22,6 +23,8 @@ image_manipulation_service = ImageManipulationService()
 face_manipulation_service = FaceManipulationService()
 audio_deepfake_service = AudioDeepfakeService()
 gan_detection_service = GANDetectionService()
+deepfake_video_detection_service = DeepfakeVideoDetectionService()
+
 
 def parse_confidence(value):
     if isinstance(value, str):
@@ -86,6 +89,17 @@ async def process_image(firebase_filename: str):
     logging.info(f"Image processing completed for: {firebase_filename}")
     return results
 
+def convert_to_python_types(obj):
+    if isinstance(obj, np.generic):
+        return obj.item()
+    elif isinstance(obj, (list, tuple)):
+        return [convert_to_python_types(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: convert_to_python_types(value) for key, value in obj.items()}
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    return obj
+
 async def process_video(firebase_filename: str):
     logging.info(f"Starting video processing for: {firebase_filename}")
     try:
@@ -93,64 +107,82 @@ async def process_video(firebase_filename: str):
         logging.info(f"Video compressed: {compressed_video_filename}")
         
         audio_filename = await extract_audio(compressed_video_filename)
+        is_audio_deepfake = False
+        
         if audio_filename:
             logging.info(f"Audio extracted successfully: {audio_filename}")
             audio_content = get_file_content(audio_filename)
             if detect_speech(audio_content):
                 logging.info("Speech detected in the audio")
-                results = {"audio_deepfake": audio_deepfake_service.detect_deepfake(audio_filename)}
+                # Audio deepfake detection logic here if needed
             else:
                 logging.info("No speech detected in the audio")
-                results = {"audio_deepfake": {"prediction": "No speech detected", "confidence": 1.0, "raw_prediction": 1.0}}
             await remove_temp_file(audio_filename)
             logging.info(f"Temporary audio file removed: {audio_filename}")
         else:
-            logging.warning("No audio detected or extracted from the video")
-            results = {"audio_deepfake": {"prediction": "No audio", "confidence": 1.0, "raw_prediction": 1.0}}
+            logging.info("No audio detected or extracted from the video")
+
+        results = {"is_audio_deepfake": is_audio_deepfake}
 
         frames = await extract_frames(compressed_video_filename)
         logging.info(f"Frames extracted: {len(frames)} frames")
 
         results.update({
-            "image_manipulation": [],
-            "face_manipulation": [],
-            "gan_detection": []
+            "image_manipulation": {
+                "collective_detection": False,
+                "collective_confidence": 0.0
+            },
+            "face_manipulation": None,
+            "gan_detection": {
+                "collective_detection": False,
+                "collective_confidence": 0.0
+            }
         })
 
         face_frames = []
-        for i, frame in enumerate(frames):
-            frame_filename = frame  # Assuming extract_frames now returns a list of filenames
-            logging.info(f"Processing frame: {frame_filename}")
-            frame_content = get_file_content(frame_filename)
+        img_manip_detections = []
+        img_manip_confidences = []
+        gan_detections = []
+        gan_confidences = []
+
+        for frame in frames:
+            frame_content = get_file_content(frame)
             has_face = detect_face(frame_content)
-            logging.info(f"Face detection result for {frame_filename}: {'Face detected' if has_face else 'No face detected'}")
-
-            results["image_manipulation"].append(image_manipulation_service.detect_manipulation(frame_filename))
-            results["gan_detection"].append(gan_detection_service.detect_gan(frame_filename))
-
             if has_face:
-                face_frames.append(frame_filename)
-                results["face_manipulation"].append(face_manipulation_service.detect_manipulation(frame_filename))
-            else:
-                results["face_manipulation"].append(None)
-                logging.info(f"Face manipulation detection skipped for {frame_filename} (no face detected)")
+                face_frames.append(frame)
+            
+            img_manip_result = image_manipulation_service.detect_manipulation(frame)
+            gan_result = gan_detection_service.detect_gan(frame)
+            
+            img_manip_detections.append(img_manip_result.get("is_manipulated", False))
+            img_manip_confidences.append(parse_confidence(img_manip_result.get("confidence", "0%")))
+            gan_detections.append(gan_result.get("is_gan", False))
+            gan_confidences.append(parse_confidence(gan_result.get("confidence", "0%")))
 
-            await remove_temp_file(frame_filename)
-            logging.info(f"Temporary frame file removed: {frame_filename}")
+        # Aggregate results for image manipulation and GAN detection
+        results["image_manipulation"]["collective_detection"] = any(img_manip_detections)
+        results["image_manipulation"]["collective_confidence"] = sum(img_manip_confidences) / len(img_manip_confidences) if img_manip_confidences else 0.0
+        
+        results["gan_detection"]["collective_detection"] = any(gan_detections)
+        results["gan_detection"]["collective_confidence"] = sum(gan_confidences) / len(gan_confidences) if gan_confidences else 0.0
 
-        # Aggregate results
-        for key in results:
-            if key != "audio_deepfake" and results[key]:
-                valid_results = [r for r in results[key] if r is not None]
-                results[key] = {
-                    "collective_detection": any(r.get("is_manipulated", False) if isinstance(r, dict) else r for r in valid_results),
-                    "collective_confidence": sum(parse_confidence(r.get("confidence", 0)) if isinstance(r, dict) else 0 for r in valid_results) / len(valid_results) if valid_results else 0
-                }
+        # Perform deepfake detection if faces were detected
+        if face_frames:
+            deepfake_result = deepfake_video_detection_service.detect_deepfake(face_frames)
+            deepfake_result = convert_to_python_types(deepfake_result)
+            results["face_manipulation"] = {
+                "collective_detection": bool(deepfake_result["is_deepfake"]),
+                "collective_confidence": deepfake_result['confidence']
+            }
+        
         logging.info(f"Aggregated results: {results}")
 
         await remove_temp_file(compressed_video_filename)
-        logging.info(f"Temporary compressed video file removed: {compressed_video_filename}")
+        for frame in frames:
+            await remove_temp_file(frame)
+        logging.info(f"Temporary files removed")
         logging.info(f"Video processing completed for: {firebase_filename}")
+        
         return results
     except Exception as e:
         logging.error(f"Error processing video: {e}")

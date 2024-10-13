@@ -85,7 +85,7 @@ def detect_speech(audio_content: bytes) -> bool:
         logging.error(traceback.format_exc())
         return False
 
-async def extract_frames(firebase_filename: str, max_frames: int = 10) -> List[str]:
+async def extract_frames(firebase_filename: str, max_frames: int = 20) -> List[str]:
     frames = []
     video_content = get_file_content(firebase_filename)
     
