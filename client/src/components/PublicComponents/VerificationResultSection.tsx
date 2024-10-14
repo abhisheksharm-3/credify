@@ -1,56 +1,188 @@
-'use client'
+"use client"
+import React, { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { ShieldAlert, ShieldCheck, CheckCircle, Upload } from "lucide-react"
+import { AppwriteUser, VerificationResultSectionProps } from '@/lib/types'
+import ForgeryAnalysisTab from './ForgeryAnalysisTab'
+import { formatDate } from '@/lib/frontend-function'
+import { Skeleton } from "@/components/ui/skeleton"
+import renderUserHierarchy from './UserHierarchy'
+import { fetchUserInfoByHash } from '@/lib/server/appwrite'
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShieldAlert, ShieldCheck, CheckCircle, Upload, ChevronRight } from "lucide-react";
-import { VerificationResultType, User } from '@/lib/types';
-
-interface VerificationResultSectionProps {
-  verificationResult: VerificationResultType;
-  uploaderHierarchy: User | null;
-  onResetVerification: () => void;
-}
-
-export default function VerificationResultSection({
+const VerificationResultSection: React.FC<VerificationResultSectionProps> = ({
   verificationResult,
   uploaderHierarchy,
-  onResetVerification
-}: VerificationResultSectionProps) {
-  const renderUserHierarchy = (user: User) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center space-x-2 py-2"
-    >
-      <Avatar className="h-8 w-8">
-        <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.name}`} />
-        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-      </Avatar>
-      <div>
-        <p className="font-medium">{user.name}</p>
-        <p className="text-xs text-muted-foreground">
-          {new Date(user.uploadTimestamp).toLocaleString()}
+  onResetVerification,
+  forgeryResult,
+  hash
+}) => {
+  const [user, setUser] = useState<AppwriteUser | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      setIsLoadingUser(true);
+      try {
+        const userInfoResponse = await fetchUserInfoByHash(hash);
+        if (userInfoResponse.success) {
+          setUser(userInfoResponse.user.user);
+        } else {
+          console.log(userInfoResponse.error || 'Failed to fetch user info.');
+        }
+      } catch (error) {
+        console.log('An error occurred while fetching user info.');
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+
+    if (hash) {
+      fetchUser();
+    } else {
+      setIsLoadingUser(false);
+    }
+  }, [hash]);
+
+  const renderHierarchySkeleton = () => (
+    <div className="space-y-4">
+      {[...Array(3)].map((_, index) => (
+        <div key={index} className="flex items-center space-x-2">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <div className="space-y-2 flex-grow">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+  const isVerifiedAndNotForged = verificationResult.verified && forgeryResult && !forgeryResult.isManipulated
+  const StatusBadge = () => {
+    let badgeText = "";
+
+    if (verificationResult.verified && forgeryResult && !forgeryResult.isManipulated) {
+      badgeText = "VERIFIED";
+    } else if (verificationResult.verified && forgeryResult?.isManipulated) {
+      badgeText = "TAMPERED";
+    } else {
+      badgeText = "NOT VERIFIED";
+    }
+
+    return (
+      <Badge
+        variant={badgeText === "VERIFIED" ? "secondary" : "destructive"}
+        className="animate-pulse text-sm md:text-base py-1 px-2 md:px-3"
+      >
+        {badgeText}
+      </Badge>
+    );
+  };
+
+
+  const StatusIcon = () => (
+    isVerifiedAndNotForged
+      ? <ShieldCheck className="w-8 h-8 md:w-12 md:h-12 text-green-500" />
+      : <ShieldAlert className="w-8 h-8 md:w-12 md:h-12 text-destructive" />
+  )
+  const StatusMessage = () => {
+    let title = "";
+    let message = "";
+
+    if (verificationResult.verified && forgeryResult && !forgeryResult.isManipulated) {
+      title = "Certified Original Content";
+      message = "This content has been verified as authentic and unaltered.";
+    } else if (verificationResult.verified && forgeryResult?.isManipulated) {
+      title = "Tampering Detected";
+      message = "This content has been verified, but potential tampering was detected.";
+    } else {
+      title = "Content Not Verified";
+      message = "This content has not been uploaded by any verified creator.";
+    }
+
+    return (
+      <div className="text-center md:text-left mb-8">
+        <h3 className="font-semibold text-base md:text-lg lg:text-xl mb-1">
+          {title}
+        </h3>
+        <p className="text-xs md:text-sm lg:text-base text-muted-foreground">
+          {message}
         </p>
       </div>
-      {user.children.length > 0 && (
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-      )}
-      {user.children.length > 0 && (
-        <div className="ml-4">
-          {user.children.map((child, index) => (
-            <div key={index}>{renderUserHierarchy(child)}</div>
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
+    );
+  };
+
+
+  const renderDetailsContent = () => {
+    if (!verificationResult.status && !uploaderHierarchy?.name && !uploaderHierarchy?.dateOfUpload) {
+      return <p className="text-sm md:text-base">Incomplete data.<br></br> All fields are required to display details.</p>
+    }
+
+    return (
+      <ul className="space-y-2 md:space-y-3 lg:space-y-4">
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
+          <div className="flex-grow">
+            <span className="font-medium text-xs md:text-sm lg:text-base">Status:</span>
+            {verificationResult.status ? (
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block capitalize">
+                {verificationResult.status}
+              </span>
+            ) : (
+              <Skeleton className="h-4 w-3/4 mt-1" />
+            )}
+          </div>
+        </li>
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
+          <div className="flex-grow">
+            <span className="font-medium text-xs md:text-sm lg:text-base">Uploader:</span>
+            {uploaderHierarchy?.name ? (
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
+                {uploaderHierarchy.name}
+              </span>
+            ) : (
+              <Skeleton className="h-4 w-1/2 mt-1" />
+            )}
+          </div>
+        </li>
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
+          <div className="flex-grow">
+            <span className="font-medium text-xs md:text-sm lg:text-base">Date:</span>
+            {uploaderHierarchy?.dateOfUpload ? (
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
+                {formatDate(new Date(uploaderHierarchy.dateOfUpload).toLocaleString())}
+              </span>
+            ) : (
+              <Skeleton className="h-4 w-2/3 mt-1" />
+            )}
+          </div>
+        </li>
+        <li className="flex dark:bg-primary/10 items-start gap-2 md:p-2 p-0.5">
+          <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-primary flex-shrink-0 mt-1" />
+          <div className="flex-grow">
+            <span className="font-medium text-xs md:text-sm lg:text-base">Copyright:</span>
+            {isLoadingUser ? (
+              <Skeleton className="h-4 w-1/2 mt-1" />
+            ) : user ? (
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
+                {user.name}
+              </span>
+            ) : (
+              <span className="text-xs md:text-sm lg:text-base text-muted-foreground block">
+                No copyright claimed
+              </span>
+            )}
+          </div>
+        </li>
+      </ul>
+    )
+  }
 
   return (
     <motion.div
@@ -58,96 +190,69 @@ export default function VerificationResultSection({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.5 }}
+      className="w-full max-w-[95%] sm:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-2 sm:px-4 lg:px-6"
     >
       <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Verification Status</span>
-            <Badge
-              variant={verificationResult.verified ? "secondary" : "destructive"}
-              className="animate-pulse text-lg py-1 px-3"
-            >
-              VERIFIED
-            </Badge>
-          </CardTitle>
+        <CardHeader className="justify-between items-center flex flex-row ">
+          <CardTitle className="text-lg sm:text-xl lg:text-2xl text-center md:text-left mt-[3px]">Verification Status</CardTitle>
+          <StatusBadge />
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <motion.div
-              className={`flex items-center gap-4 p-6 rounded-lg ${
-                verificationResult.verified ? 'bg-secondary/20' : 'bg-destructive/20'
-              }`}
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {!verificationResult.verified ? (
-                <>
-                  <ShieldAlert className="w-12 h-12 text-destructive" />
-                  <div>
-                    <h3 className="font-semibold text-xl mb-1">Content Not Verified</h3>
-                    <p className="text-sm text-muted-foreground">This content has not been uploaded by any verified creator.</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-12 h-12 text-green-500" />
-                  <div>
-                    <h3 className="font-semibold text-xl mb-1">Certified Original Content</h3>
-                    <p className="text-sm text-muted-foreground">This content has been verified as authentic and unaltered.</p>
-                  </div>
-                </>
-              )}
-            </motion.div>
+        <CardContent className="">
+          <motion.div
+            className={`flex flex-col md:flex-row items-center gap-3 md:gap-4 p-3 md:p-4 lg:p-6 mb-6 rounded-lg ${isVerifiedAndNotForged ? 'bg-green-500/30' : 'bg-destructive/30'}`}
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <StatusIcon />
+            <StatusMessage />
+          </motion.div>
 
-            {verificationResult.verified && (
-              <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="details" className="text-lg py-2">Verification Details</TabsTrigger>
-                  <TabsTrigger value="hierarchy" className="text-lg py-2">Uploader Hierarchy</TabsTrigger>
-                </TabsList>
-                <TabsContent value="details">
-                  <ScrollArea className="h-[200px] rounded-md border p-4 bg-background/50">
-                    <ul className="space-y-3">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary" />
-                        <span className="font-medium">Status:</span>
-                        <span className="text-sm text-muted-foreground">{verificationResult.status}</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary" />
-                        <span className="font-medium">Uploader:</span>
-                        <span className="text-sm text-muted-foreground">{verificationResult.uploader}</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-primary" />
-                        <span className="font-medium">Timestamp:</span>
-                        <span className="text-sm text-muted-foreground">{verificationResult.timestamp}</span>
-                      </li>
-                    </ul>
-                  </ScrollArea>
-                </TabsContent>
-                <TabsContent value="hierarchy">
-                  <ScrollArea className="h-[200px] rounded-md border p-4 bg-background/50">
-                    {uploaderHierarchy ? (
-                      renderUserHierarchy(uploaderHierarchy)
-                    ) : (
-                      <p>No uploader hierarchy available.</p>
-                    )}
-                  </ScrollArea>
-                </TabsContent>
-              </Tabs>
-            )}
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 rounded-lg bg-background p-1 my-2">
+              {['details', 'hierarchy', 'forgery'].map((tab) => (
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  className="rounded-md px-3 py-2 text-sm font-medium transition-all
+                       data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+                       data-[state=active]:shadow-sm"
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <TabsContent value="details">
+              <ScrollArea className="h-[180px] sm:h-[220px] lg:h-[260px] xl:h-[300px] rounded-md border p-3 md:p-4 bg-background/50">
+                {renderDetailsContent()}
+              </ScrollArea>
+            </TabsContent>
 
-            <div className="text-center">
-              <Button onClick={onResetVerification} variant="outline" className="gap-2">
-                <Upload className="w-4 h-4" />
-                Verify Another Content
-              </Button>
-            </div>
+            <TabsContent value="hierarchy">
+              <ScrollArea className="h-[180px] sm:h-[220px] lg:h-[260px] xl:h-[300px] rounded-md border p-3 md:p-4 bg-background/50 flex flex-col">
+                {uploaderHierarchy ? renderUserHierarchy({
+                  user: uploaderHierarchy,
+                  copyrightUserId: user?.$id
+                }) : renderHierarchySkeleton()}
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="forgery">
+              <ScrollArea className="h-[180px] sm:h-[220px] lg:h-[260px] xl:h-[300px] rounded-md border p-3 md:p-4 bg-background/50">
+                <ForgeryAnalysisTab forgeryResult={forgeryResult} />
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+
+          <div className="text-center mt-4">
+            <Button onClick={onResetVerification} variant="outline">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Again
+            </Button>
           </div>
         </CardContent>
       </Card>
     </motion.div>
-  );
+  )
 }
+
+export default VerificationResultSection

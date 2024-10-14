@@ -13,6 +13,8 @@ export interface VideoData {
     title: string;
     description: string;
     value: number;
+    icon?: React.ReactNode;
+    color?: string;
   }
   export interface AppwriteUser {
     $id: string;
@@ -76,12 +78,13 @@ export interface VideoData {
     image_hash?: string;
     audio_hash?: string;
     frame_hash?: string;
+    verificationDate?: string;
   }
   
   export interface User {
     userId: string;
     name: string;
-    uploadTimestamp: number;
+    dateOfUpload: string;
     children: User[];
   }
 
@@ -95,26 +98,7 @@ export interface VideoData {
     duration?: string
     dimensions?: string
     description: string
-  }
-
-/*   export interface FileInfo {
-    $collectionId: string;
-    $createdAt: string;
-    $databaseId: string;
-    $id: string;
-    $permissions: any[];
-    $updatedAt: string;
-    fileId: string;
-    fileName: string;
-    fileSize: number;
-    fileType: 'image' | 'video'; 
-    fileUrl: string;
-    userId: string;
-    verified: boolean;
-    tampered?: boolean; // Optional field
-    
-  } */
-  
+  }  
   export interface FileInfo {
     $collectionId?: string;
     $createdAt?: string;
@@ -130,7 +114,10 @@ export interface VideoData {
     userId?: string;
     verified?: boolean;
     tampered?: boolean; // Optional field
-  
+    gan_generated?: boolean;
+    face_manipulation?: boolean,
+    audio_manipulation?: boolean,
+    image_manipulation?: boolean,
     video_hash?: string;
     collective_audio_hash?: string;
     image_hash?: string;
@@ -147,19 +134,7 @@ export interface VideoData {
     contentType: string;
   }
   
-  export interface ForgeryDetectionResult {
-    status: 'pending' | 'completed' | 'error';
-    contentType?: 'image' | 'video' | 'unknown';
-    isManipulated?: boolean;
-    manipulationProbability?: number;
-    detectionMethods?: {
-      imageManipulation?: boolean;
-      ganGenerated?: boolean;
-      faceManipulation?: boolean;
-      audioDeepfake?: boolean;
-    };
-    message?: string;
-  }
+
   export interface VerifyLivenessResponseType {
     result?: any;
     error?: string;
@@ -233,4 +208,40 @@ export interface AppwriteUser {
 export interface ApiError {
   error: string;
   details?: string;
+}
+
+export  interface UseContentVerificationReturn {
+  isAnalyzing: boolean;
+  verificationComplete: boolean;
+  verificationResult: VerificationResultType | null;
+  uploaderHierarchy: User | null;
+  error: string | null;
+  handleUploadComplete: (res: { key: string; url: string; name: string }[]) => Promise<void>;
+  resetVerification: () => void;
+}
+
+export interface VerificationResultSectionProps {
+  verificationResult: VerificationResultType;
+  uploaderHierarchy: User | null;
+  onResetVerification: () => void;
+  forgeryResult: ForgeryDetectionResult | null; // Updated this line
+  hash:string
+}
+
+export interface ForgeryDetectionResult {
+  status?: 'pending' | 'completed' | 'error';
+  contentType?: 'image' | 'video' | 'unknown';
+  isManipulated?: boolean;
+  manipulationProbability?: number;
+  detectionMethods?: {
+    imageManipulation?: boolean;
+    ganGenerated?: boolean;
+    faceManipulation?: boolean;
+    audioDeepfake?: boolean;
+  };
+  message?: string;
+}
+
+export interface ForgeryAnalysisTabProps {
+  forgeryResult: ForgeryDetectionResult | null;
 }

@@ -1,5 +1,3 @@
-// @/lib/errorHandler.ts
-
 import { NextResponse } from 'next/server';
 import {
   ValidationError,

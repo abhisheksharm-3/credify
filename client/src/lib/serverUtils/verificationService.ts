@@ -42,7 +42,8 @@ const VIDEO_EXTENSIONS = new Set([
   '.ts', '.mts', // MPEG Transport Stream
   '.m2ts' // Blu-ray BDAV
 ]);
-
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 10000;
 export async function detectForgery(filename: string, contentUrl: string, contentId: string): Promise<ForgeryDetectionResult> {
   logger.info(`Detecting forgery for file: ${filename}`);
   const fileExtension = path.extname(filename).toLowerCase();
@@ -91,47 +92,73 @@ export async function detectForgery(filename: string, contentUrl: string, conten
     };
   }
 }
-export async function storeAnalyzedContent(ForgeryDetectionResult: ForgeryDetectionResult, userId: string | undefined, contentId: string): Promise<void> {
+export async function storeAnalyzedContent(
+  forgeryDetectionResult: ForgeryDetectionResult,
+  userId: string | undefined,
+  contentId: string
+): Promise<void> {
   if (!userId) {
-    return
+    console.log('[storeAnalyzedContent] No userId provided. Returning.');
+    return;
   }
+
   console.log(`[storeAnalyzedContent] Storing analyzed content for userId: ${userId}, contentId: ${contentId}`);
-  try {
-    const { account } = await createAdminClient();
-    const databases = new Databases(account.client);
 
-    const { documents } = await databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID!,
-      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
-      [
-        Query.equal('userId', userId),
-        Query.equal('contentId', contentId)
-      ]
-    );
+  let retries = 0;
+  while (retries < MAX_RETRIES) {
+    try {
+      const { account } = await createAdminClient();
+      const databases = new Databases(account.client);
 
-    if (documents.length === 0) {
-      console.log(`[storeAnalyzedContent] No existing document found. Return.`);
-    } else {
+      const { documents } = await databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID!,
+        process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+        [
+          Query.equal('userId', userId),
+          Query.equal('contentId', contentId)
+        ]
+      );
+
+      if (documents.length === 0) {
+        console.log(`[storeAnalyzedContent] No existing document found. Retry attempt ${retries + 1} of ${MAX_RETRIES}`);
+        if (retries < MAX_RETRIES - 1) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          retries++;
+          continue;
+        } else {
+          console.log(`[storeAnalyzedContent] Max retries reached. No document found.`);
+          return;
+        }
+      }
+
       console.log(`[storeAnalyzedContent] Existing document found. Updating document.`);
       await databases.updateDocument(
         process.env.APPWRITE_DATABASE_ID!,
         process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
         documents[0].$id,
         {
-          isManipulated: ForgeryDetectionResult.isManipulated,
-          manipulationProbability: ForgeryDetectionResult.manipulationProbability,
-          imageManipulation: ForgeryDetectionResult.detectionMethods?.imageManipulation,
-          ganGenerated: ForgeryDetectionResult.detectionMethods?.ganGenerated,
-          faceManipulation: ForgeryDetectionResult.detectionMethods?.faceManipulation,
-          audioDeepFake: ForgeryDetectionResult.detectionMethods?.audioDeepfake
+          isManipulated: forgeryDetectionResult.isManipulated,
+          manipulationProbability: forgeryDetectionResult.manipulationProbability?.toString(),
+          imageManipulation: forgeryDetectionResult.detectionMethods?.imageManipulation,
+          ganGenerated: forgeryDetectionResult.detectionMethods?.ganGenerated,
+          faceManipulation: forgeryDetectionResult.detectionMethods?.faceManipulation,
+          audioDeepFake: forgeryDetectionResult.detectionMethods?.audioDeepfake
         }
       );
-    }
 
-    console.log(`[storeAnalyzedContent] Analyzed content stored successfully`);
-  } catch (error) {
-    console.error(`[storeAnalyzedContent] Error storing analyzed content: ${error}`);
-    throw error;
+      console.log(`[storeAnalyzedContent] Analyzed content stored successfully`);
+      return;
+    } catch (error) {
+      console.error(`[storeAnalyzedContent] Error storing analyzed content: ${error}`);
+      if (retries < MAX_RETRIES - 1) {
+        console.log(`[storeAnalyzedContent] Retrying in ${RETRY_DELAY / 1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        retries++;
+      } else {
+        console.log(`[storeAnalyzedContent] Max retries reached. Throwing error.`);
+        throw error;
+      }
+    }
   }
 }
 function processImageForgeryResult(apiResponse: any): ForgeryDetectionResult {

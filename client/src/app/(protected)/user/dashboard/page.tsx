@@ -1,38 +1,25 @@
 "use client"
-import * as React from "react";
+import React, { useState, useEffect } from "react";
 import { RecentActivity } from "@/components/User/RecentActivity";
-import { AlertsNotifications } from "@/components/User/AlertNotifications";
 import { ActionItems } from "@/components/User/ActionItems";
 import { AccountSettings } from "@/components/User/AccountSettings";
 import { AppwriteUser, CardData, ChartDataPoint, FileInfo } from "@/lib/types";
 import { Label, Pie, PieChart } from "recharts";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { LoadingSkeleton } from "@/components/Layout/LoadingSkeleton";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
-import { UploadVideoDialog } from "@/components/User/UploadVideoDialog";
+import UploadVideoDialog from "@/components/User/UploadVideoDialog";
 import { useFiles } from "@/hooks/useFiles";
 import MonthlyFileHistogram from "@/components/User/MonthlyFileHistogram";
+import { Camera, FilePlus2, FileWarning, FileCheck2, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 function processFilesForChart(files: FileInfo[]): ChartDataPoint[] {
   const monthlyData: { [key: string]: number } = {};
 
   files.forEach(file => {
-    const date = new Date(file.$createdAt || "");
+    const date = new Date(file.$createdAt?.toString() || "");
     const monthKey = date.toLocaleString('default', { month: 'long' });
 
     if (!monthlyData[monthKey]) {
@@ -53,12 +40,12 @@ function processFilesForChart(files: FileInfo[]): ChartDataPoint[] {
   return chartData.sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
 }
 
-export default function Dashboard() {
+const Dashboard: React.FC = () => {
   const { verifiedCount, unverifiedCount, tamperedCount, totalCount, files } = useFiles();
-  const [user, setUser] = React.useState<AppwriteUser | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = useState<AppwriteUser | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchUser = async () => {
       try {
         const userData = await getLoggedInUser();
@@ -74,8 +61,7 @@ export default function Dashboard() {
   }, []);
 
   const chartData = React.useMemo(() => processFilesForChart(files), [files]);
-
-  const chartConfig = {
+  const chartConfig: ChartConfig = {
     desktop: {
       label: "Total Videos",
       color: "hsl(var(--chart-1))",
@@ -85,29 +71,42 @@ export default function Dashboard() {
   const summaryCards: CardData[] = [
     {
       title: "Successful Verifications",
-      description: "The number of videos that have been successfully verified.",
+      description: "Videos successfully verified",
       value: verifiedCount,
+      icon: <FileCheck2 className="h-6 w-6 text-green-500" />,
+      color: "bg-green-100 dark:bg-green-900",
     },
     {
       title: "Detected Tampering",
-      description: "The number of videos where tampering has been detected.",
+      description: "Videos with detected tampering",
       value: tamperedCount,
+      icon: <FileWarning className="h-6 w-6 text-red-500" />,
+      color: "bg-red-100 dark:bg-red-900",
     },
     {
       title: "Pending Reviews",
-      description: "The number of videos currently awaiting review.",
+      description: "Videos awaiting review",
       value: unverifiedCount,
+      icon: <FilePlus2 className="h-6 w-6 text-yellow-500" />,
+      color: "bg-yellow-100 dark:bg-yellow-900",
+    },
+    {
+      title: "Total Media",
+      description: "Total number of Media",
+      value: totalCount,
+      icon: <Camera className="h-6 w-6 text-blue-500" />,
+      color: "bg-blue-100 dark:bg-blue-900",
     },
   ];
 
-  const pieChartData = summaryCards.map((card, index) => ({
-    category: card.title,
-    value: card.value,
-    fill: `hsl(var(--chart-${index + 1}))`,
-  }));
+  const pieChartData = [
+    { category: "Unverified", value: unverifiedCount, fill: "hsl(var(--chart-1))" },
+    { category: "Tampered", value: tamperedCount, fill: "hsl(var(--chart-2))" },
+    { category: "Authentic", value: verifiedCount - tamperedCount, fill: "hsl(var(--chart-3))" },
+  ];
 
   const pieChartConfig: ChartConfig = Object.fromEntries(
-    summaryCards.map((card, index) => [
+    summaryCards.slice(0, 3).map((card, index) => [
       card.title.toLowerCase().replace(/\s+/g, '-'),
       {
         label: card.title,
@@ -123,25 +122,60 @@ export default function Dashboard() {
       </LoggedInLayout>
     );
   }
-
+  const isVerified = user?.labels?.includes('verified') || false;
   return (
     <LoggedInLayout>
-      <div className="flex min-h-screen w-full flex-col bg-muted/40">
+      <div className="flex min-h-screen w-full flex-col bg-muted/40 dark:bg-gray-900">
         <main className="flex flex-col gap-8 p-4 sm:px-6 sm:py-8 md:gap-12 lg:px-8 xl:px-12">
           {user && (
-            <div className="mb-4 flex flex-col md:flex-row w-full justify-between">
-              <div className="mb-4 md:mb-0">
-                <h1 className="text-2xl font-bold">Welcome, {user.name}!</h1>
-                <p>Email: {user.email}</p>
+            <div className="mb-4 flex flex-col md:flex-row w-full justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div className="mb-4 md:mb-0 flex items-center">
+                <div className="mr-4">
+                  <div className="flex flex-col md:flex-row text-3xl font-bold text-gray-800 dark:text-white text-3xl font-bold text-gray-800 dark:text-white">
+                    <div className="">Welcome,
+                    </div>
+                    <div className="">
+                      {user.name}!</div>
+                  </div>
+
+                  <div className={`mt-2 flex items-center ${isVerified ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {isVerified ? (
+                      <>
+                        <ShieldCheck className="h-5 w-5 mr-2" />
+                        <span className="font-semibold">Verified Creator Profile</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldAlert className="h-5 w-5 mr-2" />
+                        <span className="font-semibold">Unverified Creator Profile</span>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               <UploadVideoDialog />
             </div>
           )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {summaryCards.map((card, index) => (
+              <Card key={index} className={`${card.color} transition-all hover:shadow-lg`}>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">{card.title}</CardTitle>
+                  {card.icon}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{card.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Card className="flex flex-col">
               <CardHeader className="items-center pb-0">
-                <CardTitle>Video Statistics</CardTitle>
-                <CardDescription>Overview of video verifications</CardDescription>
+                <CardTitle className="text-2xl font-bold">Multimedia Statistics</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 pb-0">
                 <ChartContainer
@@ -182,7 +216,7 @@ export default function Dashboard() {
                                   y={(viewBox.cy || 0) + 24}
                                   className="fill-muted-foreground"
                                 >
-                                  Total Videos
+                                  Total Multimedia
                                 </tspan>
                               </text>
                             )
@@ -195,7 +229,7 @@ export default function Dashboard() {
               </CardContent>
               <CardFooter className="flex-col gap-2 text-sm">
                 <div className="leading-none text-muted-foreground">
-                  Showing total video statistics
+                  Multimedia Statistics Overview
                 </div>
               </CardFooter>
             </Card>
@@ -203,14 +237,13 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MonthlyFileHistogram files={files} />
-            <AlertsNotifications />
-            <div className="flex gap-4 flex-col">
-              <ActionItems />
-              <AccountSettings />
-            </div>
+            <ActionItems />
+            <AccountSettings />
           </div>
         </main>
       </div>
     </LoggedInLayout>
   );
-}
+};
+
+export default Dashboard;

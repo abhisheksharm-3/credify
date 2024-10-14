@@ -1,16 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, ChevronDown, ChevronUp, X, CameraIcon, Upload, Loader,CircleCheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface ProfileVerificationProps {
-  profileVerified: "yes" | "no" | "verifying" | string;
-  openStep: number | null;
-  toggleStep: (step: number) => void;
-  handleAction: (action: number) => void;
-  profileImages: string[];
-  handleProfileUpload: () => void;
-  setProfileVerified: (status: "yes" | "no" | "verifying") => void;
-}
+import { ProfileVerificationProps } from "@/lib/frontend-types";
 
 const ProfileVerification: React.FC<ProfileVerificationProps> = ({
   profileVerified,

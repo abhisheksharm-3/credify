@@ -1,33 +1,21 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, X, Camera as CameraIcon, } from "lucide-react"
-import { AppwriteUser } from '@/lib/types'
+import { CheckCircle, X } from "lucide-react"
 import { checkVerify, getLoggedInUser, sendVerificationEmail, setIdPhoto, setProfilePhoto } from '@/lib/server/appwrite'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import Camera from "@/components/ui/camera/camera";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
-import { app } from "../../../src/lib/FirebaseConfig";
 import UserInfo from './UserInfo'
 import EmailVerification from './EmailVerification'
 import ProfilePhotoUpload from './ProfilePhotoUpload'
 import GovIdUpload from './GovIdUpload'
 import { toast } from 'sonner'
+import { UserHeaderProps } from '@/lib/frontend-types'
+import { uploadPhoto } from '@/lib/firebaseUpload'
 
-interface UserHeaderProps {
-  user: AppwriteUser | null
-  verifiedCount: number
-}
-const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
+const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [emailVerified, setEmailVerified] = useState("no");
-  const [profilePhotoUploaded, setProfilePhotoUploaded] = useState(false);
-  const [govIdUploaded, setGovIdUploaded] = useState(false);
   const [profileImages, setProfileImages] = useState<string[]>([]);
   const [idImages, setIdImages] = useState<string[]>([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -36,7 +24,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
   const [idVerified, setIdVerified] = useState("no");
   const [userId, setUserId] = useState("");
   const [userProfileImage, setUserProfileImage] = useState("");
-  const storage = getStorage(app);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -78,7 +65,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
     };
     checkVerification();
   }, []);
-
   const sendVerify = async () => {
     try {
       const result = await sendVerificationEmail();
@@ -94,57 +80,21 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
       setEmailVerified("no");
     }
   };
-
   const toggleStep = (index: number) => {
     setOpenStep(openStep === index ? null : index);
   };
-
-  const uploadPhoto = async (imageUrl: string, photoType: 'profile' | 'id') => {
-    const fileName = `${photoType}-photo-${Date.now()}.jpg`;
-    const metadata = { contentType: 'image/jpeg' };
-    const storageRef = ref(storage, `Credify/${fileName}`);
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const uploadTask = uploadBytesResumable(storageRef, blob, metadata);
-      return new Promise<string>((resolve, reject) => {
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          },
-          (error) => {
-            toast.error('Upload failed');
-            reject(error);
-          },
-          async () => {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            resolve(downloadURL);
-          }
-        );
-      });
-    } catch (error) {
-      toast.error("Error converting image URL to blob");
-      throw error;
-    }
-  };
-
   const handleCapturePhoto = async (stepIndex: number) => {
     setCurrentStepIndex(stepIndex);
     setShowDialog(true);
   };
-
   const handleCapturedImages = (images: string[]) => {
     if (currentStepIndex === 1) {
       setProfileImages(images);
-      setProfilePhotoUploaded(true);
     } else if (currentStepIndex === 2) {
       setIdImages(images);
-      setGovIdUploaded(true);
     }
     setShowDialog(false);
   };
-
   const handleAction = (stepIndex: number) => {
     if (stepIndex === 0) {
       sendVerify();
@@ -162,11 +112,10 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
       }
     }
   };
-
   const verifyProfileImage = async (url: string) => {
     try {
       setProfileVerified("verifying");
-      const response = await fetch(`/api/auth/verifyLiveliness?url=${encodeURIComponent(url)}`, {
+      const response = await fetch(`/api/auth/verify-liveliness?url=${encodeURIComponent(url)}`, {
         method: 'GET',
       });
       if (!response.ok) {
@@ -187,7 +136,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
       toast.error('Error during fetch');
     }
   };
-
   const sendProfileUrl = async (url: string) => {
     const profileURL = url;
     const response = await setProfilePhoto(userId, profileURL);
@@ -222,26 +170,17 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
       }
     }
   };
-
   return (
-    <header  className="relative bg-gradient-to-tl from-white via-purple-300 via-purple-500 to-purple-700  dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg"  >
-     <div className="container pt-12 lg:py-12 pb-4">
+    <header className="relative bg-gradient-to-tl from-white via-purple-300 via-purple-500 to-purple-700  dark:bg-gradient-to-r dark:from-black/50 dark:to-purple-600/30 backdrop-blur-lg shadow-lg"  >
+      <div className="container pt-12 lg:py-12 pb-4">
         <UserInfo isVerified={isVerified} user={user} userProfileImage={userProfileImage} />
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-          className="mt-4 ml-0"
-        >
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.6 }} className="mt-4 ml-0">
           {!isVerified && (
             <div className="container mx-auto pt-2 pl-2 lg:pl-8 xl:pl-0">
               <div className="flex flex-wrap flex-row justify-start  items-start gap-3">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className="flex  items-center bg-white/60 dark:bg-white/10 backdrop-blur-lg rounded-full ml-2 px-3 lg:px-4 py-3 shadow-lg cursor-pointer"
-                    >
+                    <motion.div whileHover={{ scale: 1.05 }} className="flex  items-center bg-white/60 dark:bg-white/10 backdrop-blur-lg rounded-full ml-2 px-3 lg:px-4 py-3 shadow-lg cursor-pointer">
                       {isVerified ? (
                         <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                       ) : (
@@ -265,20 +204,14 @@ const UserHeader: React.FC<UserHeaderProps> = ({ verifiedCount, user }) => {
                 </Dialog>
                 <Dialog open={showDialog} onOpenChange={(open) => setShowDialog(open)}>
                   <DialogContent className="h-svh w-svw max-w-full p-0">
-                    <Camera
-                      onClosed={() => setShowDialog(false)}
-                      onCapturedImages={handleCapturedImages}
-                    />
+                    <Camera onClosed={() => setShowDialog(false)} onCapturedImages={handleCapturedImages} />
                   </DialogContent>
                 </Dialog>
               </div>
             </div>
           )}
-
         </motion.div >
       </div>
-
-
     </header >
   )
 }

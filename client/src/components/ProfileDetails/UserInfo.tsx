@@ -1,27 +1,15 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, UserIcon, Video } from 'lucide-react';
-import { AppwriteUser } from '@/lib/types';
+import { CalendarDays, ImageIcon, UserIcon } from 'lucide-react';
 import verifiedIcon from '../../../public/images/verified.png'
 import Image from 'next/image';
 import { useFiles } from '@/hooks/useFiles';
-interface UserProfileProps {
-  user: AppwriteUser | null;
-  userProfileImage: string;
-  isVerified: boolean;
-}
+import { UserProfileProps } from '@/lib/frontend-types';
+import { formatDate } from '@/lib/frontend-function';
 
 const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) => {
   const { totalCount } = useFiles();
-  function formatDate(dateString?: string): string {
-    if (!dateString) return 'N/A'; // Handle undefined case
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
 
-    return `${day}-${month}-${year}`;
-  }
   return (
     <div className="flex flex-row items-center justify-between">
       <motion.div
@@ -76,11 +64,11 @@ const UserInfo: FC<UserProfileProps> = ({ isVerified, user, userProfileImage }) 
           >
             <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg text-white mt-2">
               <CalendarDays className=" text-white" size={20} />
-              <span>Joined on: {formatDate(user?.registration)}</span>
+              <span>Joined on: {formatDate(user?.registration||" ")}</span>
             </div>
             <div className="flex flex-row items-center gap-2 text-sm md:text-base lg:text-lg text-white mt-2">
-              <Video className="text-white" size={20} />
-              <span>Total Videos: {totalCount}</span>
+              <ImageIcon className="text-white" size={20} />
+              <span>Overall Content: {totalCount}</span>
             </div>
           </motion.div>
         </div>

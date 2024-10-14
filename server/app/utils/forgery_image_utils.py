@@ -39,9 +39,61 @@ def strip_metadata(img: Image.Image) -> Image.Image:
     return img_without_exif
 
 def detect_face(image_content: bytes) -> bool:
-    nparr = np.frombuffer(image_content, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-    return len(faces) > 0
+    """
+    Enhanced face detection using cascaded classifiers.
+    Args:
+        image_content: Raw image bytes
+    Returns:
+        bool: True if any faces are detected, False otherwise
+    """
+    try:
+        # Decode image
+        nparr = np.frombuffer(image_content, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if img is None:
+            return False
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Enhance contrast to help with detection
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        enhanced_gray = clahe.apply(gray)
+        
+        # Try frontal face detection first
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        faces = face_cascade.detectMultiScale(
+            enhanced_gray,
+            scaleFactor=1.1,
+            minNeighbors=4,
+            minSize=(30, 30)
+        )
+        
+        if len(faces) > 0:
+            return True
+            
+        # Try alternate frontal face classifier
+        alt_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
+        faces = alt_cascade.detectMultiScale(
+            enhanced_gray,
+            scaleFactor=1.15,
+            minNeighbors=3,
+            minSize=(30, 30)
+        )
+        
+        if len(faces) > 0:
+            return True
+            
+        # Try profile face detection as last resort
+        profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
+        faces = profile_cascade.detectMultiScale(
+            enhanced_gray,
+            scaleFactor=1.1,
+            minNeighbors=3,
+            minSize=(30, 30)
+        )
+        
+        return len(faces) > 0
+
+    except Exception:
+        return False

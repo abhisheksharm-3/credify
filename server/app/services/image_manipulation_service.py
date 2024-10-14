@@ -16,6 +16,9 @@ class ImageManipulationService:
             self.preprocessing_params = json.load(f)
 
     def convert_to_ela_image(self, image, quality):
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        
         temp_buffer = io.BytesIO()
         image.save(temp_buffer, 'JPEG', quality=quality)
         temp_buffer.seek(0)
@@ -47,11 +50,13 @@ class ImageManipulationService:
         prediction = self.model.predict(prepared_image)
         predicted_class = int(np.argmax(prediction, axis=1)[0])
         confidence = float(np.max(prediction) * 100)
+        
+        check_manipulated = bool(predicted_class == 0 and confidence > 90)
 
         result = {
             "class": self.class_names[predicted_class],
             "confidence": f"{confidence:.2f}%",
-            "is_manipulated": bool(predicted_class == 0)
+            "is_manipulated": check_manipulated
         }
 
         return result

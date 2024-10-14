@@ -1,28 +1,26 @@
 "use client"
-
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, AlertCircle, Clock, ShieldCheck, ShieldAlert, ChevronRight, Link as LinkIcon, Copy, Eye } from "lucide-react";
+import { AlertCircle, ShieldCheck, ShieldAlert, ChevronRight, Copy, Eye } from "lucide-react";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getUserById } from "@/lib/server/appwrite";
+import { getDocumentsByHash, getUserById } from "@/lib/server/appwrite";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { VerificationResultType } from "@/lib/types";
-
-interface User {
-  userId: string;
-  name: string;
-  uploadTimestamp: number;
-  children: User[];
-}
+import { User, VerificationResultType } from "@/lib/types";
+import { formatDate } from "@/lib/frontend-function";
+import { ImageIcon, VideoIcon, CalendarIcon } from "lucide-react";
+import renderUserHierarchy from "@/components/PublicComponents/UserHierarchy";
+import GeminiAnalysisTab from "@/components/PublicComponents/GeminiAnalysisTab";
+import VerificationTabVerify from "@/components/PublicComponents/VerificationTabVerify";
+import Footer from "@/components/Layout/Footer";
 
 const VerifyContent: React.FC = () => {
   const params = useParams();
@@ -32,12 +30,16 @@ const VerifyContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareableLink, setShareableLink] = useState<string>("");
+  const [isTampered, setIsTampered] = useState<string>("fetching");
+  const [factCheck, setFactCheck] = useState<string>("");
+
   const router = useRouter();
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareableLink)
       .then(() => toast.success("Verification link copied to clipboard"))
       .catch((err) => console.error('Failed to copy: ', err));
   };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!contentHash) {
@@ -45,25 +47,65 @@ const VerifyContent: React.FC = () => {
         setIsLoading(false);
         return;
       }
-
       setIsLoading(true);
       setError(null);
 
       try {
+        // Step 1: Check Appwrite first
+        const appwriteResult = await getDocumentsByHash(contentHash);
+
+        if (appwriteResult?.documents && appwriteResult.documents.length > 0) {
+          setIsTampered(appwriteResult.documents[0].isManipulated);
+          setFactCheck(appwriteResult.documents[0].fact_check);
+          console.log(appwriteResult.documents[0].fact_check);
+
+
+        } else {
+          console.log("No documents found or appwriteResult is undefined.");
+        }
+
+
+        if (!appwriteResult.success || !appwriteResult.documents || appwriteResult.documents.length === 0) {
+          setError("No verified records found for this content");
+          setIsLoading(false);
+          return;
+        }
+
+        const appwriteDoc = appwriteResult.documents[0];
+
+        // Step 2: Only if Appwrite succeeds, fetch lineage
+        console.log("Fetching lineage data");
         const response = await fetch(`/api/content/get-lineage/${contentHash}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch data');
+          throw new Error('Failed to fetch lineage data');
         }
-        const data = await response.json();
-        setVerificationData(data.verificationResult);
 
-        const updatedHierarchy = await fetchUsernames(data.uploaderHierarchy);
-        setUploaderHierarchy(updatedHierarchy);
+        const lineageData = await response.json();
+
+        // Combine data
+        const combinedVerificationData: VerificationResultType = {
+          ...lineageData.verificationResult,
+          verificationDate: appwriteDoc.verificationDate,
+          userId: appwriteDoc.userId,
+        };
+
+        setVerificationData(combinedVerificationData);
+
+        // Step 3: Process hierarchy if available
+        if (lineageData.uploaderHierarchy) {
+          const updatedHierarchy = await fetchUsernames(lineageData.uploaderHierarchy);
+          setUploaderHierarchy(updatedHierarchy);
+        }
 
         setShareableLink(`${window.location.origin}/verify/${contentHash}`);
+
       } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to fetch data. Please try again later.");
+        console.error("Error in verification process:", error);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("An unexpected error occurred during verification");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -71,7 +113,6 @@ const VerifyContent: React.FC = () => {
 
     fetchData();
   }, [contentHash]);
-
   const handleCreatorClick = (userId: string) => {
     router.push(`/verify/creator/${userId}`);
   };
@@ -81,53 +122,14 @@ const VerifyContent: React.FC = () => {
     const updatedUser: User = {
       userId: hierarchy.userId,
       name: result.success ? result.user?.name ?? 'Unknown User' : 'Unknown User',
-      uploadTimestamp: hierarchy.uploadTimestamp,
+      dateOfUpload: hierarchy.dateOfUpload,
       children: [],
     };
-
     for (const child of hierarchy.children) {
       updatedUser.children.push(await fetchUsernames(child));
     }
-
     return updatedUser;
   };
-
-  const renderUserHierarchy = (user: User) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center space-x-2 py-2"
-    >
-      <Avatar className="h-8 w-8 ring-2 ring-primary ring-offset-2 ring-offset-background">
-        <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.name}`} />
-        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-      </Avatar>
-      <div>
-        <p
-          className="cursor-pointer hover:text-primary transition-colors font-medium"
-          onClick={() => handleCreatorClick(user.userId)}
-        >
-          {user.name}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {new Date(user.uploadTimestamp).toLocaleString()}
-        </p>
-      </div>
-      {user.children.length > 0 && (
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-      )}
-      {user.children.length > 0 && (
-        <div className="ml-4">
-          {user.children.map((child, index) => (
-            <div key={index}>{renderUserHierarchy(child)}</div>
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
-
-  // ... (keep the existing helper functions)
 
   if (isLoading) {
     return (
@@ -139,18 +141,13 @@ const VerifyContent: React.FC = () => {
       </LoggedInLayout>
     );
   }
-
   if (error) {
     return (
       <LoggedInLayout className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
         <div className="container max-w-3xl mx-auto p-6">
           <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
             <CardContent className="p-6">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              >
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}>
                 <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
               </motion.div>
               <h2 className="text-2xl font-bold text-center mb-2">Error</h2>
@@ -168,11 +165,7 @@ const VerifyContent: React.FC = () => {
         <div className="container max-w-3xl mx-auto p-6">
           <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
             <CardContent className="p-6">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              >
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}>
                 <AlertCircle className="w-12 h-12 text-warning mx-auto mb-4" />
               </motion.div>
               <h2 className="text-2xl font-bold text-center mb-2">No Data Found</h2>
@@ -183,23 +176,22 @@ const VerifyContent: React.FC = () => {
       </LoggedInLayout>
     );
   }
-
   return (
     <LoggedInLayout className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <div className="container max-w-3xl mx-auto p-6">
-        <motion.h1
+        <motion.h1 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }} 
           className="text-4xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
         >
           Content Verification
         </motion.h1>
         <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            exit={{ opacity: 0, scale: 0.9 }} 
             transition={{ duration: 0.5 }}
           >
             <Card className="backdrop-blur-sm bg-background/30 shadow-xl border-primary/20">
@@ -207,24 +199,24 @@ const VerifyContent: React.FC = () => {
                 <CardTitle className="flex items-center justify-between">
                   <span>Verification Status</span>
                   <Badge
-                    variant={verificationData.verified ? "destructive" : "secondary"}
-                    className="animate-pulse text-lg py-1 px-3"
+                    className={`animate-pulse text-lg py-1 px-3 ${isTampered
+                      ? 'bg-destructive text-white'
+                      : 'bg-green-500 text-white'
+                    }`}
                   >
-                    VERIFIED
+                    {isTampered ? "TAMPERED" : "VERIFIED"}
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   <motion.div
-                    className={`flex items-center gap-4 p-6 rounded-lg ${
-                      verificationData.verified ? 'bg-destructive/20' : 'bg-secondary/20'
-                    }`}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
+                    className={`flex items-center gap-4 p-6 rounded-lg ${isTampered ? 'bg-destructive/20' : 'bg-green-500/10'}`}
+                    initial={{ x: -20, opacity: 0 }} 
+                    animate={{ x: 0, opacity: 1 }} 
                     transition={{ duration: 0.3 }}
                   >
-                    {verificationData.verified ? (
+                    {isTampered ? (
                       <>
                         <ShieldAlert className="w-12 h-12 text-destructive" />
                         <div>
@@ -242,42 +234,45 @@ const VerifyContent: React.FC = () => {
                       </>
                     )}
                   </motion.div>
-
-                  <Tabs defaultValue="details" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                      <TabsTrigger value="details" className="text-lg py-2">Verification Details</TabsTrigger>
-                      <TabsTrigger value="hierarchy" className="text-lg py-2">Uploader Hierarchy</TabsTrigger>
+                  <Tabs defaultValue="Details" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 rounded-lg bg-background p-1 my-2">
+                      {['Details', 'Hierarchy', 'Gemini Insights'].map((tab) => (
+                        <TabsTrigger
+                          key={tab}
+                          value={tab}
+                          className="rounded-md px-3 py-2 text-sm font-medium transition-all
+                            data-[state=active]:bg-primary data-[state=active]:text-primary-foreground
+                            data-[state=active]:shadow-sm"
+                        >
+                          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        </TabsTrigger>
+                      ))}
                     </TabsList>
-                    <TabsContent value="details">
+                    <TabsContent value="Details">
                       <ScrollArea className="h-[250px] rounded-md border p-4 bg-background/50">
-                        <ul className="space-y-3">
-                          {Object.entries(verificationData).map(([key, value]) => (
-                            <motion.li
-                              key={key}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="flex items-center gap-2"
-                            >
-                              <Eye className="w-4 h-4 text-primary" />
-                              <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>
-                              <span className="text-sm text-muted-foreground break-all">{String(value)}</span>
-                            </motion.li>
-                          ))}
-                        </ul>
+                        <VerificationTabVerify result={verificationData} />
                       </ScrollArea>
                     </TabsContent>
-                    <TabsContent value="hierarchy">
+                    <TabsContent value="Hierarchy">
                       <ScrollArea className="h-[250px] rounded-md border p-4 bg-background/50">
                         {uploaderHierarchy ? (
-                          renderUserHierarchy(uploaderHierarchy)
+                          renderUserHierarchy({
+                            user: uploaderHierarchy,
+                            copyrightUserId: "hello"
+                          })
                         ) : (
                           <p>No uploader hierarchy available.</p>
                         )}
                       </ScrollArea>
                     </TabsContent>
+                    <TabsContent value="Gemini Insights">
+                      <ScrollArea className="h-[250px] rounded-md border p-4 bg-background/50">
+                        {factCheck && (
+                          <GeminiAnalysisTab geminiAnalysis={factCheck} />
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
                   </Tabs>
-
                   <div>
                     <h3 className="font-semibold mb-3 text-lg">Share Verification</h3>
                     <div className="flex gap-2">
@@ -294,6 +289,7 @@ const VerifyContent: React.FC = () => {
           </motion.div>
         </AnimatePresence>
       </div>
+      <Footer />
     </LoggedInLayout>
   );
 };

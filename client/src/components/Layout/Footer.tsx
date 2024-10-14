@@ -1,21 +1,17 @@
 import React from 'react'
-import { RiTwitterXLine, RiGithubLine, RiLinkedinBoxLine, RiVideoLine, RiSearchEyeLine, RiShieldCheckLine, RiQuestionLine } from "@remixicon/react";
-
-interface NavigationItem {
-  name: string
-  href: string
-  icon: React.ReactNode
-}
+import { RiTwitterXLine, RiGithubLine, RiLinkedinBoxLine, RiVideoLine, RiSearchEyeLine, RiShieldCheckLine, RiQuestionLine, RiCodeSSlashLine } from "@remixicon/react";
+import { NavigationItem } from '@/lib/frontend-types';
 
 const navigation: {
   main: NavigationItem[]
   social: NavigationItem[]
+  developers: NavigationItem[]
 } = {
   main: [
-    { name: 'Video Detection', href: '#video-detection', icon: <RiVideoLine /> },
-    { name: 'Source Tracing', href: '#source-tracing', icon: <RiSearchEyeLine /> },
-    { name: 'Our Technology', href: '#our-technology', icon: <RiShieldCheckLine /> },
-    { name: 'Support', href: '#support', icon: <RiQuestionLine /> },
+    { name: 'Analyze Video', href: '/public/analyze', icon: <RiVideoLine /> },
+    { name: 'Source Tracing', href: '/public/analyze', icon: <RiSearchEyeLine /> },
+    { name: 'Our Technology', href: '/', icon: <RiShieldCheckLine /> },
+    { name: 'Support', href: 'https://github.com/abhisheksharm-3/credify', icon: <RiQuestionLine /> },
   ],
   social: [
     {
@@ -33,6 +29,11 @@ const navigation: {
       href: 'https://linkedin.com/in',
       icon: <RiLinkedinBoxLine aria-hidden="true" />,
     },
+  ],
+  developers: [
+    { name: 'Abhishek Sharma', href: 'https://www.abhisheksharma.tech/' },
+    { name: 'Arnav Arora', href: 'https://github.com/arnav-03' },
+    { name: 'Garvit Nag', href: 'https://github.com/Garvit-Nag' },
   ],
 }
 
@@ -66,12 +67,22 @@ const Footer: React.FC = () => {
             </nav>
           </div>
           <div>
-            <h3 className="text-md font-semibold mb-2">Legal</h3>
+            <h3 className="text-md font-semibold mb-2">Our Amazing Developers</h3>
             <nav className="flex flex-col space-y-1">
-              <a href="#privacy" className="text-sm hover:text-ruby-600 transition-colors duration-200">Privacy Policy</a>
-              <a href="#terms" className="text-sm hover:text-ruby-600 transition-colors duration-200">Terms of Service</a>
-              <a href="#cookies" className="text-sm hover:text-ruby-600 transition-colors duration-200">Cookie Policy</a>
+              {navigation.developers.map((dev) => (
+                <a
+                  key={dev.name}
+                  href={dev.href}
+                  className="text-sm hover:text-ruby-600 transition-colors duration-200 flex items-center"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <RiCodeSSlashLine className="mr-1 text-ruby-500" />
+                  <span>{dev.name}</span>
+                </a>
+              ))}
             </nav>
+            <p className="text-xs mt-2 text-gray-600">Crafted with love and dedication!</p>
           </div>
           <div>
             <h3 className="text-md font-semibold mb-2">Connect With Us</h3>

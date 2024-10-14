@@ -1,32 +1,35 @@
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { UserIcon, LockIcon, BarcodeIcon, ImportIcon } from "lucide-react";
+import { UserIcon, LockIcon, CreditCardIcon, PuzzleIcon } from "lucide-react";
 
 export function AccountSettings() {
+  const settingsLinks = [
+    { icon: UserIcon, text: "Profile", href: "/user/profile" },
+    { icon: LockIcon, text: "Security", href: "/user/profile" },
+    { icon: CreditCardIcon, text: "Billing", href: "/user/profile" },
+    { icon: PuzzleIcon, text: "Integrations", href: "/user/profile" },
+  ];
+
   return (
-    <Card>
+    <Card className="col-span-2 lg:col-span-1">
       <CardHeader>
-        <CardTitle>Account Settings</CardTitle>
-        <CardDescription>Manage your Credify account and security settings.</CardDescription>
+        <CardTitle className="text-2xl font-bold">Account Settings</CardTitle>
+        <CardDescription>Manage your Credify account and security</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
-          <Link href="#" className="flex items-center gap-2 text-primary" prefetch={false}>
-            <UserIcon className="h-4 w-4" />
-            Profile
-          </Link>
-          <Link href="#" className="flex items-center gap-2 text-primary" prefetch={false}>
-            <LockIcon className="h-4 w-4" />
-            Security
-          </Link>
-          <Link href="#" className="flex items-center gap-2 text-primary" prefetch={false}>
-            <BarcodeIcon className="h-4 w-4" />
-            Billing
-          </Link>
-          <Link href="#" className="flex items-center gap-2 text-primary" prefetch={false}>
-            <ImportIcon className="h-4 w-4" />
-            Integrations
-          </Link>
+          {settingsLinks.map((link, index) => (
+            <Link 
+              key={index}
+              href={link.href} 
+              className="flex items-center p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+              prefetch={false}
+            >
+              <link.icon className="h-5 w-5 mr-3 text-primary" />
+              <span className="text-lg">{link.text}</span>
+            </Link>
+          ))}
         </div>
       </CardContent>
     </Card>

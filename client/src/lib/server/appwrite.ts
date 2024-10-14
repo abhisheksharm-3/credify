@@ -1,8 +1,7 @@
-
-// src/lib/server/appwrite.ts
 "use server";
 import { Client, Account, ID, Users, Databases, Query } from "node-appwrite";
 import { cookies } from "next/headers";
+import { HashQueryResult } from "../frontend-types";
 
 export async function createSessionClient() {
   const client = new Client()
@@ -13,7 +12,6 @@ export async function createSessionClient() {
   if (!session || !session.value) {
     throw new Error("No session");
   }
-
   client.setSession(session.value);
 
   return {
@@ -52,7 +50,6 @@ export async function signUpWithEmail(formData: FormData) {
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const name = `${firstName} ${lastName}`.trim();
-
   const { account } = await createAdminClient();
 
   try {
@@ -74,7 +71,6 @@ export async function signUpWithEmail(formData: FormData) {
 export async function loginWithEmail(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-
   const { account } = await createAdminClient();
 
   try {
@@ -95,10 +91,7 @@ export async function loginWithEmail(formData: FormData) {
 export async function updatePassword(oldPassword: string, newPassword: string) {
   try {
     const { account } = await createSessionClient();
-
-    // Attempt to update the password directly
     await account.updatePassword(newPassword, oldPassword);
-
     return { success: true };
   } catch (error) {
     console.error("Password update failed:", error);
@@ -109,11 +102,9 @@ export async function updatePassword(oldPassword: string, newPassword: string) {
 export async function getLogDetails() {
   try {
     const { account } = await createSessionClient();
-    // Fetch the logs
     const logResponse = await account.listLogs(
-      [] // queries (optional)
+      []
     );
-
     // Format the logs
     const formattedLogs = logResponse.logs.map((log) => {
       return {
@@ -128,7 +119,6 @@ export async function getLogDetails() {
       };
     });
 
-    // Slice to get only the latest 5 results
     const latestLogs = formattedLogs.slice(-5);
     return { success: true, logs: latestLogs };
   } catch (error) {
@@ -140,8 +130,8 @@ export async function updatePhoneNumber(phone: string, password: string) {
   try {
     const { account } = await createSessionClient();
     const result = await account.updatePhone(
-      phone, // phone
-      password // password
+      phone,
+      password
     );
     return { success: true };
   } catch (error) {
@@ -163,7 +153,7 @@ export async function getUserById(userId: string) {
 export async function sendVerificationEmail() {
   try {
     const { account } = await createSessionClient();
-    await account.createVerification(`${process.env.DEPLOYMENT_ADDRESS!}/verify-email`);
+    await account.createVerification(`${process.env.DEPLOYMENT_ADDRESS!}/verifyEmail`);
     return { success: true, message: "Verification email sent." };
   } catch (error) {
     console.error("Failed to send verification email:", error);
@@ -175,9 +165,7 @@ export async function verifyEmail(userId: string, secret: string) {
   try {
     console.log(userId, secret);
     const { account } = await createSessionClient();
-
-    await account.updateVerification(userId, secret);  // Verifies email using userId and secret
-
+    await account.updateVerification(userId, secret);
     return { success: true, message: "Email successfully verified." };
   } catch (error) {
     console.error("Email verification failed:", error);
@@ -216,9 +204,9 @@ export async function setProfilePhoto(userId: string, profileURL: string) {
 export async function setIdPhoto(userId: string, IdUrl: string) {
   try {
     const { users } = await createAdminClient();
-    const user = await users.get(userId);  // Fetch current user preferences
-    const currentPrefs = user.prefs || {};  // Get existing preferences or empty object
-    await users.updatePrefs(userId, { ...currentPrefs, IdPhoto: IdUrl });  // Merge new data with existing prefs
+    const user = await users.get(userId);
+    const currentPrefs = user.prefs || {};
+    await users.updatePrefs(userId, { ...currentPrefs, IdPhoto: IdUrl });
     return { success: true, message: "ID photo updated." };
   } catch (error) {
     console.error("Failed to update ID photo:", error);
@@ -229,12 +217,8 @@ export async function setUserAsVerified() {
   try {
     const { users } = await createAdminClient();
     const { account } = await createSessionClient();
-    
     const user = await account.get();
-    
-    // Add 'verified' label to user
     await users.updateLabels(user.$id, [...(user.labels || []), 'verified']);
-    
     return { success: true, message: "User set as verified." };
   } catch (error) {
     console.error("Failed to set user as verified:", error);
@@ -244,26 +228,152 @@ export async function setUserAsVerified() {
 
 export async function getFileUploadDateByHash(hash: string, userId: string): Promise<string | undefined> {
   const { account } = await createAdminClient();
-    const databases = new Databases(account.client);
+  const databases = new Databases(account.client);
   try {
-      const response = await databases.listDocuments(
-        process.env.APPWRITE_DATABASE_ID!,
-        process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
-          [
-              Query.equal('userId', userId),
-              Query.or([
-                  Query.equal('image_hash', hash),
-                  Query.equal('video_hash', hash)
-              ])
-          ]
-      );
-      if (response.documents.length > 0) {
-          const file = response.documents[0];
-          return file.verificationDate;
-      } else {
-          return undefined;
-      }
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+      [
+        Query.equal('userId', userId),
+        Query.or([
+          Query.equal('image_hash', hash),
+          Query.equal('video_hash', hash)
+        ])
+      ]
+    );
+    if (response.documents.length > 0) {
+      const file = response.documents[0];
+      return file.verificationDate;
+    } else {
+      return undefined;
+    }
   } catch (error) {
-      throw error;
+    throw error;
   }
 }
+
+
+export async function getDocumentsByHash(hash: string): Promise<HashQueryResult> {
+  try {
+    console.log("called hash function with hash", hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+    console.log("called hash function with hash", hash);
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.APPWRITE_VERIFIED_CONTENT_COLLECTION_ID!,
+      [
+        Query.or([
+          Query.equal('image_hash', hash),
+          Query.equal('video_hash', hash)
+        ])
+      ]
+    );
+
+    return {
+      success: true,
+      documents: response.documents
+    };
+  } catch (error) {
+    console.error("Failed to fetch documents by hash:", error);
+    return {
+      success: false,
+      error: "Failed to fetch documents. Please try again."
+    };
+  }
+}
+
+export async function createCopyrightDocument(userId: string, mediaHash: string) {
+  try {
+    console.log("called hash function with hash", userId, mediaHash);
+    
+    // Use the client and admin properties from createAdminClient
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);  // Use the client from account
+
+    const response = await databases.createDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      ID.unique(),
+      {
+        copyrightOwnerId: userId,
+        mediaHash: mediaHash,
+      }
+    );
+
+    return { success: true, document: response };
+
+  } catch (error) {
+    console.error("Error issuing certificate:", error);
+    return { success: false, error: "Error issuing certificate" };
+  }
+}
+export async function updateIsDisputeByHash(hash: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log("Checking for document with mediaHash:", hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    // Step 1: Find the document by mediaHash
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      [
+        Query.equal('mediaHash', hash),  // Directly comparing with mediaHash
+      ]
+    );
+
+    if (response.documents.length === 0) {
+      return { success: false, error: "No document found with the specified mediaHash." };
+    }
+
+    // Step 2: Update the first document's isDispute property to true
+    const documentId = response.documents[0].$id; // Get the ID of the first document found
+
+    await databases.updateDocument(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      documentId,
+      {
+        isDisputed: true, // Set isDispute to true
+      }
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update isDispute:", error);
+    return { success: false, error: "Failed to update isDispute. Please try again." };
+  }
+}
+
+export async function fetchUserInfoByHash(hash: string): Promise<{ success: boolean; userId?: string; user?: any; error?: string }> {
+  try {
+    console.log("Checking for document with mediaHash:", hash);
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+
+    // Step 1: Find the document by mediaHash
+    const response = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!,
+      [
+        Query.equal('mediaHash', hash), // Directly comparing with mediaHash
+      ]
+    );
+
+    if (response.documents.length === 0) {
+      return { success: false, error: "No document found with the specified mediaHash." };
+    }
+
+    // Step 2: Extract userId and userName from the found document
+    const document = response.documents[0]; // Get the first document found
+    const userId = document.copyrightOwnerId; // Assuming userId is a field in the document
+    const user = await getUserById(userId); // Await the getUserById call
+
+    return { success: true, userId, user }; // Return user instead of userName
+  } catch (error) {
+    console.error("Failed to fetch user info:", error);
+    return { success: false, error: "Failed to fetch user info. Please try again." };
+  }
+}
+

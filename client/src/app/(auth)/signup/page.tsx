@@ -7,14 +7,7 @@ import { RotateCw, Mail, Lock, User, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form";
 import { getLoggedInUser, signUpWithEmail } from "@/lib/server/appwrite";
 import { signUpWithGoogle } from "@/lib/server/oauth";
 import Layout from "@/components/Layout/Layout";
@@ -33,13 +26,11 @@ const Signup: React.FC = () => {
   useEffect(() => {
     setColor(theme === "dark" ? "#ffffff" : "#000000");
   }, [theme]);
-
   const password = useWatch({
     control: form.control,
     name: "password",
     defaultValue: "",
   });
-
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -51,7 +42,6 @@ const Signup: React.FC = () => {
         console.error("Error checking user session:", error);
       }
     };
-
     checkUser();
   }, [router]);
 
@@ -82,18 +72,10 @@ const Signup: React.FC = () => {
       }
     });
   };
-
   return (
     <Layout>
       <div className="h-full md:min-h-screen flex flex-col md:flex-row border-b">
-        <Particles
-          className="absolute inset-0"
-          quantity={100}
-          ease={80}
-          color={color}
-          refresh
-        />
-        {/* Left side - Branding and Information */}
+        <Particles className="absolute inset-0" quantity={100} ease={80} color={color} refresh />
         <div className="w-full z-30 md:w-1/2 bg-gradient-to-br from-primary to-secondary p-12 hidden md:flex flex-col justify-center items-center text-white">
           <h1 className="text-4xl font-bold mb-6">Credify</h1>
           <p className="text-xl mb-8 text-center">Join the Revolution in Digital Authenticity</p>
@@ -106,8 +88,6 @@ const Signup: React.FC = () => {
             Sign up now to join our community of content creators and guardians of digital integrity. Together, we&apos;re building a more trustworthy online world.
           </p>
         </div>
-
-        {/* Right side - Signup Form */}
         <div className="w-full md:w-1/2 bg-background flex items-center justify-center p-12">
           <div className="w-full max-w-md z-30">
             <h2 className="text-3xl font-bold mb-6 text-center">Create Your Account</h2>
@@ -132,8 +112,7 @@ const Signup: React.FC = () => {
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
+                    )} />
                   <FormField
                     control={form.control}
                     name="lastName"
@@ -148,8 +127,7 @@ const Signup: React.FC = () => {
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
+                    )} />
                 </div>
                 <FormField
                   control={form.control}
@@ -165,8 +143,7 @@ const Signup: React.FC = () => {
                       </FormControl>
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
+                  )} />
                 <FormField
                   control={form.control}
                   name="password"
@@ -182,11 +159,8 @@ const Signup: React.FC = () => {
                       <PasswordStrengthBar password={password} />
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                >
+                    )} />
+                <motion.div whileTap={{ scale: 0.95 }}>
                   <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 transition-all duration-300" disabled={isLoading}>
                     {isLoading ? (
                       <div className="flex items-center justify-center gap-2">
@@ -232,5 +206,4 @@ const Signup: React.FC = () => {
     </Layout>
   );
 };
-
 export default Signup;

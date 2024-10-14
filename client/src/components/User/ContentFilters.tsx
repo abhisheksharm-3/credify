@@ -1,13 +1,14 @@
 import React from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+// First, let's properly type the props
 interface ContentFiltersProps {
-  filterStatus: string
-  setFilterStatus: (status: string) => void
-  filterType: string
-  setFilterType: (type: string) => void
-  sortBy: 'Date' | 'Status' | 'Title'
-  setSortBy: (sortBy: 'Date' | 'Status' | 'Title') => void
+  filterStatus: string;
+  setFilterStatus: (value: string) => void;
+  filterType: string;
+  setFilterType: (value: string) => void;
+  sortBy: 'Date' | 'Status' | 'Title';
+  setSortBy: (value: 'Date' | 'Status' | 'Title') => void;
 }
 
 export default function ContentFilters({
@@ -18,10 +19,20 @@ export default function ContentFilters({
   sortBy,
   setSortBy
 }: ContentFiltersProps) {
+  // Handle sort change with proper type checking
+  const handleSortChange = (value: string) => {
+    if (value === 'Date' || value === 'Status' || value === 'Title') {
+      setSortBy(value);
+    }
+  };
+
   return (
-    <div className="flex space-x-4 flex-wrap">
-      <Select value={filterStatus} onValueChange={setFilterStatus}>
-        <SelectTrigger className="w-[180px]">
+    <div className="flex flex-col sm:flex-row gap-4 w-full">
+      <Select 
+        value={filterStatus} 
+        onValueChange={setFilterStatus}
+      >
+        <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter by Status" />
         </SelectTrigger>
         <SelectContent>
@@ -31,8 +42,12 @@ export default function ContentFilters({
           <SelectItem value="Tampered">Tampered</SelectItem>
         </SelectContent>
       </Select>
-      <Select value={filterType} onValueChange={setFilterType}>
-        <SelectTrigger className="w-[180px]">
+
+      <Select 
+        value={filterType} 
+        onValueChange={setFilterType}
+      >
+        <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filter by Type" />
         </SelectTrigger>
         <SelectContent>
@@ -41,8 +56,12 @@ export default function ContentFilters({
           <SelectItem value="image">Images</SelectItem>
         </SelectContent>
       </Select>
-      <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'Date' | 'Status' | 'Title')}>
-        <SelectTrigger className="w-[180px]">
+
+      <Select 
+        value={sortBy} 
+        onValueChange={handleSortChange}
+      >
+        <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>

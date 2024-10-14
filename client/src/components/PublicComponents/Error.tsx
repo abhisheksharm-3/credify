@@ -1,10 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
-
-interface ErrorSectionProps {
-  error: string;
-}
+import { ErrorSectionProps } from '@/lib/frontend-types';
 
 export default function ErrorSection({ error }: ErrorSectionProps) {
   return (

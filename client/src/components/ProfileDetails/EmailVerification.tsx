@@ -1,13 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, ChevronDown, ChevronUp, Mail, X, CircleCheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button"
-
-interface EmailVerificationProps {
-    emailVerified: "yes" | "no" | "send" | string;
-    openStep: number | null; 
-    toggleStep: (step: number) => void;
-    handleAction: (action: number) => void;
-}
+import { EmailVerificationProps } from "@/lib/frontend-types";
 
 const EmailVerification: React.FC<EmailVerificationProps> = ({
     emailVerified,

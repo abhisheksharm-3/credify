@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import {
   Navbar,
   NavbarBrand,
@@ -9,14 +9,12 @@ import {
   NavbarMenu,
   NavbarMenuItem,
   Link,
-  Button,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
   Avatar,
 } from "@nextui-org/react";
-import Image from "next/image";
 import { ModeToggle } from "../ThemeSwitcher";
 import { useRouter } from "next/navigation";
 import {
@@ -26,6 +24,7 @@ import {
   RiUserLine,
   RiLogoutBoxLine,
 } from "@remixicon/react";
+import Image from "next/image";
 
 export default function NavbarLoggedIn() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -58,9 +57,8 @@ export default function NavbarLoggedIn() {
           className="sm:hidden"
         />
         <Link href="/">
-          <NavbarBrand className="">
-            <RiShieldCheckLine />
-            <p>Credify</p>
+        <NavbarBrand className="flex items-center gap-2">
+            <Image src="/images/logo.png" alt="Credify Logo" width={170} height={40} />
           </NavbarBrand>
         </Link>
       </NavbarContent>

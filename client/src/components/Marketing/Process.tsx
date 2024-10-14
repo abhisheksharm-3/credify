@@ -1,12 +1,6 @@
 import React from 'react'
 import { Video, Shield, Award } from 'lucide-react'
-
-interface ProcessStepProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  step: number;
-}
+import { ProcessStepProps } from '@/lib/frontend-types'
 
 const ProcessStep: React.FC<ProcessStepProps> = ({ icon, title, description, step }) => (
   <div className="flex flex-col items-center justify-start space-y-4 text-center relative">
@@ -45,7 +39,7 @@ export const Process: React.FC = () => (
         <ProcessStep
           icon={<Award className="h-10 w-10 text-primary" />}
           title="Certification"
-          description="Receive a Credify digital certificate to prove your video's authenticity."
+          description="Receive a unique shareable link to prove your video's authenticity."
           step={3}
         />
       </div>

@@ -1,33 +1,7 @@
 "use client";
 import { createContext, useContext, useRef, useState } from "react";
 import { defaultErrorMessages } from "./camera-types";
-
-interface CameraProviderProps {
-  children: React.ReactNode;
-}
-
-interface CameraContextType {
-  numberOfCameras: number;
-  activeDeviceId: string | undefined;
-  images: string[];
-  devices: MediaDeviceInfo[];
-  playerRef: React.RefObject<HTMLVideoElement>;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
-  containerRef: React.RefObject<HTMLDivElement>;
-  notSupported: boolean;
-  permissionDenied: boolean;
-
-  setNumberOfCameras: React.Dispatch<React.SetStateAction<number>>;
-  setActiveDeviceId: React.Dispatch<React.SetStateAction<string | undefined>>;
-  setDevices: React.Dispatch<React.SetStateAction<MediaDeviceInfo[]>>;
-  addImage: (imageData: string) => void;
-  removeImage: (index: number) => void;
-  resetImages: () => void;
-  initCameraStream: () => Promise<void>;
-  takePhoto: () => string | undefined;
-  stopStream: () => void;
-  switchCamera: () => void;
-}
+import { CameraContextType, CameraProviderProps } from "@/lib/frontend-types";
 
 const CameraContext = createContext<CameraContextType | undefined>(undefined);
 
@@ -38,7 +12,6 @@ export const CameraProvider = ({ children }: CameraProviderProps) => {
   const [images, setImages] = useState<string[]>([]);
   const [numberOfCameras, setNumberOfCameras] = useState(0);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-
   const playerRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,7 +26,6 @@ export const CameraProvider = ({ children }: CameraProviderProps) => {
       setNotSupported(true);
       return;
     }
-
     try {
       navigator.mediaDevices
         .getUserMedia({
@@ -81,7 +53,6 @@ export const CameraProvider = ({ children }: CameraProviderProps) => {
   };
   const handleError = (error: Error) => {
     console.error(error);
-
     //https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
     if (error.name === "PermissionDeniedError") {
       setPermissionDenied(true);
@@ -114,8 +85,6 @@ export const CameraProvider = ({ children }: CameraProviderProps) => {
       !containerRef.current?.offsetHeight
     )
       return;
-
-
     const playerWidth = playerRef.current.videoWidth ?? 1280;
     const playerHeight = playerRef.current.videoHeight ?? 720;
     const playerAR = playerWidth / playerHeight;
@@ -199,7 +168,6 @@ export const CameraProvider = ({ children }: CameraProviderProps) => {
         containerRef,
         notSupported,
         permissionDenied,
-
         setNumberOfCameras,
         setActiveDeviceId,
         setDevices,
