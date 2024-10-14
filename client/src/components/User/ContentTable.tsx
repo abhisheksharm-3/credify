@@ -21,14 +21,28 @@ export default function ContentTable({ files }: ContentTableProps) {
     return type === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />
   }
 
-  const handleDelete = (content: FileInfo) => {
-    toast("Delete Content", {
+  const handleDelete = async (content: FileInfo) => {
+    toast.warning("Delete Content", {
       description: `Are you sure you want to delete "${content.fileName}"?`,
       action: (
-        <Button variant="destructive" size="sm" onClick={() => {
-          toast("Content Deleted", {
-            description: `"${content.fileName}" has been deleted.`,
-          })
+        <Button variant="destructive" size="sm" onClick={async () => {
+          try {
+            const response = await fetch(`/api/content/delete`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: content.fileId }),
+            });
+            if (!response.ok) throw new Error('Failed to delete content');
+            toast.success("Content Deleted", {
+              description: `"${content.fileName}" has been deleted.`,
+            });
+            console.log('Content deleted successfully');
+          } catch (error) {
+            console.error('Error deleting content:', error);
+            toast.error("Delete Failed", {
+              description: `Failed to delete "${content.fileName}". Please try again.`,
+            });
+          }
         }} >
           Delete
         </Button>
