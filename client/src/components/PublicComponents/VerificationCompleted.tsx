@@ -13,7 +13,7 @@ import GeminiAnalysisTab from "./GeminiAnalysisTab"
 import ForgeryAnalysisTab from "./ForgeryAnalysisTab"
 import ShareableLink from "./ShareableLink"
 import CopyrightApply from "./CopyrightApply"
-import { fetchUserInfoByHash } from "@/lib/server/appwrite"
+import { compareHashes, fetchUserInfoByHash } from "@/lib/server/appwrite"
 
 interface VerificationCompletedProps {
   result: VerificationResult
@@ -30,19 +30,62 @@ export default function VerificationCompleted({
   geminiAnalysis,
   shareableLink
 }: VerificationCompletedProps) {
-  
   const [copyright, setCopyright] = useState(false);
-    useEffect(() => {
-    const fetchUser = async () => {
-        const userInfoResponse = await fetchUserInfoByHash(result.image_hash||result.video_hash || "");
-        if (userInfoResponse.success) {
-            setCopyright(true);
-        } else {
+  const [matchingHash, setMatchingHash] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkCopyright = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const hash = result.image_hash || result.video_hash;
+        if (!hash) {
+          throw new Error("No hash found in the result");
         }
+        const fileType = result.image_hash ? 'image' : 'video';
+        
+        const userInfoResponse = await fetchUserInfoByHash(hash);
+        
+        if (userInfoResponse.success) {
+          setCopyright(true);
+        } else {
+          // Only compare hashes if fetchUserInfoByHash was not successful
+          const comparisonResult = await compareHashes(hash, fileType);
+          if (comparisonResult.data && comparisonResult.data.matching_hash !== "") {
+            setCopyright(true);
+            setMatchingHash(comparisonResult.data.matching_hash || "");
+          }
+        }
+      } catch (err) {
+        console.error("Error checking copyright:", err);
+        setError("An error occurred while checking copyright status. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
     };
     
-    fetchUser();
-}, [result]);
+    checkCopyright();
+  }, [result]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <motion.div
       className="space-y-4 p-4 px-2 md:px-4"
@@ -57,7 +100,11 @@ export default function VerificationCompleted({
         <CardContent>
           <ContentIntegrityAlert forgeryResult={forgeryResult} />
           <div className="space-y-4 my-4"></div> 
-          {isExisting && copyright ? <ExistingContentAlert result={result} /> : <CopyrightApply result={result} />}
+          {isExisting && copyright ? (
+            <ExistingContentAlert hash={matchingHash || result.image_hash || result.video_hash || ""} />
+          ) : (
+            <CopyrightApply result={result} />
+          )}
         </CardContent>
       </Card>
 
