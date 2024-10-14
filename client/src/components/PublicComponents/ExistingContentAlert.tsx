@@ -4,13 +4,13 @@ import { VerificationResult } from "@/lib/frontend-types";
 
 
 interface ExistingContentAlertProps {
-  result: VerificationResult;
+  hash: string;
 }
 
-export default function ExistingContentAlert({ result }: ExistingContentAlertProps) {
+export default function ExistingContentAlert({ hash }: ExistingContentAlertProps) {
   return (
     <div className="space-y-4">
-       <CopyrightDispute mediaHash={result.image_hash || result.video_hash || ""}
+       <CopyrightDispute mediaHash={hash || ""}
       />
     </div>
   );
