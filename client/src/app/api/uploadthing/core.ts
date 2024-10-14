@@ -8,6 +8,22 @@ const f = createUploadthing();
 
 const MAX_VIDEO_SIZE = "1024MB";
 const MAX_IMAGE_SIZE = "128MB";
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/bmp",
+  "image/tiff",
+  "image/webp"
+];
+
+const ACCEPTED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/avi",
+  "video/quicktime", // .mov
+  "video/x-flv",
+  "video/x-ms-wmv"
+];
 
 interface User {
   id: string;
@@ -79,8 +95,8 @@ const handleUploadComplete = async ({ metadata, file }: { metadata: { userId: st
 
 export const ourFileRouter = {
   contentUploader: f({
-    video: { maxFileSize: MAX_VIDEO_SIZE },
-    image: { maxFileSize: MAX_IMAGE_SIZE },
+    video: { maxFileSize: MAX_VIDEO_SIZE, additionalProperties: { acceptedMimeTypes: ACCEPTED_VIDEO_TYPES } },
+    image: { maxFileSize: MAX_IMAGE_SIZE, additionalProperties: { acceptedMimeTypes: ACCEPTED_IMAGE_TYPES } },
   })
     .middleware(async ({ req }) => {
       const user = await auth(req);
@@ -90,8 +106,8 @@ export const ourFileRouter = {
     .onUploadComplete(handleUploadComplete),
 
   analyzeContent: f({
-    video: { maxFileSize: MAX_VIDEO_SIZE },
-    image: { maxFileSize: MAX_IMAGE_SIZE },
+    video: { maxFileSize: MAX_VIDEO_SIZE, additionalProperties: { acceptedMimeTypes: ACCEPTED_VIDEO_TYPES } },
+    image: { maxFileSize: MAX_IMAGE_SIZE, additionalProperties: { acceptedMimeTypes: ACCEPTED_IMAGE_TYPES } },
   })
     .middleware(() => ({ userId: "anonymous" }))
     .onUploadComplete(async ({ metadata, file }) => {
