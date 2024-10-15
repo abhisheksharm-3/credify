@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UploadIcon, CheckCircle, Loader2, AlertCircle, ArrowRight } from "lucide-react";
+import { UploadIcon, CheckCircle, Loader2, AlertCircle, ArrowRight, ImageIcon, VideoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +38,9 @@ export default function UploadContentDialog() {
     setUploadProgress(0);
   };
 
+  const supportedImageFormats = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'];
+  const supportedVideoFormats = ['mp4', 'avi', 'mov', 'flv', 'wmv'];
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -53,6 +56,30 @@ export default function UploadContentDialog() {
             Upload a video or image to check its authenticity and attribution.
           </DialogDescription>
         </DialogHeader>
+        
+        <div className="my-4 p-4 bg-muted rounded-lg">
+          <h4 className="font-semibold mb-2">File Requirements:</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center">
+              <ImageIcon className="h-5 w-5 mr-2 text-primary" />
+              <span className="text-sm">Images: max 128MB</span>
+            </div>
+            <div className="flex items-center">
+              <VideoIcon className="h-5 w-5 mr-2 text-primary" />
+              <span className="text-sm">Videos: max 1GB</span>
+            </div>
+          </div>
+          <div className="mt-3">
+            <h5 className="font-medium mb-1">Supported Formats:</h5>
+            <p className="text-xs text-muted-foreground">
+              Images: {supportedImageFormats.join(', ')}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Videos: {supportedVideoFormats.join(', ')}
+            </p>
+          </div>
+        </div>
+
         {uploadState === 'idle' && (
           <UploadDropzone
             endpoint="contentUploader"

@@ -377,3 +377,53 @@ export async function fetchUserInfoByHash(hash: string): Promise<{ success: bool
   }
 }
 
+export async function compareHashes(hashToCompare: string, fileType: 'image' | 'video') {
+  try {
+    const { account } = await createAdminClient();
+    const databases = new Databases(account.client);
+    // Fetch all hashes from the copyright collection
+    const copyrightDocs = await databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID!,
+      process.env.COPYRIGHT_COLLECTION_ID!
+    );
+
+    const hashArray = copyrightDocs.documents.map(doc => doc.mediaHash);
+
+    // Prepare the payload for the backend service
+    const payload = {
+      hash_to_compare: hashToCompare,
+      hash_array: hashArray,
+      file_type: fileType
+    };
+
+    // Make a POST request to the backend service
+    const response = await fetch(`${process.env.VERIFICATION_SERVICE_BASE_URL}/compare_hashes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to compare hashes');
+    }
+
+    const result = await response.json();
+
+    return {
+      success: true,
+      data: {
+        message: result.message,
+        results: result.results,
+        matching_hash: result.matching_hash
+      },
+    };
+  } catch (error) {
+    console.error('Error comparing hashes:', error);
+    return {
+      success: false,
+      error: 'Failed to compare hashes',
+    };
+  }
+}
