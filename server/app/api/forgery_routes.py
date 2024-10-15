@@ -84,7 +84,10 @@ async def process_image(firebase_filename: str):
         results["face_manipulation"] = face_manipulation_service.detect_manipulation(firebase_filename)
         logging.info(f"Face manipulation detection result: {results['face_manipulation']}")
     else:
-        results["face_manipulation"] = None
+        results["face_manipulation"] = {
+            "is_manipulated": False,
+            "confidence": "0%"
+        }
         logging.info("Face manipulation detection skipped (no face detected)")
     logging.info(f"Image processing completed for: {firebase_filename}")
     return results
@@ -132,7 +135,10 @@ async def process_video(firebase_filename: str):
                 "collective_detection": False,
                 "collective_confidence": 0.0
             },
-            "face_manipulation": None,
+            "face_manipulation": {
+                "collective_detection": False,
+                "collective_confidence": 0.0
+            },
             "gan_detection": {
                 "collective_detection": False,
                 "collective_confidence": 0.0

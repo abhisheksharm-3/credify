@@ -4,11 +4,44 @@ from typing import Union
 from PIL import Image
 from io import BytesIO
 import imghdr
+import cv2
+import os
 from fastapi import HTTPException
+import io
 from app.utils.file_utils import get_file_content
+import logging
 
 SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp']
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Define the paths to the XML files
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+xml_paths = {
+    'frontal': os.path.join(project_root, 'models', 'haarcascade_frontalface_default.xml'),
+    'frontal_alt': os.path.join(project_root, 'models', 'haarcascade_frontalface_alt2.xml'),
+    'profile': os.path.join(project_root, 'models', 'haarcascade_profileface.xml')
+}
+
+# Try to load the pre-trained face detection models
+face_cascades = {}
+for name, path in xml_paths.items():
+    try:
+        if not os.path.exists(path):
+            logger.error(f"Error: XML file not found at {path}")
+            continue
+        cascade = cv2.CascadeClassifier(path)
+        if cascade.empty():
+            logger.error(f"Error: Unable to load the cascade classifier. XML file is empty or invalid: {path}")
+        else:
+            face_cascades[name] = cascade
+            logger.info(f"Successfully loaded face detection model from: {path}")
+    except Exception as e:
+        logger.error(f"Error loading face detection model {name}: {str(e)}")
+    
 def verify_image_format(firebase_filename: str):
     content = get_file_content(firebase_filename)
     file_ext = '.' + (imghdr.what(BytesIO(content)) or '')
@@ -38,19 +71,29 @@ def strip_metadata(img: Image.Image) -> Image.Image:
     img_without_exif.putdata(data)
     return img_without_exif
 
-def detect_face(image_content: bytes) -> bool:
+def detect_face(image_input) -> bool:
     """
     Enhanced face detection using cascaded classifiers.
     Args:
-        image_content: Raw image bytes
+        image_input: Either raw image bytes or a filename
     Returns:
         bool: True if any faces are detected, False otherwise
     """
     try:
-        # Decode image
-        nparr = np.frombuffer(image_content, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        # Determine if the input is bytes or a filename
+        if isinstance(image_input, bytes):
+            # Decode image from bytes
+            nparr = np.frombuffer(image_input, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        elif isinstance(image_input, str):
+            # Read image from file
+            img = cv2.imread(image_input)
+        else:
+            logger.error("Invalid input type for detect_face")
+            return False
+
         if img is None:
+            logger.error("Failed to load image in detect_face")
             return False
 
         # Convert to grayscale
@@ -60,40 +103,20 @@ def detect_face(image_content: bytes) -> bool:
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
         enhanced_gray = clahe.apply(gray)
         
-        # Try frontal face detection first
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        faces = face_cascade.detectMultiScale(
-            enhanced_gray,
-            scaleFactor=1.1,
-            minNeighbors=4,
-            minSize=(30, 30)
-        )
+        # Try each cascade classifier
+        for name, cascade in face_cascades.items():
+            faces = cascade.detectMultiScale(
+                enhanced_gray,
+                scaleFactor=1.1,
+                minNeighbors=4,
+                minSize=(30, 30)
+            )
+            if len(faces) > 0:
+                logger.info(f"Face detected using {name} classifier")
+                return True
         
-        if len(faces) > 0:
-            return True
-            
-        # Try alternate frontal face classifier
-        alt_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
-        faces = alt_cascade.detectMultiScale(
-            enhanced_gray,
-            scaleFactor=1.15,
-            minNeighbors=3,
-            minSize=(30, 30)
-        )
-        
-        if len(faces) > 0:
-            return True
-            
-        # Try profile face detection as last resort
-        profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
-        faces = profile_cascade.detectMultiScale(
-            enhanced_gray,
-            scaleFactor=1.1,
-            minNeighbors=3,
-            minSize=(30, 30)
-        )
-        
-        return len(faces) > 0
-
-    except Exception:
+        logger.info("No face detected")
+        return False
+    except Exception as e:
+        logger.error(f"Error in detect_face: {str(e)}")
         return False

@@ -2,7 +2,9 @@ from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 from app.services import video_service, image_service, antispoof_service
 from app.services.antispoof_service import antispoof_service
+from app.services.hash_comparison_service import compare_hash_with_array
 from app.services.image_service import compare_images
+from typing import List
 import logging
 import os
 
@@ -14,6 +16,11 @@ class ContentRequest(BaseModel):
 class CompareRequest(BaseModel):
     url1: str
     url2: str
+    
+class CompareHashesRequest(BaseModel):
+    hash_to_compare: str
+    hash_array: List[str]
+    file_type: str
     
 SUPPORTED_VIDEO_FORMATS = ['mp4', 'avi', 'mov', 'flv', 'wmv']
 SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp']
@@ -97,3 +104,17 @@ async def compare_images_route(request: CompareRequest):
     except Exception as e:
         logging.error(f"Error in image comparison: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error in image comparison: {str(e)}")
+    
+   
+@router.post("/compare_hashes")
+async def compare_hashes_route(request: CompareHashesRequest):
+    try:
+        comparison_results = compare_hash_with_array(request.hash_to_compare, request.hash_array, request.file_type)
+        return {
+            "message": comparison_results["message"],
+            "results": comparison_results["results"],
+            "matching_hash": comparison_results["matching_hash"]
+        }
+    except Exception as e:
+        logging.error(f"Error in hash comparison: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in hash comparison: {str(e)}")
