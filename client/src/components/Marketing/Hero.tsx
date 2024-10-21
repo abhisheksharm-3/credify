@@ -3,15 +3,15 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useTheme } from 'next-themes'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Trophy } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
 const GeminiIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 
@@ -45,7 +45,12 @@ export const Hero: React.FC = () => {
               <p className="max-w-[600px] text-muted-foreground text-lg sm:text-xl">
                 Unleash advanced video verification to protect your content and preserve authenticity in the digital age.
               </p>
-            </div>
+            </div><Link href="/about" className="no-underline">
+              <Badge variant="secondary" className="w-fit hover:bg-secondary/80 transition-colors">
+                <Trophy className="w-4 h-4 mr-2" />
+                Winner: Google GenAI Exchange Hackathon
+              </Badge>
+            </Link>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button asChild size="lg">
                 <Link href="/login">Get Started</Link>

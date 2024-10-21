@@ -13,7 +13,7 @@ import {
   Button,
   Link
 } from "@nextui-org/react";
-import { RiVideoLine, RiShieldCheckLine, RiSearchEyeLine, RiCustomerServiceLine, RiLoginBoxLine } from "@remixicon/react";
+import { RiVideoLine, RiShieldCheckLine, RiSearchEyeLine, RiCustomerServiceLine, RiLoginBoxLine, RiInformationLine } from "@remixicon/react";
 import { ModeToggle } from "../ThemeSwitcher";
 
 export default function NavbarComponent() {
@@ -22,6 +22,7 @@ export default function NavbarComponent() {
   const menuItems = [
     { name: "Analyze Video", icon: <RiVideoLine />, href: "/public/analyze" },
     { name: "Our Technology", icon: <RiShieldCheckLine />, href: "/technology" },
+    { name: "About", icon: <RiInformationLine />, href: "/about" },
     { name: "Support", icon: <RiCustomerServiceLine />, href: "/support" },
   ];
 

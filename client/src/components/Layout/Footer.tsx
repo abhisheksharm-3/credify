@@ -1,9 +1,10 @@
 import React, { ReactElement } from 'react';
 import Link from 'next/link';
-import { RiTwitterXLine, RiGithubLine, RiLinkedinBoxLine, RiVideoLine, RiSearchEyeLine, RiShieldCheckLine, RiQuestionLine, RiCodeSSlashLine } from "@remixicon/react";
+import { RiTwitterXLine, RiGithubLine, RiLinkedinBoxLine, RiVideoLine, RiSearchEyeLine, RiShieldCheckLine, RiQuestionLine, RiCodeSSlashLine, RiInformationLine } from "@remixicon/react";
 import { NavigationItem } from '@/lib/frontend-types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Image from 'next/image';
 
 const navigation: {
   main: NavigationItem[]
@@ -12,8 +13,8 @@ const navigation: {
 } = {
   main: [
     { name: 'Analyze Video', href: '/public/analyze', icon: <RiVideoLine /> },
-    { name: 'Source Tracing', href: '/public/analyze', icon: <RiSearchEyeLine /> },
     { name: 'Our Technology', href: '/', icon: <RiShieldCheckLine /> },
+    { name: "About", href: "/about",  icon: <RiInformationLine />},
     { name: 'Support', href: 'https://github.com/abhisheksharm-3/credify', icon: <RiQuestionLine /> },
   ],
   social: [
@@ -54,8 +55,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
             <Link href="/" className="flex items-center text-2xl font-bold mb-4">
-              <RiShieldCheckLine className="mr-2" />
-              Credify
+            <Image src="/images/logo.png" alt="Credify Logo" width={170} height={20} />
             </Link>
             <p className="mb-4">
               Empowering truth in the digital age: Detecting tampered videos and tracing them back to their origins.
