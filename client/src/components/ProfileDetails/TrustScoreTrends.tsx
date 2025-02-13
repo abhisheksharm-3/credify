@@ -73,8 +73,8 @@ const TrustScoreTrend: React.FC<TrustScoreTrendProps> = ({ monthlyData }) => {
             <p className="text-2xl f font-semibold">
               {monthlyData[activeIndex]?.month}:
               <span className='text-[#3b82f6]'>Verified {monthlyData[activeIndex]?.verifiedCount || 0}</span>,
-              <span className='text-[#fbbf24]'>Unverified {monthlyData[activeIndex]?.unverifiedCount || 0}</span>,
-              <span className='text-[#ef4444]'>Tampered {monthlyData[activeIndex]?.tamperedCount || 0}</span>
+              <span className='text-[#fbbf24]'> Unverified {monthlyData[activeIndex]?.unverifiedCount || 0}</span>,{' '}
+              <span className='text-[#ef4444]'>Tampered {monthlyData[activeIndex]?.tamperedCount || 0}</span>{' '}
             </p>
           </motion.div>
         </CardContent>

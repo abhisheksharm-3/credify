@@ -23,7 +23,6 @@ import { toast } from "sonner";
 const ForgotPassword: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm();
-  const router = useRouter();
   const { theme } = useTheme();
   const [color, setColor] = useState("#ffffff");
 

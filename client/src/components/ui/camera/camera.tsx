@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Check, X } from "lucide-react";
+import { ArrowLeftRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CameraView } from "./camera-view";
 import { FC, useRef } from "react";
@@ -30,7 +30,7 @@ interface CameraProps {
 
 const Camera: FC<CameraProps> = ({ onClosed, onCapturedImages }) => {
   const camera = useRef<CameraType>();
-  const { images, addImage, resetImages, stopStream, removeImage } = useCamera();
+  const { images, addImage, resetImages, stopStream } = useCamera();
 
   const handleCapture = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();

@@ -1,7 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronRight } from "lucide-react"
 import { User } from '@/lib/types'
 import { formatDate, handleNavigation } from '@/lib/frontend-function'
 
@@ -24,13 +23,15 @@ const renderUserHierarchy = ({ user, isRoot = true, copyrightUserId }: RenderUse
         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
       </Avatar>
       <div>
-        <p
+        <button
           onClick={() => handleNavigation(user.userId)}
-          className={`text-sm md:text-base font-medium cursor-pointer hover:underline ${isRoot ? 'text-center' : 'text-left'}`}
+          className={`text-sm md:text-base font-medium cursor-pointer hover:underline ${
+            isRoot ? 'text-center' : 'text-left'
+          } bg-transparent border-0`}
         >
           {user.name}
           {copyrightUserId === user.userId && ' (Copyright Owner)'}
-        </p>
+        </button>
         <p className={`text-xs md:text-sm text-muted-foreground ${isRoot ? 'text-center' : 'text-left'}`}>
           {user.dateOfUpload ? formatDate(new Date(user.dateOfUpload).toLocaleString()) : "Unknown Date"}
         </p>

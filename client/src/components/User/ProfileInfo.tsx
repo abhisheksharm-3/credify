@@ -20,14 +20,14 @@ import { ProfileInfoProps } from "@/lib/frontend-types";
 
 const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [phone, setPhone] = useState(user.phone || "No Number Provided");
+  const [phoneNumber, setPhoneNumber] = useState(user.phone || "No Number Provided");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
 
   const handleEditClick = () => {
     setIsEditing(true);
-    setPhone("");
+    setPhoneNumber("");
     if (phoneInputRef.current) {
       phoneInputRef.current.focus();
     }
@@ -35,27 +35,27 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
 
   const handleDoneClick = async () => {
     setLoading(true);
-    if (phone === "") {
-      setPhone(user.phone || "No Number Provided");
+    if (phoneNumber === "") {
+      setPhoneNumber(user.phone || "No Number Provided");
       setIsEditing(false);
       setLoading(false);
       return;
     }
 
     try {
-      const result = await updatePhoneNumber(phone, password);
+      const result = await updatePhoneNumber(phoneNumber, password);
 
       if (result.success) {
         setIsEditing(false);
-        setPhone(phone);
+        setPhoneNumber(phoneNumber);
         toast.success("Phone Number updated successfully!");
       } else {
         toast.error(result.error || "Unknown error occurred");
-        setPhone(user.phone || "No Number Provided");
+        setPhoneNumber(user.phone || "No Number Provided");
       }
     } catch (error) {
       toast.error("An unexpected error occurred. Please try again.");
-      setPhone(user.phone || "No Number Provided");
+      setPhoneNumber(user.phone || "No Number Provided");
     } finally {
       setLoading(false);
       setPassword("");
@@ -82,8 +82,8 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user }) => {
           <div className="flex gap-2 items-center">
             <Input
               id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
               readOnly={!isEditing}
               ref={phoneInputRef}
             />

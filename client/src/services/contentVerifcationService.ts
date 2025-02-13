@@ -1,4 +1,3 @@
-import { Response } from 'node-fetch';
 import NodeCache from 'node-cache';
 import { ContentInfo, VerificationResultType } from '@/lib/types';
 

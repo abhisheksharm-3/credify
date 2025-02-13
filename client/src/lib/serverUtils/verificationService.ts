@@ -4,7 +4,7 @@ import { ExternalServiceError } from '@/lib/errors';
 import logger from '@/lib/logger';
 import path from 'path';
 import { createAdminClient, getLoggedInUser } from '../server/appwrite';
-import { Databases, ID, Query } from 'node-appwrite';
+import { Databases, Query } from 'node-appwrite';
 
 const VERIFICATION_SERVICE_BASE_URL = process.env.VERIFICATION_SERVICE_BASE_URL;
 

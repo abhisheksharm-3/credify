@@ -16,8 +16,9 @@ ENV NUMBA_CACHE_DIR=/tmp/NUMBA_CACHE_DIR/
 COPY . /code/
 
 # Expose the secret FIREBASE_KEY_BASE64 at buildtime and save it as a file
-RUN --mount=type=secret,id=FIREBASE_KEY_BASE64,mode=0444,required=true \
-    cat /run/secrets/FIREBASE_KEY_BASE64 | base64 -d > /code/firebase_key.json
+RUN --mount=type=secret,id=FIREBASE_KEY_BASE64,mode=0400,required=true \
+    cat /run/secrets/FIREBASE_KEY_BASE64 | base64 -d > /code/firebase_key.json && \
+    chmod 0400 /code/firebase_key.json
 
 # Set the Google Application Credentials environment variable
 ENV GOOGLE_APPLICATION_CREDENTIALS="/code/firebase_key.json"

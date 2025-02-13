@@ -1,7 +1,6 @@
 import ProfileInfo from "../../../../components/User/ProfileInfo"
 import ChangePassword from "../../../../components/User/ChangePassword"
 import VerificationSettings from "../../../../components/User/VerificationSettings"
-import SupportAndHelp from "../../../../components/User/SupportAndHelp"
 import SecuritySetting from "../../../../components/User/SecuritySetting"
 import { getLoggedInUser } from "@/lib/server/appwrite";
 import { redirect } from "next/navigation";
@@ -20,7 +19,6 @@ export default async function Page() {
       <div className="space-y-8">
         <VerificationSettings/>
         <SecuritySetting/>
-        {/* <SupportAndHelp/> */}
       </div>
     </main>
   </div></LoggedInLayout>

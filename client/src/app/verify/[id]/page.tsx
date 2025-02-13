@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, ShieldCheck, ShieldAlert, ChevronRight, Copy, Eye } from "lucide-react";
+import { AlertCircle, ShieldCheck, ShieldAlert, Copy } from "lucide-react";
 import LoggedInLayout from "@/components/Layout/LoggedInLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +13,7 @@ import { getDocumentsByHash, getUserById } from "@/lib/server/appwrite";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, VerificationResultType } from "@/lib/types";
-import { formatDate } from "@/lib/frontend-function";
-import { ImageIcon, VideoIcon, CalendarIcon } from "lucide-react";
 import renderUserHierarchy from "@/components/PublicComponents/UserHierarchy";
 import GeminiAnalysisTab from "@/components/PublicComponents/GeminiAnalysisTab";
 import VerificationTabVerify from "@/components/PublicComponents/VerificationTabVerify";
@@ -113,9 +110,6 @@ const VerifyContent: React.FC = () => {
 
     fetchData();
   }, [contentHash]);
-  const handleCreatorClick = (userId: string) => {
-    router.push(`/verify/creator/${userId}`);
-  };
 
   const fetchUsernames = async (hierarchy: User): Promise<User> => {
     const result = await getUserById(hierarchy.userId);

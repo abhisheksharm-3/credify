@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/server/appwrite';
-import { Databases, ID, Query } from 'node-appwrite';
+import { Databases, Query } from 'node-appwrite';
 import { UTApi } from 'uploadthing/server';
 import { z } from 'zod';
 import logger from '@/lib/logger';

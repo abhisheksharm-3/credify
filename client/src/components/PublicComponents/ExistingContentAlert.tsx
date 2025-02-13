@@ -1,6 +1,5 @@
 import React from "react";
 import CopyrightDispute from "./CopyrightExists";
-import { VerificationResult } from "@/lib/frontend-types";
 
 
 interface ExistingContentAlertProps {

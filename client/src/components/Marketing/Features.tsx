@@ -1,7 +1,6 @@
 import React from 'react';
 import { FingerprintIcon, MonitorCheckIcon, CopyrightIcon, ShieldCheckIcon } from 'lucide-react';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -22,11 +21,6 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, com
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold tracking-tight text-xl">{title}</h3>
-          {/* {comingSoon && (
-            <Badge variant="secondary" className="text-xs font-normal bg-primary/20 text-primary hover:bg-primary/30">
-              Coming soon
-            </Badge>
-          )} */}
         </div>
       </div>
     </CardHeader>

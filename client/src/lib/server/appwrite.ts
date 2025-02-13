@@ -133,6 +133,8 @@ export async function updatePhoneNumber(phone: string, password: string) {
       phone,
       password
     );
+    console.log(result);
+    
     return { success: true };
   } catch (error) {
     console.error("Phone number update failed:", error);

@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import Link from 'next/link';
-import { RiTwitterXLine, RiGithubLine, RiLinkedinBoxLine, RiVideoLine, RiSearchEyeLine, RiShieldCheckLine, RiQuestionLine, RiCodeSSlashLine, RiInformationLine } from "@remixicon/react";
+import { RiTwitterXLine, RiGithubLine, RiLinkedinBoxLine, RiVideoLine, RiShieldCheckLine, RiQuestionLine, RiCodeSSlashLine, RiInformationLine } from "@remixicon/react";
 import { NavigationItem } from '@/lib/frontend-types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

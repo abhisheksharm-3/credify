@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFiles } from "@/hooks/useFiles";
 import { RecentActivityProps } from "@/lib/frontend-types";
-import { formatDate, formatFileSize, handleVerificationRedirect, truncateFileName } from "@/lib/frontend-function";
+import { formatDate, handleVerificationRedirect, truncateFileName } from "@/lib/frontend-function";
 
 export function RecentActivity({ files }: RecentActivityProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,12 +17,8 @@ export function RecentActivity({ files }: RecentActivityProps) {
   const { setFiles } = useFiles();
 
   useEffect(() => {
-    if (files.length > 0) {
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
-    }
-  }, [files])
+    setIsLoading(false);
+  }, [files]);
 
   const handleDelete = async (fileId: string) => {
     try {

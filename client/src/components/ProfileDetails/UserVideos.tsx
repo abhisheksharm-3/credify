@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FC } from 'react';
 import { motion } from 'framer-motion';
 import { CircleCheck, XCircle, TriangleAlert, Image, Video } from 'lucide-react';
-import { FC } from 'react';
 import { FileInfo } from '@/lib/types';
 import { VerifiedVideosProps } from '@/lib/frontend-types';
 import { handleVerificationRedirect, truncateFileName } from '@/lib/frontend-function';

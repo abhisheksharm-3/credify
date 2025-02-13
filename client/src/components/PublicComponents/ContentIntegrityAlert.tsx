@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, ShieldAlert, ShieldQuestion } from "lucide-react";
+import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ContentIntegrityAlertProps {

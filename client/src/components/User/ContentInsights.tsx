@@ -1,6 +1,6 @@
 import React from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { AlertTriangle, CheckCircle2, AlertCircle, BarChart2 } from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card"
+import { AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react'
 import { ContentInsightsProps, InsightItemProps } from '@/lib/frontend-types'
 
 export default function ContentInsights({ verifiedCount, tamperedCount, unverifiedCount }: ContentInsightsProps) {

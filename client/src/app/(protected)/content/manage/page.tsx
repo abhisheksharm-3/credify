@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
-import { Search, Upload, BarChart2 } from 'lucide-react'
+import { Search, BarChart2 } from 'lucide-react'
 import LoggedInLayout from '@/components/Layout/LoggedInLayout'
 import ContentTable from '@/components/User/ContentTable'
 import ContentFilters from '@/components/User/ContentFilters'

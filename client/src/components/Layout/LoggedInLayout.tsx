@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
-import Footer from "./Footer";
 import NavbarLoggedIn from "./NavbarLoggedIn";
 
 const LoggedInayout = ({
@@ -19,7 +18,6 @@ const LoggedInayout = ({
         className
       )}
     >
-      {/* TODO: use context to avoid prop drilling */}
       <NavbarLoggedIn />
       {children}
     </div>

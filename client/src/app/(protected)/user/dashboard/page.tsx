@@ -60,14 +60,6 @@ const Dashboard: React.FC = () => {
     fetchUser();
   }, []);
 
-  const chartData = React.useMemo(() => processFilesForChart(files), [files]);
-  const chartConfig: ChartConfig = {
-    desktop: {
-      label: "Total Videos",
-      color: "hsl(var(--chart-1))",
-    },
-  };
-
   const summaryCards: CardData[] = [
     {
       title: "Successful Verifications",
@@ -131,7 +123,7 @@ const Dashboard: React.FC = () => {
             <div className="mb-4 flex flex-col md:flex-row w-full justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
               <div className="mb-4 md:mb-0 flex items-center">
                 <div className="mr-4">
-                  <div className="flex flex-col md:flex-row text-3xl font-bold text-gray-800 dark:text-white text-3xl font-bold text-gray-800 dark:text-white">
+                  <div className="flex flex-col md:flex-row text-3xl font-bold text-gray-800 dark:text-white">
                     <div className="">Welcome,
                     </div>
                     <div className="">

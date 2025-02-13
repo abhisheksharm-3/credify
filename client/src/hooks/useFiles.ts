@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { FileInfo } from '@/lib/types';
-import { MonthlyData } from '@/lib/frontend-types';
 import { normalizeFile, processMonthlyData } from '@/lib/frontend-function';
 
 export const useFiles = () => {
