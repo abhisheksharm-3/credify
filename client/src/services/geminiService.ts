@@ -5,40 +5,35 @@ import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import axios from 'axios';
 import { pipeline } from 'stream/promises';
 
-const IMAGE_MODEL_NAME = "gemini-1.5-flash";
-const VIDEO_MODEL_NAME = "gemini-1.5-pro";
+const IMAGE_MODEL_NAME = "gemini-2.0-flash";
+const VIDEO_MODEL_NAME = "gemini-2.0-pro";
 
 const API_KEY = process.env.GEMINI_API_KEY!;
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 const fileManager = new GoogleAIFileManager(API_KEY);
 
-const SPECIALIZED_PROMPT = `As an AI media analyst, your task is to provide a clear, actionable analysis of the given image or video. Focus on delivering concrete insights that a user can immediately understand and act upon. Structure your response as follows:
+const SPECIALIZED_PROMPT = `As a seasoned media fact-checker with journalism experience, share your analysis of this content in a conversational yet thorough manner.
 
-1. Content Summary (2-3 sentences):
-   Briefly describe what you see in the media.
+Give me your immediate assessment - what are we looking at here and what's the apparent context?
 
-2. Key Entities (bullet points):
-   - List main people, objects, or brands visible
-   - For each, note their relevance or significance
+Focus your expert analysis on:
 
-3. Context Analysis (2-3 sentences):
-   Explain the situation or event depicted, if apparent. Also tell is this event factually correct or spreads misinformation.
+Truth assessment: Look for signs this media accurately represents reality. Note any inconsistencies with known facts, manipulated elements, or contextual clues that suggest misrepresentation. If something seems potentially misleading, explain why.
 
-4. Potential Concerns (choose relevant, explain briefly):
-   - Privacy: Any visible personal information?
-   - Security: Any potential security risks shown?
-   - Authenticity: Signs of manipulation or AI generation?
-   - Sensitivity: Content that might be disturbing or controversial?
-   - Copyright: Visible trademarks or copyrighted material?
+Contextual understanding: What's the full picture here? Is there important context missing that would change how someone interprets this? Is this media being presented in its original context?
 
-5. Main Takeaway (1 sentence):
-   What's the most important thing a viewer should understand from this media?
+Source credibility: Any indicators of where this content originated? Do recognizable people or institutions appear, and are they accurately represented?
 
-6. Suggested Actions (2-3 bullet points):
-   Based on your analysis, what should the user consider doing next?
+Technical evaluation: Notice any visual artifacts, unnatural elements, or signs of digital manipulation that affect authenticity.
 
-Be specific and confident in your observations. If you can't determine something with high confidence, clearly state that it's uncertain. Aim to provide information that helps the user make informed decisions about using or sharing the media.`;
+When you spot potential misinformation, clearly explain your reasoning with specific examples from the content. Use phrases like "I'm noticing that..." or "What raises questions for me is..." to frame your observations.
+
+If the content appears authentic, note that too: "From what I can see, this appears to be an accurate representation of..."
+
+Conclude with practical advice for someone encountering this content - should they treat it as reliable, verify specific aspects, or be cautious about sharing it?
+
+Throughout your analysis, maintain a conversational tone while prioritizing factual accuracy above all else.`;
 
 export async function analyzeImageWithGemini(contentBuffer: Buffer, contentType: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: IMAGE_MODEL_NAME });
