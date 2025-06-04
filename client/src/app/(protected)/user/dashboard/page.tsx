@@ -13,7 +13,8 @@ import LoggedInLayout from "@/components/Layout/LoggedInLayout";
 import UploadVideoDialog from "@/components/User/UploadVideoDialog";
 import { useFiles } from "@/hooks/useFiles";
 import MonthlyFileHistogram from "@/components/User/MonthlyFileHistogram";
-import { Camera, FilePlus2, FileWarning, FileCheck2, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Camera, FilePlus2, FileWarning, FileCheck2, ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 function processFilesForChart(files: FileInfo[]): ChartDataPoint[] {
   const monthlyData: { [key: string]: number } = {};
@@ -148,6 +149,15 @@ const Dashboard: React.FC = () => {
               <UploadVideoDialog />
             </div>
           )}
+
+          {/* Warning Alert for Gemini Rate Limits */}
+          <Alert variant="destructive" className="bg-amber-50 border-amber-500 dark:bg-amber-900/30 dark:border-amber-800">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+            <AlertTitle className="text-amber-800 dark:text-amber-400 font-medium">Service Degradation</AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-300">
+              Video verification is currently experiencing issues due to Gemini rate limits. Our team is actively working on implementing workarounds. Thank you for your patience.
+            </AlertDescription>
+          </Alert>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {summaryCards.map((card, index) => (

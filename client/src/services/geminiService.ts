@@ -51,7 +51,7 @@ export async function analyzeImageWithGemini(contentBuffer: Buffer, contentType:
     return response.text();
   } catch (error) {
     console.error("Error in Gemini API image analysis:", error);
-    throw new Error("Failed to analyze image content with Gemini API");
+    return "Gemini verification service is currently unavailable. Our team is working on resolving this issue. Please try again later or contact support if this persists.";
   }
 }
 
@@ -80,7 +80,8 @@ export async function analyzeVideoWithGemini(videoUrl: string, contentType: stri
     }
 
     if (file.state === FileState.FAILED) {
-      throw new Error("Video processing failed.");
+      console.error("Video processing failed in Gemini API");
+      return "Gemini verification service is currently unavailable. Our team is working on resolving this issue. Please try again later or contact support if this persists.";
     }
 
     const result = await model.generateContent([
@@ -97,6 +98,6 @@ export async function analyzeVideoWithGemini(videoUrl: string, contentType: stri
     return response.text();
   } catch (error) {
     console.error("Error in Gemini API video analysis:", error);
-    throw new Error("Failed to analyze video content with Gemini API");
+    return "Gemini verification service is currently unavailable. Our team is working on resolving this issue. Please try again later or contact support if this persists.";
   }
 }
