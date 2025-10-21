@@ -5,8 +5,8 @@ import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
 import axios from 'axios';
 import { pipeline } from 'stream/promises';
 
-const IMAGE_MODEL_NAME = "gemini-2.0-flash";
-const VIDEO_MODEL_NAME = "gemini-1.5-pro";
+const IMAGE_MODEL_NAME = "gemini-2.5-flash-lite";
+const VIDEO_MODEL_NAME = "gemini-2.5-flash-lite";
 
 const API_KEY = process.env.GEMINI_API_KEY!;
 
