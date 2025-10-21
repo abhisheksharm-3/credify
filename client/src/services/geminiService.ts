@@ -13,27 +13,36 @@ const API_KEY = process.env.GEMINI_API_KEY!;
 const genAI = new GoogleGenerativeAI(API_KEY);
 const fileManager = new GoogleAIFileManager(API_KEY);
 
-const SPECIALIZED_PROMPT = `As a seasoned media fact-checker with journalism experience, share your analysis of this content in a conversational yet thorough manner.
+const SPECIALIZED_PROMPT = `You are a professional fact-checker. Analyze this media content and provide a clear, direct assessment.
 
-Give me your immediate assessment - what are we looking at here and what's the apparent context?
+**Content Overview:**
+Describe what you see in 1-2 sentences. Be specific and factual.
 
-Focus your expert analysis on:
+**Authenticity Check:**
+• Identify any signs of manipulation, editing, or artificial generation
+• Note specific visual inconsistencies, artifacts, or technical anomalies if present
+• Check if text, objects, or people appear genuine and consistent
+• Verify if metadata or context seems accurate
 
-Truth assessment: Look for signs this media accurately represents reality. Note any inconsistencies with known facts, manipulated elements, or contextual clues that suggest misrepresentation. If something seems potentially misleading, explain why.
+**Red Flags (if any):**
+List specific concerns that indicate potential misinformation:
+- Manipulated/altered elements
+- Missing or suspicious context
+- Inconsistent details
+- Misleading presentation
 
-Contextual understanding: What's the full picture here? Is there important context missing that would change how someone interprets this? Is this media being presented in its original context?
+**Verification Status:**
+☑ Appears Authentic - No obvious signs of manipulation detected
+⚠ Questionable - Contains elements that need verification
+❌ Likely Manipulated - Clear signs of editing or artificial generation
 
-Source credibility: Any indicators of where this content originated? Do recognizable people or institutions appear, and are they accurately represented?
+**Recommendation:**
+Provide one clear action the user should take (e.g., "Safe to trust and share", "Verify with additional sources before sharing", "Do not share - likely misinformation")
 
-Technical evaluation: Notice any visual artifacts, unnatural elements, or signs of digital manipulation that affect authenticity.
+**Key Details to Verify:**
+List 2-3 specific facts or claims that should be independently verified if applicable.
 
-When you spot potential misinformation, clearly explain your reasoning with specific examples from the content. Use phrases like "I'm noticing that..." or "What raises questions for me is..." to frame your observations.
-
-If the content appears authentic, note that too: "From what I can see, this appears to be an accurate representation of..."
-
-Conclude with practical advice for someone encountering this content - should they treat it as reliable, verify specific aspects, or be cautious about sharing it?
-
-Throughout your analysis, maintain a conversational tone while prioritizing factual accuracy above all else.`;
+Keep your response concise, factual, and helpful. Avoid speculation. Focus on observable evidence. If content appears authentic, say so clearly without over-explaining.`;
 
 export async function analyzeImageWithGemini(contentBuffer: Buffer, contentType: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: IMAGE_MODEL_NAME });
